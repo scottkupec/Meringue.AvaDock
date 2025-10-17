@@ -1,0 +1,32 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:dock="clr-namespace:Meringue.AvaDock.Controls;assembly=Meringue.AvaDock"
+        xmlns:dockViewModels="clr-namespace:Meringue.AvaDock.ViewModels;assembly=Meringue.AvaDock"
+        xmlns:viewModels="clr-namespace:HelloLayout.ViewModels"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="HelloLayout.Windows.MainWindow"
+        x:DataType="viewModels:MainWindowViewModel"
+        Title="Hello HelloLayout!">
+
+  <DockPanel>
+    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="8">
+      <ComboBox ItemsSource="{Binding LayoutManager.DockControl.HiddenItems}"
+                SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
+                Width="200"
+                Margin="4,0"
+                ToolTip.Tip="Select a closed window to reopen">
+        <ComboBox.ItemTemplate>
+          <DataTemplate x:DataType="dockViewModels:DockItemViewModel">
+            <TextBlock Text="{Binding Title}" />
+          </DataTemplate>
+        </ComboBox.ItemTemplate>
+      </ComboBox>
+
+      <Button Content="Unhide" Command="{Binding ReopenItemCommand}" Margin="4,0" />
+      <Button Content="Load Layout" Command="{Binding LoadLayoutCommand}" Margin="4,0" />
+      <Button Content="Save Layout" Command="{Binding SaveLayoutCommand}" Margin="4,0" />
+    </StackPanel>
+
+    <dock:DockControl Manager="{Binding LayoutManager.DockControl}" />
+  </DockPanel>
+
+</Window>

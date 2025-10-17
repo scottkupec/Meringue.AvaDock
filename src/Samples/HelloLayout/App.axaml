@@ -1,0 +1,34 @@
+<Application
+  x:Class="HelloLayout.App"
+  xmlns="https://github.com/avaloniaui"
+  xmlns:dock="clr-namespace:Meringue.AvaDock.Themes;assembly=Meringue.AvaDock"
+  xmlns:dockContols="clr-namespace:Meringue.AvaDock.Controls;assembly=Meringue.AvaDock"
+  xmlns:sys="clr-namespace:System;assembly=netstandard"  
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  RequestedThemeVariant="Dark">
+
+  <Application.Styles>
+    <FluentTheme DensityStyle="Compact" />
+
+    <!--
+      AvaDockTheme needs imported to get default styling and required
+      data tempaltes.
+    -->
+    <dock:AvaDockTheme />
+
+    <!--
+      How to change the tabstrip placement for the DockTabPanels.
+    -->
+    <Style Selector="dockContols|DockTabPanel">
+      <Setter Property="TabStripPlacement" Value="Left" />
+    </Style>
+  </Application.Styles>
+
+  <!--
+    Here's how to replace the placeholder text for a control loaded from a layout that does not
+    have content attached yet.
+  -->
+  <Application.Resources>
+    <sys:String x:Key="AvaDockTabContentPlaceholderText">Custom tool loading text.</sys:String>
+  </Application.Resources>  
+</Application>

@@ -1,0 +1,13 @@
+<UserControl x:Class="Meringue.AvaDock.Controls.DockTree"
+             x:DataType="viewModels:DockNodeViewModel"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:controls="clr-namespace:Meringue.AvaDock.Controls"
+             xmlns:viewModels="clr-namespace:Meringue.AvaDock.ViewModels"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             DragDrop.AllowDrop="True">
+
+  <Grid HorizontalAlignment="Stretch"
+        VerticalAlignment="Stretch">
+    <ContentControl Content="{Binding}" />
+  </Grid>
+</UserControl>

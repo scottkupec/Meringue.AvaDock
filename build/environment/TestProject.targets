@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.5.1" >
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Headless.XUnit"/>
+    <PackageReference Include="coverlet.collector"/>
+    <PackageReference Include="Microsoft.NET.Test.Sdk"/>
+    <PackageReference Include="Moq"/>
+    <PackageReference Include="Shouldly"/>
+    <PackageReference Include="XUnit"/>
+    <PackageReference Include="XUnit.Runner.VisualStudio"/>
+  </ItemGroup>
+</Project>

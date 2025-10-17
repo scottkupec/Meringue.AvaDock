@@ -1,0 +1,12 @@
+# Git merge conflict files
+*.orig
+
+# Outputs
+artifacts/
+
+# MSTest test Results
+[Tt]est[Rr]esult*/
+
+# Visual Studio created files/directories
+.vs/
+**/launchSettings.json

@@ -1,0 +1,34 @@
+<DataTemplates
+  xmlns="https://github.com/avaloniaui"
+  xmlns:controls="clr-namespace:Meringue.AvaDock.Controls"
+  xmlns:managers="clr-namespace:Meringue.AvaDock.Managers"
+  xmlns:viewModels="clr-namespace:Meringue.AvaDock.ViewModels"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <DataTemplate DataType="managers:DockControlManager">
+    <controls:DockControl />
+  </DataTemplate>
+
+  <DataTemplate DataType="viewModels:DockItemViewModel">
+    <controls:DockItem Title="{Binding Title}" Content="{Binding Context}" />
+  </DataTemplate>
+
+  <DataTemplate DataType="viewModels:DockSplitNodeViewModel">
+    <controls:DockSplitPanel HorizontalAlignment="Stretch"
+                             VerticalAlignment="Stretch" />
+  </DataTemplate>
+
+  <DataTemplate DataType="viewModels:DockTabNodeViewModel">
+    <Panel Background="Transparent"
+           DragDrop.AllowDrop="True">
+      <controls:DockTabPanel DragDrop.AllowDrop="True"
+                             ItemsSource="{Binding Tabs}"
+                             SelectedItem="{Binding Selected, Mode=TwoWay}" />
+    </Panel>
+  </DataTemplate>
+
+  <DataTemplate DataType="managers:DockWorkspaceManager">
+    <controls:DockWorkspace />
+  </DataTemplate>
+
+</DataTemplates>

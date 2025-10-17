@@ -1,0 +1,40 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:converters="clr-namespace:Meringue.AvaDock.Converters"
+        xmlns:sys="clr-namespace:System;assembly=netstandard"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Meringue.AvaDock.Themes.AvaDockTheme">
+
+  <Styles.Resources>
+    <ResourceDictionary>
+      <sys:Double x:Key="AvaDockFontSize">12</sys:Double>
+      <sys:Double x:Key="AvaDockPreviewTransparencyLevel">0.7</sys:Double>
+
+      <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Light">
+          <Color x:Key="AvaDockBackgroundColor">White</Color>
+          <Color x:Key="AvaDockAccentColor">SlateGray</Color>
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="Dark">
+          <Color x:Key="AvaDockBackgroundColor">Black</Color>
+          <Color x:Key="AvaDockAccentColor">SlateGray</Color>
+        </ResourceDictionary>
+      </ResourceDictionary.ThemeDictionaries>
+    </ResourceDictionary>
+  </Styles.Resources>
+
+  <Style Selector="Button.item-title-bar">
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="BorderBrush" Value="Transparent"/>
+    <Setter Property="Padding" Value="0"/>
+    <Setter Property="CornerRadius" Value="0"/>
+  </Style>
+  
+  <StyleInclude Source="/Themes/DockControl.axaml" />
+  <StyleInclude Source="/Themes/DockItem.axaml" />
+  <StyleInclude Source="/Themes/DockSplitPanel.axaml" />
+  <StyleInclude Source="/Themes/DockTabPanel.axaml" />
+  <StyleInclude Source="/Themes/DockWorkspace.axaml" />
+  <StyleInclude Source="/Themes/ItemTitleBar.axaml" />
+  <StyleInclude Source="/Themes/MinimizedItemsBar.axaml" />
+  <StyleInclude Source="avares://IconPacks.Avalonia.Codicons/Codicons.axaml" />
+</Styles>

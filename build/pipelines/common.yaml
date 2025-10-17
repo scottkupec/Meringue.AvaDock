@@ -1,0 +1,46 @@
+steps:
+- checkout: self  # self represents the repo where the initial Pipelines YAML file was found
+  clean: true
+  fetchDepth: 1
+
+- task: UseDotNet@2
+  displayName: Install .NET Core SDK
+  inputs:
+    useGlobalJson: true
+    performMultiLevelLookup: false
+
+- task: DotNetCoreCLI@2
+  displayName: Restore nuget packages
+  inputs:
+    command: 'restore'
+    feedsToUse: 'config'
+    nugetConfigPath: 'nuget.config'
+    projects: '**/*.sln'
+    restoreDirectory: '$(PackagesPath)'
+    verbosityRestore: 'Diagnostic'
+
+- task: MSBuild@1
+  displayName: Build solution
+  inputs:
+    solution: '**/*.sln'
+    clean: true
+    msbuildArchitecture: 'x64'
+    platform: '$(BuildPlatform)'
+    configuration: '$(BuildConfiguration)'
+    msbuildArguments: '/restore:False'
+    maximumCpuCount: true
+
+- task: DotNetCoreCLI@2
+  displayName: Execute unit tests
+  inputs:
+    command: 'test'
+    projects: '**/*.UnitTests.csproj'
+    # TODO: This is what we really want, but CC is never showing completed.  See if not using *.runsettings solves that.
+    # arguments: '--no-build --no-restore --settings $(Build.SourcesDirectory)\src\CodeCoverage.runsettings --configuration $(BuildConfiguration) --collect:"XPlat Code Coverage"'
+    arguments: '--no-build --no-restore --configuration $(BuildConfiguration) --collect:"XPlat Code Coverage"'    
+    nobuild: true
+
+- task: PublishCodeCoverageResults@2
+  displayName: Publish code coverage reports
+  inputs:
+    summaryFileLocation: $(Agent.TempDirectory)/**/coverage.cobertura.xml

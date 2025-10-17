@@ -1,0 +1,39 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <AssemblyVersion>0.0.1</AssemblyVersion>
+    <LangVersion>latest</LangVersion>
+    <TargetFramework>net80</TargetFramework>    
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <EnableAsyncStackTraces Condition="'$(Configuration)' == 'Debug'">true</EnableAsyncStackTraces>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <EnableXamlIlCompilation>true</EnableXamlIlCompilation>
+    <UseWindowsForms>false</UseWindowsForms>
+    <UseWPF>false</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\AvaDock\Meringue.AvaDock.csproj" />
+  </ItemGroup>
+
+  <ItemGroup> <!-- UI support -->
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Avalonia.Desktop" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
+    <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
+    <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" />
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="**\*.axaml.cs">
+      <DependentUpon>$([System.IO.Path]::GetFileNameWithoutExtension('%(Filename)'))</DependentUpon>
+    </Compile>
+  </ItemGroup>
+</Project>

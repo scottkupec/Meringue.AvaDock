@@ -1,0 +1,67 @@
+  <UserControl x:Class="Meringue.AvaDock.Controls.ItemTitleBar"
+               xmlns="https://github.com/avaloniaui"
+               xmlns:icons="clr-namespace:IconPacks.Avalonia.Codicons;assembly=IconPacks.Avalonia.Codicons"
+               xmlns:viewModels="clr-namespace:Meringue.AvaDock.ViewModels"
+               xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+               x:DataType="viewModels:DockItemViewModel"
+               Background="Transparent">
+
+  <UserControl.ContextMenu>
+    <ContextMenu x:Name="PART_ContextMenu"/>
+  </UserControl.ContextMenu>
+
+    <Grid VerticalAlignment="Center">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" /> <!-- Title takes remaining space -->
+        <ColumnDefinition Width="Auto" /> <!-- Buttons -->
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="Auto" />
+      </Grid.ColumnDefinitions>
+
+      <TextBlock Grid.Column="0"
+                 Text="{Binding Title}"
+                 FontSize="{DynamicResource AvaDockFontSize}"
+                 TextTrimming="CharacterEllipsis"
+                 VerticalAlignment="Center"
+                 Margin="0,0,10,0" />
+
+      <Button Grid.Column="1"
+              Classes="item-title-bar"
+              Command="{Binding MinimizeCommand}"
+              Margin="0,0,0,0"
+              HorizontalAlignment="Center"
+              VerticalAlignment="Center"
+              IsEnabled="{Binding !DisableMinimize}"
+              IsVisible="{Binding !DisableMinimize}">
+        <icons:PackIconCodicons Kind="ChromeMinimize"
+                                Height="{DynamicResource AvaDockFontSize}"
+                                Width="{DynamicResource AvaDockFontSize}" />
+      </Button>
+
+      <Button Grid.Column="2"
+              Classes="item-title-bar"
+              Command="{Binding HideCommand}"
+              Margin="10,0,0,0"
+              HorizontalAlignment="Center"
+              VerticalAlignment="Center"
+              IsEnabled="{Binding !DisableHide}"
+              IsVisible="{Binding !DisableHide}">
+        <icons:PackIconCodicons Kind="Eye"
+                                Height="{DynamicResource AvaDockFontSize}"
+                                Width="{DynamicResource AvaDockFontSize}" />
+      </Button>
+
+      <Button Grid.Column="3"
+              Classes="item-title-bar"
+              Command="{Binding CloseCommand}"
+              Margin="10,0,0,0"
+              HorizontalAlignment="Center"
+              VerticalAlignment="Center"
+              IsEnabled="{Binding !DisableClose}"
+              IsVisible="{Binding !DisableClose}">
+        <icons:PackIconCodicons Kind="ChromeClose"
+                                Height="{DynamicResource AvaDockFontSize}"
+                                Width="{DynamicResource AvaDockFontSize}" />
+      </Button>
+    </Grid>
+</UserControl>

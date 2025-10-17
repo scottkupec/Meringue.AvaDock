@@ -1,0 +1,77 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:controls="using:Meringue.AvaDock.Controls"
+        xmlns:viewModels="using:Meringue.AvaDock.ViewModels"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <Style Selector=":is(controls|DockTabPanel)">
+    <Setter Property="TabStripPlacement" Value="Bottom" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Grid>
+          <Border Name="PART_DropTarget"
+                  Background="Transparent"
+                  IsHitTestVisible="True" />
+          <DockPanel>
+            <ItemsPresenter
+              Name="PART_ItemsPresenter"
+              DockPanel.Dock="{TemplateBinding TabStripPlacement}"
+              IsVisible="{TemplateBinding ShouldShowTabStrip}" 
+              ItemsPanel="{TemplateBinding ItemsPanel}"/>
+
+            <ContentPresenter
+              Name="PART_SelectedContentHost"
+              Content="{TemplateBinding SelectedContent}"
+              ContentTemplate="{TemplateBinding ContentTemplate}" />
+          </DockPanel>
+        </Grid>
+      </ControlTemplate>
+    </Setter>
+
+    <Setter Property="ContentTemplate">
+      <DataTemplate DataType="viewModels:DockItemViewModel">
+        <controls:DockItem Content="{Binding Context}" Title="{Binding Title}" />
+      </DataTemplate>
+    </Setter>
+
+    <Setter Property="ItemTemplate">
+      <DataTemplate DataType="viewModels:DockItemViewModel">
+        <TextBlock FontSize="{DynamicResource AvaDockFontSize}"
+                   MaxWidth="80"
+                   Text="{Binding Title}"
+                   TextTrimming="CharacterEllipsis"/>
+      </DataTemplate>
+    </Setter>
+
+    <Style Selector="^[TabStripPlacement=Bottom] /template/ ItemsPresenter#PART_ItemsPresenter > WrapPanel">
+      <Setter Property="Orientation" Value="Horizontal" />
+      <Setter Property="Margin" Value="0,0,0,4" />
+    </Style>
+
+    <Style Selector="^[TabStripPlacement=Left] /template/ ItemsPresenter#PART_ItemsPresenter > WrapPanel">
+      <Setter Property="Orientation" Value="Vertical" />
+    </Style>
+
+    <Style Selector="controls|DockTabPanel^[TabStripPlacement=Left] TabItem TextBlock">
+      <!-- Set MinWidth to match MaxWidth so tabbed controls form better column looking layouts. -->
+      <Setter Property="MinWidth" Value="80"/>
+    </Style>
+    
+    <Style Selector="^[TabStripPlacement=Right] /template/ ItemsPresenter#PART_ItemsPresenter > WrapPanel">
+      <Setter Property="Orientation" Value="Vertical" />
+    </Style>
+
+    <Style Selector="controls|DockTabPanel^[TabStripPlacement=Right] TabItem TextBlock">
+      <!-- Set MinWidth to match MaxWidth so tabbed controls form better column looking layouts. -->
+      <Setter Property="MinWidth" Value="80"/>
+    </Style>
+    
+    <Style Selector="^[TabStripPlacement=Top] /template/ ItemsPresenter#PART_ItemsPresenter > WrapPanel">
+      <Setter Property="Orientation" Value="Horizontal" />
+      <Setter Property="Margin" Value="0,4,0,0" />
+    </Style>
+  </Style>
+
+  <Style Selector="controls|DockTabPanel TabItem">
+    <Setter Property="Foreground" Value="{DynamicResource AvaDockAccentColor}" />
+  </Style>
+</Styles>

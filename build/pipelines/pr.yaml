@@ -1,0 +1,11 @@
+pool:
+  vmImage: windows-latest
+
+variables:
+  PackagesPath: '$(Agent.BuildDirectory)\packages'
+  BuildConfiguration: 'Debug'
+  BuildPlatform: 'Any CPU'
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+
+steps:
+- template: common.yaml

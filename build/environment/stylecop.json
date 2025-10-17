@@ -1,0 +1,61 @@
+{
+    "$schema": "https://raw.githubusercontent.com/DotNetAnalyzers/StyleCopAnalyzers/master/StyleCop.Analyzers/StyleCop.Analyzers/Settings/stylecop.schema.json",
+    "settings":
+    {
+        "indentation" : {
+            "indentationSize" : 4,
+            "tabSize" : 4,
+            "useTabs" : false
+        },
+        "spacingRules" : {
+        },
+        "orderingRules":
+        {
+            "elementOrder" : [
+                "kind",
+                "constant",
+                "accessibility",
+                "static",
+                "readonly"
+            ],
+            "blankLinesBetweenUsingGroups" : "omit",
+            "systemUsingDirectivesFirst" : true,
+            "usingDirectivesPlacement": "insideNamespace"
+        },
+        "namingRules":
+        {
+            "allowCommonHungarianPrefixes": false,
+            "allowedHungarianPrefixes" : [
+              "id",
+              "is",
+              "on"
+             ]
+        },
+        "maintainabilityRules":
+        {
+            "topLevelTypes" : [
+                "class",
+                "interface",
+                "struct",
+                "delegate",
+                "enum"
+            ]
+        },
+        "layoutRules":
+        {
+            "newlineAtEndOfFile": "require",
+            "allowConsecutiveUsings" : false
+        },
+        "documentationRules":
+        {
+            "documentExposedElements": true,
+            "documentInternalElements": true,
+            "documentPrivateElements": true,
+            "documentInterfaces": true,
+            "documentPrivateFields": true,
+            "companyName": "Scott Kupec",
+            "copyrightText": "Copyright (C) {companyName}. All rights reserved.",
+            "xmlHeader": false
+        }
+    }
+}

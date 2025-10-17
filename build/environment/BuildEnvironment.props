@@ -1,0 +1,54 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.5.1">
+  <PropertyGroup>
+    <AssemblyCompanyAttribute Condition="'$(AssemblyCompanyAttribute)' == ''">Scott Kupec</AssemblyCompanyAttribute>
+    <AssemblyCopyrightAttribute Condition="'$(AssemblyCopyrightAttribute)' == ''">Copyright (C) Scott Kupec. All rights reserved.</AssemblyCopyrightAttribute>
+    <AssemblyAttributeCLSCompliant Condition="'$(AssemblyAttributeCLSCompliant)'==''">false</AssemblyAttributeCLSCompliant>
+    <AssemblyAttributeComVisible Condition="'$(AssemblyAttributeComVisible)'==''">false</AssemblyAttributeComVisible>
+    <AssemblyAttributeUseComVisible Condition="'$(AssemblyAttributeUseComVisible)'==''">true</AssemblyAttributeUseComVisible>
+  </PropertyGroup>
+
+  <PropertyGroup> <!-- Redirect outputs - order of some of these matters -->
+    <SourceRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)\..\..\src'))</SourceRoot>
+    <BuildEnvironmentRoot>$(MSBuildThisFileDirectory)</BuildEnvironmentRoot>
+    <BaseIntermediateOutputPath>$([System.IO.Path]::GetFullPath('$(SourceRoot)\..\artifacts\obj\$(MSBuildProjectName)'))</BaseIntermediateOutputPath>
+    <BaseOutputPath>$([System.IO.Path]::GetFullPath('$(SourceRoot)\..\artifacts\bin\$(MSBuildProjectName)'))</BaseOutputPath>
+  </PropertyGroup>
+
+  <PropertyGroup> <!-- Code quality -->
+    <CodeAnalysisTreatWarningsAsErrors>$(TreatWarningsAsErrors)</CodeAnalysisTreatWarningsAsErrors>
+    <DebugType>Full</DebugType>
+    <DisableTransitiveFrameworkReferenceDownloads>true</DisableTransitiveFrameworkReferenceDownloads>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="$(BuildEnvironmentRoot)/stylecop.json" Visible="false" />
+    <GlobalAnalyzerConfigFiles Include="$(BuildEnvironmentRoot)/AnalysisRules.prod" Condition="'$(IsTestProject)'!='true'" />
+    <GlobalAnalyzerConfigFiles Include="$(BuildEnvironmentRoot)/AnalysisRules.test" Condition="'$(IsTestProject)'=='true'" />
+  </ItemGroup>
+
+  <PropertyGroup> <!-- Misc settings -->
+    <!-- No one should want to manage these by hand, but let them if they really want to. -->
+    <AutoGenerateBindingRedirects Condition="'$(AutoGenerateBindingRedirects)' == ''">true</AutoGenerateBindingRedirects>
+    <!-- Define the common build environment targets to be included via Diretory.Build.targets. -->
+    <BuildEnvironmentCommonTargets>$(BuildEnvironmentRoot)\BuildEnvironment.targets</BuildEnvironmentCommonTargets>
+    <!-- Detect if this is a test project so we can alter some specific behaviors as a result. -->
+    <IsTestProject Condition="'$(IsTestProject)'=='' and ('$(TestProjectType)'!='' or $(MSBuildProjectName.Contains('Tests')))">true</IsTestProject>
+    <!-- IsPackable seems to be something many SDKs like to play with and has caused significant wasted time in debugging why
+         the build is clean but there is no nupkg generated.  Error by default. -->
+    <WarnOnPackingNonPackableProject Condition="'$(WarnOnPackingNonPackableProject)' == ''">true</WarnOnPackingNonPackableProject>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(IsTestProject)'!='true'">
+    <!-- Tests for the assembly sometimes need to validate internals for a clearer test. -->
+    <InternalsVisibleTo Include="$(AssemblyName).UnitTests" />
+    <!-- Required for Moq.Protected -->
+    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <ImportDirectoryBuildProps>false</ImportDirectoryBuildProps>
+  </PropertyGroup>
+</Project>

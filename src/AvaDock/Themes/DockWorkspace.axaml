@@ -1,0 +1,41 @@
+<Styles
+  xmlns="https://github.com/avaloniaui"
+  xmlns:controls="using:Meringue.AvaDock.Controls"
+  xmlns:managers="using:Meringue.AvaDock.Managers"
+  xmlns:viewModels="using:Meringue.AvaDock.ViewModels"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <Style Selector=":is(controls|DockWorkspace)">
+    <Setter Property="Template">
+      <ControlTemplate TargetType="controls:DockWorkspace">
+        <Grid ColumnDefinitions="Auto,*">
+          <controls:MinimizedItemsBar x:Name="PART_MinimizedStub"
+                                      DockEdge="Left"
+                                      Grid.Column="0"
+                                      HorizontalAlignment="Left"
+                                      IsVisible="{TemplateBinding ShouldShowMinimizedItems}"
+                                      VerticalAlignment="Stretch" />
+          <controls:DockTree x:DataType="managers:DockWorkspaceManager"
+                             Content="{Binding DockTree}"
+                             Grid.Column="1" />
+
+          <!-- Overlay: Hovered Content -->
+          <ContentControl x:DataType="managers:DockWorkspaceManager"
+                          Background="{DynamicResource AvaDockBackgroundColor}"
+                          CornerRadius="0"
+                          Content="{Binding HoveredItem}"
+                          IsVisible="{Binding HoveredItem, Converter={x:Static ObjectConverters.IsNotNull}}"
+                          Grid.Column="1"
+                          Padding="2"
+                          MinHeight="100"
+                          MinWidth="100"
+                          HorizontalAlignment="Left"
+                          VerticalAlignment="Top"
+                          Opacity="{DynamicResource AvaDockPreviewTransparencyLevel}">
+          </ContentControl>
+
+        </Grid>
+      </ControlTemplate>
+    </Setter>
+  </Style>
+</Styles>

@@ -1,0 +1,60 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:controls="using:Meringue.AvaDock.Controls"
+        xmlns:icons="clr-namespace:IconPacks.Avalonia.Codicons;assembly=IconPacks.Avalonia.Codicons"
+        xmlns:viewModels="using:Meringue.AvaDock.ViewModels"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <Style Selector=":is(controls|MinimizedItemsBar)">
+    <Setter Property="Template">
+      <ControlTemplate TargetType="controls:MinimizedItemsBar">
+        <Border Background="Transparent">
+          <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{TemplateBinding Items}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <!--
+                    Avalonia 12 is expected to bring back DataTrigger so we can size this without
+                    code work arounds. Once available, evaluate the changes needed.
+                  -->
+                  <StackPanel Orientation="Vertical" Width="40" />
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="viewModels:DockItemViewModel">
+                  <LayoutTransformControl>
+                    <LayoutTransformControl.LayoutTransform>
+                      <RotateTransform Angle="-90" />
+                    </LayoutTransformControl.LayoutTransform>
+
+                    <ToggleButton Background="{DynamicResource AvaDockAccentColor}"
+                                  Command="{Binding ItemSelectedCommand, RelativeSource={RelativeSource AncestorType=controls:MinimizedItemsBar}}"
+                                  CommandParameter="{Binding}"
+                                  controls:HoverBehavior.EnableHoverTracking="True">
+
+                       <Grid>
+                        <StackPanel HorizontalAlignment="Center"
+                                    Orientation="Horizontal"
+                                    Spacing="2">
+                          <icons:PackIconCodicons Height="{DynamicResource AvaDockFontSize}"
+                                                  HorizontalAlignment="Center"
+                                                  Kind="ChromeRestore"
+                                                  Margin="4,0,4,0"
+                                                  VerticalAlignment="Center"
+                                                  Width="{DynamicResource AvaDockFontSize}"/>
+                          <TextBlock FontSize="{DynamicResource AvaDockFontSize}"
+                                     Text="{Binding Title}"
+                                     TextTrimming="CharacterEllipsis"
+                                     MaxWidth="100" />
+                        </StackPanel>
+                      </Grid>
+                    </ToggleButton>
+                  </LayoutTransformControl>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+  </Style>
+</Styles>

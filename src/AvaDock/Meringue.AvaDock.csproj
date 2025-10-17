@@ -1,0 +1,53 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Authors>Scott Kupec</Authors>
+    <Description>A docking system for Avalonia.</Description>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Version>0.0.1</Version>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <AssemblyVersion>$(Version).0</AssemblyVersion>
+    <EnableAsyncStackTraces Condition="'$(Configuration)' == 'Debug'">true</EnableAsyncStackTraces>
+    <LangVersion>latest</LangVersion>
+    <TargetFrameworks>netstandard2.0;net9.0</TargetFrameworks>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)/Generated</CompilerGeneratedFilesOutputPath>
+  </PropertyGroup>
+  
+  <PropertyGroup>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <EnableXamlIlCompilation>true</EnableXamlIlCompilation>
+    <UseAvalonia>true</UseAvalonia>
+    <UseWindowsForms>false</UseWindowsForms>
+    <UseWPF>false</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" />
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="IconPacks.Avalonia.Codicons" />
+    <PackageReference Include="Nullable">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="System.Reactive" />
+    <PackageReference Include="System.Reactive.Linq" />
+    <PackageReference Include="System.Text.Json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AvaloniaXaml Include="Themes\DataTemplates.axaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="**\*.axaml.cs">
+      <DependentUpon>$([System.IO.Path]::GetFileNameWithoutExtension('%(Filename)'))</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+</Project>

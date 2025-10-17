@@ -1,0 +1,45 @@
+trigger:
+- main
+
+pool:
+  vmImage: windows-latest
+
+variables:
+  PackagesPath: '$(Agent.BuildDirectory)\packages'
+  BuildConfiguration: 'Release'
+  BuildPlatform: 'Any CPU'
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+
+steps:
+- template: common.yaml
+
+# CI specific task - Source index symbols and publish them to Azure Artifacts Symbol Service
+- task: PublishSymbols@2
+  displayName: Publish debug files
+  inputs:
+    SymbolsFolder: '$(Agent.BuildDirectory)'
+    searchPattern: '**/bin/**'
+    indexSources: true
+    publishSymbols: true
+    symbolServerType: 'teamServices'
+    detailedLog: true
+    symbolsArtifactName: '$(system.teamProject)/$(ProjectName)/$(Build.BuildNumber)/$(Build.BuildId)'
+
+- task: PublishBuildArtifacts@1
+  displayName: Publish nupkg as artifact
+  inputs:
+    PathToPublish: '$(Build.SourcesDirectory)\artifacts\bin\Meringue.AvaDock\$(BuildConfiguration)'
+    parallel: true
+    parallelCount: 8
+    publishLocation: 'container'
+    ArtifactName: 'Meringue.AvaDock'
+
+# Task NugetCommand@2 referenced by GUID per https://developercommunity.visualstudio.com/content/problem/288534/vsts-yaml-build-failure-the-task-name-nugetcommand.html
+- task: NugetCommand@2
+  displayName: Publish nuget packages
+  inputs:
+    command: 'push'
+    packagesToPush: '$(Agent.BuildDirectory)/**/Meringue.*.nupkg;!$(Agent.BuildDirectory)/**/*.symbols.nupkg'
+    nuGetFeedType: 'internal'
+    publishVstsFeed: 'Meringue.Dev'
+    allowPackageConflicts: true
