@@ -128,15 +128,17 @@ namespace Meringue.AvaDock.Services
                 // CONSIDER: These two require special knowledge about the implementation
                 //           details.  Can we make it more generic?  Do we just serialize
                 //           all item.Tags?  What about tags that can't serialize?
+#pragma warning disable CS8604 // Possible null reference argument. Null validation on IsNullOrWhiteSpace is not being recognized by the compiler.
                 if (!String.IsNullOrWhiteSpace(itemData.Workspace))
                 {
-                    DockContext.SetPreferredWorkspaceId(item, itemData.Workspace!);
+                    DockContext.SetPreferredWorkspaceId(item, itemData.Workspace);
                 }
 
                 if (!String.IsNullOrWhiteSpace(itemData.Panel))
                 {
-                    DockContext.SetPreferredTabPanelId(item, itemData.Panel!);
+                    DockContext.SetPreferredTabPanelId(item, itemData.Panel);
                 }
+#pragma warning restore CS8604
 
                 return item;
             }

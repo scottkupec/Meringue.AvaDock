@@ -688,18 +688,18 @@ namespace Meringue.AvaDock.Managers.UnitTests
                 this.moveOptions.ShouldNotBeNull("Move options must be set");
                 this.expectedTree.ShouldNotBeNull("Expected tree must be set");
 
-                Boolean result = this.manager!.MoveItem(this.itemToMove!, this.targetNode!, this.moveOptions!);
+                Boolean result = this.manager.MoveItem(this.itemToMove, this.targetNode, this.moveOptions);
                 Avalonia.Threading.Dispatcher.UIThread.RunJobs();
                 result.ShouldBeTrue("Move operation should succeed");
 
-                DockNodeViewModel actual = this.manager!.PrimaryWorkspace.DockTree;
+                DockNodeViewModel actual = this.manager.PrimaryWorkspace.DockTree;
 
                 if (displayActualTree)
                 {
                     DockTree.DisplayTree(actual);
                 }
 
-                AssertTreesEqual(actual, this.expectedTree!);
+                AssertTreesEqual(actual, this.expectedTree);
             }
 
             /// <summary>Define the expected <see cref="DockTree"/>.</summary>

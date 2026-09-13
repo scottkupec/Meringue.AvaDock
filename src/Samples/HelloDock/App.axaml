@@ -1,7 +1,7 @@
 <Application
   x:Class="HelloDock.App"
   xmlns="https://github.com/avaloniaui"
-  xmlns:dock="clr-namespace:Meringue.AvaDock.Themes;assembly=Meringue.AvaDock"  
+  xmlns:dock="clr-namespace:Meringue.AvaDock.Themes;assembly=Meringue.AvaDock"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   RequestedThemeVariant="Dark">
 

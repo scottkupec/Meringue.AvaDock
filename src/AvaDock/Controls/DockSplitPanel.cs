@@ -146,10 +146,7 @@ namespace Meringue.AvaDock.Controls
         /// </summary>
         private void OnDataContextChanged()
         {
-            if (this.ViewModel != null)
-            {
-                this.ViewModel.PropertyChanged -= this.OnViewModelPropertyChanged;
-            }
+            this.ViewModel?.PropertyChanged -= this.OnViewModelPropertyChanged;
 
             if (this.DataContext is DockSplitNodeViewModel viewModel)
             {

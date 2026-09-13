@@ -79,7 +79,7 @@ namespace Meringue.AvaDock.Services
         {
             foreach (IWindow child in this.ChildWindows.ToList())
             {
-                child.Show(this.MainWindow!);
+                child.Show(this.MainWindow);
             }
         }
 

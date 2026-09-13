@@ -12,7 +12,7 @@ namespace Meringue.AvaDock.Events
         /// <summary>
         /// Initializes a new instance of the <see cref="DockItemFloatRequestedEventArgs"/> class.
         /// </summary>
-        /// <param name="item">The <see cref="DockItemViewModel"/> that is requesting to be closed.</param>
+        /// <param name="item">The <see cref="DockItemViewModel"/> that is requesting to be floated.</param>
         public DockItemFloatRequestedEventArgs(DockItemViewModel item)
             : base(item)
         {

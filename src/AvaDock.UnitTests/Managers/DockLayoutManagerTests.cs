@@ -60,7 +60,7 @@ namespace Meringue.AvaDock.Managers.UnitTests
             merged
                 .ShouldNotBeNull("Hidden item should be present after merge.");
 
-            merged!.Context
+            merged.Context
                 .ShouldBe("HiddenContext", "Context from runtime hidden item should be preserved.");
 
             merged.Title
@@ -121,7 +121,7 @@ namespace Meringue.AvaDock.Managers.UnitTests
             mergedHidden
                 .ShouldNotBeNull("Hidden item should be present after merge.");
 
-            mergedHidden!.Context
+            mergedHidden.Context
                 .ShouldBe("HiddenContext", "Context from runtime hidden item should be preserved.");
 
             mergedHidden.Title
@@ -132,7 +132,7 @@ namespace Meringue.AvaDock.Managers.UnitTests
             restoredMinimized
                 .ShouldNotBeNull("Minimized item should be restored into workspace.");
 
-            restoredMinimized!.Title
+            restoredMinimized.Title
                 .ShouldBe("Minimized Item", "Title should match serialized layout.");
 
             DockTabNodeViewModel? owningTab = manager.DockControl.PrimaryWorkspace.DockTree.FindOwningTabNode("min123");
@@ -192,7 +192,7 @@ namespace Meringue.AvaDock.Managers.UnitTests
             merged
                 .ShouldNotBeNull("Minimized item should be present after merge.");
 
-            merged!.Context
+            merged.Context
                 .ShouldBe("RuntimeContext", "Context should be preserved from runtime layout.");
 
             merged.Title
@@ -359,7 +359,7 @@ namespace Meringue.AvaDock.Managers.UnitTests
             merged
                 .ShouldNotBeNull("Runtime-only hidden item should be preserved.");
 
-            merged!.Context
+            merged.Context
                 .ShouldBe("HiddenContext", "Context should be preserved from runtime layout.");
 
             merged.Title
@@ -408,7 +408,7 @@ namespace Meringue.AvaDock.Managers.UnitTests
             restored
                 .ShouldNotBeNull("Runtime-only minimized item should be preserved.");
 
-            restored!.Context
+            restored.Context
                 .ShouldBe("RuntimeContext", "Context should be preserved from runtime layout.");
 
             restored.Title
@@ -458,7 +458,7 @@ namespace Meringue.AvaDock.Managers.UnitTests
             restored
                 .ShouldNotBeNull("Minimized item should be restored into workspace.");
 
-            restored!.Title
+            restored.Title
                 .ShouldBe("Minimized Item", "Title should match serialized layout.");
 
             DockTabNodeViewModel? owningTab = manager.DockControl.PrimaryWorkspace.DockTree.FindOwningTabNode("min123");
@@ -503,7 +503,7 @@ namespace Meringue.AvaDock.Managers.UnitTests
             restored
                 .ShouldNotBeNull("Serialized-only hidden item should be restored.");
 
-            restored!.Title
+            restored.Title
                 .ShouldBe("Serialized Hidden", "Title should match serialized layout.");
         }
 
@@ -565,7 +565,7 @@ namespace Meringue.AvaDock.Managers.UnitTests
             restored
                 .ShouldNotBeNull("Item with matching ID should be restored.");
 
-            restored!.Context
+            restored.Context
                 .ShouldBe("RuntimeContext", "Context should be preserved from runtime layout.");
 
             restored.Title

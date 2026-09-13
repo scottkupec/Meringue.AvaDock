@@ -246,7 +246,9 @@ namespace Meringue.AvaDock.Managers
 
                 if (!String.IsNullOrEmpty(defaultParentId))
                 {
-                    targetNode = this.DockControl.FindNode(defaultParentId!);
+#pragma warning disable CS8604 // Possible null reference argument. Null validation on IsNullOrWhiteSpace is not being recognized by the compiler.
+                    targetNode = this.DockControl.FindNode(defaultParentId);
+#pragma warning restore CS8604 // Possible null reference argument.
                 }
 
                 if (targetNode is null)

@@ -137,7 +137,7 @@ namespace Meringue.AvaDock.UnitTests
                     .GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, null, [typeof(WindowCloseReason), typeof(Boolean)], null) ??
                     throw new InvalidOperationException("Could not find internal constructor for WindowClosingEventArgs.");
 
-                return (WindowClosingEventArgs)ctor!.Invoke([reason, isProgrammatic]);
+                return (WindowClosingEventArgs)ctor.Invoke([reason, isProgrammatic]);
             }
         }
     }

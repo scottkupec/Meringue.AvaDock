@@ -80,7 +80,7 @@ namespace Meringue.AvaDock.Controls
             if (element is TabItem tab)
             {
                 // Ensure no handler leaks
-                tab.PointerPressed -= null!;
+                tab.PointerPressed -= null;
                 tab.PointerMoved -= null;
             }
 
@@ -266,17 +266,9 @@ namespace Meringue.AvaDock.Controls
         /// </summary>
         private void SubscribeToItemsCollection()
         {
-            if (this.CurrentItemsCollection != null)
-            {
-                this.CurrentItemsCollection.CollectionChanged -= this.OnItemsCollectionChanged;
-            }
-
+            this.CurrentItemsCollection?.CollectionChanged -= this.OnItemsCollectionChanged;
             this.CurrentItemsCollection = this.ItemsSource as INotifyCollectionChanged;
-
-            if (this.CurrentItemsCollection != null)
-            {
-                this.CurrentItemsCollection.CollectionChanged += this.OnItemsCollectionChanged;
-            }
+            this.CurrentItemsCollection?.CollectionChanged += this.OnItemsCollectionChanged;
         }
 
         /// <summary>

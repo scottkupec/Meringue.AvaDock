@@ -22,6 +22,13 @@ namespace Meringue.AvaDock.Controls
     internal static class HoverBehavior
     {
         /// <summary>
+        /// How long to wait until showing the hover-over control.  The delay is somewhat arbitrary
+        /// but the value should be large enough that the hover control does not pop up on casual
+        /// mouse over and small enough the user isn't left waiting for it.
+        /// </summary>
+        private const Int32 HoverDelayMs = 400;
+
+        /// <summary>
         /// Identifies the <see cref="EnableHoverTrackingProperty"/> attached property.
         /// When set to <c>true</c>, the control will listen for pointer events and
         /// update <c>IsHovered</c> on its <see cref="StyledElement.DataContext"/> if applicable.
@@ -116,6 +123,7 @@ namespace Meringue.AvaDock.Controls
             if (sender is Control control && control.DataContext is DockItemViewModel item)
             {
                 CancellationTokenSource? oldTokenSource = GetHoverToken(control);
+
 #if NET6_0_OR_GREATER
                 if (oldTokenSource is not null)
                 {
@@ -124,12 +132,13 @@ namespace Meringue.AvaDock.Controls
 #else
                 oldTokenSource?.Cancel();
 #endif
+
                 CancellationTokenSource tokenSource = new();
                 SetHoverToken(control, tokenSource);
 
                 try
                 {
-                    await Task.Delay(TimeSpan.FromMilliseconds(400), tokenSource.Token).ConfigureAwait(false);
+                    await Task.Delay(TimeSpan.FromMilliseconds(HoverBehavior.HoverDelayMs), tokenSource.Token).ConfigureAwait(false);
 
                     if (!tokenSource.Token.IsCancellationRequested)
                     {
@@ -176,10 +185,7 @@ namespace Meringue.AvaDock.Controls
 
                 DockWorkspaceManager? workspace = DockContext.GetWorkspace(item);
 
-                if (workspace is not null)
-                {
-                    workspace.HoveredItem = null;
-                }
+                workspace?.HoveredItem = null;
             }
         }
     }

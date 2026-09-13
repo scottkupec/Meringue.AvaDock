@@ -39,7 +39,7 @@ namespace Meringue.AvaDock.Controls.UnitTests
 
             container.ShouldNotBeNull("Expected Grid container to be present in visual tree");
 
-            Int32 splitterCount = container!.Children.OfType<GridSplitter>().Count();
+            Int32 splitterCount = container.Children.OfType<GridSplitter>().Count();
             Int32 expectedSplitterCount = childCountToAdd - 1;
 
             splitterCount.ShouldBe(

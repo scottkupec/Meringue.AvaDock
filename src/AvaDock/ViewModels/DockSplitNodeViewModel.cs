@@ -26,6 +26,7 @@ namespace Meringue.AvaDock.ViewModels
         /// Used to signal the control when changes are ready to be rebuilt in the UI in order to
         /// avoid race conditions of multiple changes occuring in quick succession.
         /// </summary>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0032:Use auto property", Justification = "Bound property.")]
         private Boolean needsRebuilt;
 
         /// <summary>
@@ -35,6 +36,7 @@ namespace Meringue.AvaDock.ViewModels
         /// The orientation is the reverse of the splitter direction. Horizontal orientation
         /// uses vertical splitters and veritical orientation uses horizontal splitters.
         /// </remarks>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0032:Use auto property", Justification = "Bound property.")]
         private Orientation orientation;
 
         /// <summary>

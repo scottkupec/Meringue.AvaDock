@@ -82,10 +82,7 @@ namespace Meringue.AvaDock.Controls
                     MinimizedItemsProperty,
                     new Binding(nameof(viewModel.MinimizedItems)) { Source = viewModel });
 
-                if (this.MinimizedItemsStub is not null)
-                {
-                    this.MinimizedItemsStub.Items = this.MinimizedItems;
-                }
+                this.MinimizedItemsStub?.Items = this.MinimizedItems;
             }
         }
     }

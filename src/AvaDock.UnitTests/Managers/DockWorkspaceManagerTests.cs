@@ -33,7 +33,7 @@ namespace Meringue.AvaDock.Managers.UnitTests
             insertedTabNode
                 .ShouldNotBeNull($"{nameof(DockWorkspaceManager.DockTree)} should contain a new {nameof(DockTabNodeViewModel)}.");
 
-            insertedTabNode!.Tabs
+            insertedTabNode.Tabs
                 .ShouldContain(item, $"New {nameof(DockTabNodeViewModel)} should contain the inserted tab.");
         }
 

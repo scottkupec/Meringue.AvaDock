@@ -268,7 +268,7 @@ namespace Meringue.AvaDock.Managers
             }
             else
             {
-                foreach (IWindow window in this.WindowManager!.Windows)
+                foreach (IWindow window in this.WindowManager.Windows)
                 {
                     DockWorkspaceManager? workspace = window.DataContext as DockWorkspaceManager;
 
@@ -407,7 +407,7 @@ namespace Meringue.AvaDock.Managers
                     }
                 };
 
-                child.Show(this.WindowManager.MainWindow!);
+                child.Show(this.WindowManager.MainWindow);
                 _ = this.MoveItem(item, floatingTabNode, NewWindowMoveOptions);
 
                 DockControlManager.EnsureWorkspaceHasTabNode(this.PrimaryWorkspace);

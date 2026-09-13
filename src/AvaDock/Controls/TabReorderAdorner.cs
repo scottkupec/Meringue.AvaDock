@@ -122,6 +122,11 @@ namespace Meringue.AvaDock.Controls
         {
             System.Diagnostics.Debug.Assert(this.TargetPanel != null, $"{nameof(TabReorderAdorner.GetHighlightLine)} called with null {nameof(this.TargetPanel)}.");
 
+            if (this.TargetPanel == null)
+            {
+                return (default, default);
+            }
+
             // Transform itemsPresenter.Bounds into adorner space
             Matrix? presenterTransform = itemsPresenter.TransformToVisual(this);
             Rect presenterBounds = itemsPresenter.Bounds;
@@ -136,7 +141,7 @@ namespace Meringue.AvaDock.Controls
             Point lineStart = default;
             Point lineEnd = default;
 
-            switch (this.TargetPanel!.TabStripPlacement)
+            switch (this.TargetPanel.TabStripPlacement)
             {
                 case Dock.Top:
                 case Dock.Bottom:

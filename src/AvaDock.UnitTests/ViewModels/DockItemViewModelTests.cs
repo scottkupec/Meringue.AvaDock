@@ -45,7 +45,7 @@ namespace Meringue.AvaDock.ViewModels.UnitTests
             receivedArgs
                 .ShouldNotBeNull($"{nameof(item.CloseRequested)} event should be raised");
 
-            receivedArgs!.Item
+            receivedArgs.Item
                 .ShouldBe(item, $"{nameof(DockItemCloseRequestedEventArgs)} should reference the correct {nameof(DockItemViewModel)}");
         }
 
@@ -93,7 +93,7 @@ namespace Meringue.AvaDock.ViewModels.UnitTests
             receivedArgs
                 .ShouldNotBeNull($"{nameof(item.FloatRequested)} event should be raised");
 
-            receivedArgs!.Item
+            receivedArgs.Item
                 .ShouldBe(item, $"{nameof(DockItemFloatRequestedEventArgs)} should reference the correct {nameof(DockItemViewModel)}");
         }
 
@@ -132,7 +132,7 @@ namespace Meringue.AvaDock.ViewModels.UnitTests
             receivedArgs
                 .ShouldNotBeNull($"{nameof(item.HideRequested)} event should be raised");
 
-            receivedArgs!.Item
+            receivedArgs.Item
                 .ShouldBe(item, $"{nameof(DockItemHideRequestedEventArgs)} should reference the correct {nameof(DockItemViewModel)}");
         }
 
@@ -185,7 +185,7 @@ namespace Meringue.AvaDock.ViewModels.UnitTests
             receivedArgs
                 .ShouldNotBeNull($"{nameof(item.MaximizeRequested)} event should be raised");
 
-            receivedArgs!.Item
+            receivedArgs.Item
                 .ShouldBe(item, $"{nameof(DockItemMaximizeRequestedEventArgs)} should reference the correct {nameof(DockItemViewModel)}");
         }
 
@@ -224,7 +224,7 @@ namespace Meringue.AvaDock.ViewModels.UnitTests
             receivedArgs
                 .ShouldNotBeNull($"{nameof(item.MinimizeRequested)} event should be raised");
 
-            receivedArgs!.Item
+            receivedArgs.Item
                 .ShouldBe(item, $"{nameof(DockItemMinimizeRequestedEventArgs)} should reference the correct {nameof(DockItemViewModel)}");
         }
 
@@ -245,7 +245,7 @@ namespace Meringue.AvaDock.ViewModels.UnitTests
             receivedArgs
                 .ShouldNotBeNull($"{nameof(item.RestoreRequested)} event should be raised");
 
-            receivedArgs!.Item
+            receivedArgs.Item
                 .ShouldBe(item, $"{nameof(DockItemRestoreRequestedEventArgs)} should reference the correct {nameof(DockItemViewModel)}");
         }
 
@@ -266,7 +266,7 @@ namespace Meringue.AvaDock.ViewModels.UnitTests
             receivedArgs
                 .ShouldNotBeNull($"{nameof(item.ShowRequested)} event should be raised");
 
-            receivedArgs!.Item
+            receivedArgs.Item
                 .ShouldBe(item, $"{nameof(DockItemShowRequestedEventArgs)} should reference the correct {nameof(DockItemViewModel)}");
         }
 

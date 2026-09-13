@@ -54,7 +54,7 @@ namespace Meringue.AvaDock.UnitTests
         /// <param name="children">Child <see cref="DockNodeViewModel"/> to include in the split.</param>
         /// <returns>A <see cref="DockSplitNodeViewModel"/> with <see cref="Orientation.Horizontal"/>.</returns>
         public static DockSplitNodeViewModel Horizontal(params DockNodeViewModel[] children)
-            => Split(Orientation.Horizontal, children!);
+            => Split(Orientation.Horizontal, children);
 
         /// <summary>
         /// Constructs a <see cref="DockTabNodeViewModel"/> containing <see cref="DockItemViewModel"/>s
@@ -81,7 +81,7 @@ namespace Meringue.AvaDock.UnitTests
         /// <param name="children">Child <see cref="DockNodeViewModel"/> to include in the split.</param>
         /// <returns>A <see cref="DockSplitNodeViewModel"/> with <see cref="Orientation.Vertical"/>.</returns>
         public static DockSplitNodeViewModel Vertical(params DockNodeViewModel[] children)
-            => Split(Orientation.Vertical, children!);
+            => Split(Orientation.Vertical, children);
 
         /// <summary>
         /// Internal helper to construct a <see cref="DockSplitNodeViewModel"/> with the given <see cref="Orientation"/> and <paramref name="children"/>.

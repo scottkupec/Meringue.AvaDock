@@ -246,7 +246,7 @@ namespace Meringue.AvaDock.Controls.UnitTests
             panel
                 .ShouldNotBeNull($"Sanity: The {nameof(DockTabPanel)} must be found to run this test.");
 
-            panel!.SelectedItem = item2;
+            panel.SelectedItem = item2;
 
             tabNode.Selected
                 .ShouldBe(item2, "Selected tab in view model should reflect control selection via binding.");
