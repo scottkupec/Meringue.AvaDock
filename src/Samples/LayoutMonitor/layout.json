@@ -1,0 +1,66 @@
+{
+  "major": 1,
+  "minor": 0,
+  "patch": 0,
+  "primaryWorkspace": {
+    "id": "1413f5fac864458dbb21abd3d2846b52",
+    "dockTree": {
+      "id": "1de53f35c5df4800ad782a54054aa9ca",
+      "children": [
+        {
+          "$type": "tab",
+          "id": "left",
+          "selectedId": "1",
+          "tabs": [
+            {
+              "id": "1",
+              "title": "Left Item"
+            }
+          ]
+        },
+        {
+          "$type": "tab",
+          "id": "534cdf8d293f4837ae9d7f2cc90d5fa3",
+          "selectedId": "2",
+          "tabs": [
+            {
+              "id": "2",
+              "title": "Center Tool",
+              "disableClose": true,
+              "disableHide": true
+            }
+          ]
+        },
+        {
+          "$type": "tab",
+          "id": "215fca34c3304c63962f63a8db1d8b37",
+          "selectedId": "3",
+          "tabs": [
+            {
+              "id": "3",
+              "title": "Right Item 1"
+            }
+          ]
+        },
+        {
+          "$type": "tab",
+          "id": "742908035164425e8e542b22be0fca1f",
+          "selectedId": "4",
+          "tabs": [
+            {
+              "id": "4",
+              "title": "Right Item 2"
+            }
+          ]
+        }
+      ],
+      "orientation": "Horizontal",
+      "sizes": [
+        0.25,
+        0.25,
+        0.25,
+        0.25
+      ]
+    }
+  }
+}
