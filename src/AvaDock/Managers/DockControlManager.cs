@@ -54,6 +54,16 @@ namespace Meringue.AvaDock.Managers
         }
 
         /// <summary>
+        /// Occurs when a secondary <see cref="DockWorkspaceManager"/> is attached to a floating window.
+        /// </summary>
+        public event EventHandler<DockWorkspaceAttachedEventArgs>? WorkspaceAttached;
+
+        /// <summary>
+        /// Occurs when a secondary <see cref="DockWorkspaceManager"/> is detached from a floating window.
+        /// </summary>
+        public event EventHandler<DockWorkspaceDetachedEventArgs>? WorkspaceDetached;
+
+        /// <summary>
         /// Gets the list of <see cref="DockItemViewModel"/> that are currently soft-closed and not part of the visuals.
         /// </summary>
         public IEnumerable<DockItemViewModel> HiddenItems => this.hiddenItems;
@@ -71,7 +81,7 @@ namespace Meringue.AvaDock.Managers
 
         /// <summary>Gets or sets the manager for floating widows.</summary>
         // TODO: Refactor so this is private instead of internal.
-        internal WindowManager WindowManager { get; set; } = new();
+        internal WindowManager WindowManager { get; set; } = new(new AvaloniaWindowFactory());
 
         /// <summary>
         /// Gets the <see cref="DockNodeMonitor"/> used to monitor for changes in <see cref="DockTree"/>s.
@@ -125,9 +135,12 @@ namespace Meringue.AvaDock.Managers
                     });
             };
 
+            child.Closed += (sender, eventArgs) => this.OnWorkspaceDetached(workspace);
+
             workspace.MinimizedItemsChanged += this.OnWorkspaceMinimizedItemsChanged;
 
             this.DockMonitor.Monitor(workspace.DockTree);
+            this.OnWorkspaceAttached(workspace);
             return child;
         }
 
@@ -675,6 +688,25 @@ namespace Meringue.AvaDock.Managers
             {
                 System.Diagnostics.Debug.Assert(this.hiddenItems.Contains(item), "Can't show an item that isn't hidden.");
             }
+        }
+
+        /// <summary>
+        /// Raises the <see cref="WorkspaceAttached"/> event.
+        /// </summary>
+        /// <param name="workspace">The <see cref="DockWorkspaceManager"/> that was attached.</param>
+        private void OnWorkspaceAttached(DockWorkspaceManager workspace)
+        {
+            this.WorkspaceAttached?.Invoke(this, new DockWorkspaceAttachedEventArgs(workspace));
+        }
+
+        /// <summary>
+        /// Raises the <see cref="WorkspaceDetached"/> event.
+        /// </summary>
+        /// <param name="workspace">The <see cref="DockWorkspaceManager"/> that was detached.</param>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0051:Remove unused private members", Justification = "WIP")]
+        private void OnWorkspaceDetached(DockWorkspaceManager workspace)
+        {
+            this.WorkspaceDetached?.Invoke(this, new DockWorkspaceDetachedEventArgs(workspace));
         }
 
         /// <summary>

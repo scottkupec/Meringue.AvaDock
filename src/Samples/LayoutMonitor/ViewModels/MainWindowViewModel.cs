@@ -6,6 +6,7 @@ using System.ComponentModel;
 using Avalonia.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Meringue.AvaDock.Events;
 using Meringue.AvaDock.Managers;
 using Meringue.AvaDock.ViewModels;
 
@@ -83,6 +84,10 @@ namespace LayoutMonitor.ViewModels
             }
 
             this.StatusMessage = $"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.CurrentCulture)}] Monitoring layout changes...";
+
+            // Subscribe to workspace attachment and detachment events
+            this.LayoutManager.DockControl.WorkspaceAttached += this.OnWorkspaceAttached;
+            this.LayoutManager.DockControl.WorkspaceDetached += this.OnWorkspaceDetached;
         }
 
         /// <summary>
@@ -123,6 +128,26 @@ namespace LayoutMonitor.ViewModels
             };
 
             this.StatusMessage = $"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.CurrentCulture)}] Minimized items collection changed: {action} {eventArgs.NewItems?.Count ?? eventArgs.OldItems?.Count} item(s)";
+        }
+
+        /// <summary>
+        /// Handles workspace attachment events.
+        /// </summary>
+        /// <param name="sender">The sender of the event.</param>
+        /// <param name="eventArgs">The <see cref="DockWorkspaceAttachedEventArgs"/> for the event.</param>
+        private void OnWorkspaceAttached(Object? sender, DockWorkspaceAttachedEventArgs eventArgs)
+        {
+            this.StatusMessage = $"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.CurrentCulture)}] Workspace attached: {eventArgs.Workspace.Id}";
+        }
+
+        /// <summary>
+        /// Handles workspace detachment events.
+        /// </summary>
+        /// <param name="sender">The sender of the event.</param>
+        /// <param name="eventArgs">The <see cref="DockWorkspaceDetachedEventArgs"/> for the event.</param>
+        private void OnWorkspaceDetached(Object? sender, DockWorkspaceDetachedEventArgs eventArgs)
+        {
+            this.StatusMessage = $"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.CurrentCulture)}] Workspace detached: {eventArgs.Workspace.Id}";
         }
 
         /// <summary>
