@@ -46,7 +46,7 @@ namespace Meringue.AvaDock.ViewModels.UnitTests
                 .ShouldNotBeNull($"{nameof(item.CloseRequested)} event should be raised");
 
             receivedArgs.Item
-                .ShouldBe(item, $"{nameof(DockItemCloseRequestedEventArgs)} should reference the correct {nameof(DockItemViewModel)}");
+                .ShouldBe(item, $"{nameof(DockItemClosedEventArgs)} should reference the correct {nameof(DockItemViewModel)}");
         }
 
         [Fact]

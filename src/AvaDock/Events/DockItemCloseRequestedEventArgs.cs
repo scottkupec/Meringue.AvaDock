@@ -1,5 +1,6 @@
 ﻿// Copyright (C) Scott Kupec. All rights reserved.
 
+using System.ComponentModel;
 using Meringue.AvaDock.ViewModels;
 
 namespace Meringue.AvaDock.Events
@@ -7,7 +8,8 @@ namespace Meringue.AvaDock.Events
     /// <summary>
     /// Provides data for the <see cref="DockItemViewModel.CloseRequested"/> event.
     /// </summary>
-    public class DockItemCloseRequestedEventArgs : DockItemEventArgs
+    [EditorBrowsable(EditorBrowsableState.Advanced)]
+    public class DockItemCloseRequestedEventArgs : DockItemRequestEventArgs
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="DockItemCloseRequestedEventArgs"/> class.

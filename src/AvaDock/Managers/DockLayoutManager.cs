@@ -265,11 +265,11 @@ namespace Meringue.AvaDock.Managers
                         split.AddChild(tab);
                         DockWorkspaceManager manager = new(split);
 
-                        IWindow window = this.DockControl.AttachSecondaryWorkspace(
+                        IWindow? window = this.DockControl.AttachSecondaryWorkspace(
                             manager,
                             null,
                             new Size(300, 200));
-                        window.Show();
+                        window?.Show();
 
                         targetNode = tab;
                     }

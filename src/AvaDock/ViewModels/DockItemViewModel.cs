@@ -134,7 +134,6 @@ namespace Meringue.AvaDock.ViewModels
         /// <summary>
         /// Gets the command that requests the item be shown.
         /// </summary>
-        // CONSIDER: Does this really need to be separate from RestoreCommand?
         public ICommand ShowCommand => new RelayCommand(this.ShowItem);
 
         /// <summary>
