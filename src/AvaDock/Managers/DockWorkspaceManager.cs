@@ -8,7 +8,6 @@ using System.ComponentModel;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Meringue.AvaDock.Controls;
-using Meringue.AvaDock.Events;
 using Meringue.AvaDock.Services;
 using Meringue.AvaDock.ViewModels;
 
@@ -68,26 +67,6 @@ namespace Meringue.AvaDock.Managers
             add => this.items.CollectionChanged += value;
             remove => this.items.CollectionChanged -= value;
         }
-
-        /// <summary>
-        /// Occurs when a <see cref="DockItemViewModel"/> has been minimized.
-        /// </summary>
-        public event EventHandler<DockItemMinimizedEventArgs>? ItemMinimized;
-
-        /// <summary>
-        /// Occurs when a <see cref="DockItemViewModel"/> is being minimized.
-        /// </summary>
-        public event EventHandler<DockItemMinimizingEventArgs>? ItemMinimizing;
-
-        /// <summary>
-        /// Occurs when a <see cref="DockItemViewModel"/> has been restored from a minimized state.
-        /// </summary>
-        public event EventHandler<DockItemRestoredEventArgs>? ItemRestored;
-
-        /// <summary>
-        /// Occurs when a <see cref="DockItemViewModel"/> is being restored from a minimized state.
-        /// </summary>
-        public event EventHandler<DockItemRestoringEventArgs>? ItemRestoring;
 
         /// <summary>
         /// Occurs when the contents of the <see cref="MinimizedItems"/> collection change.
@@ -176,6 +155,7 @@ namespace Meringue.AvaDock.Managers
 
                 tabNode.AddTab(item);
 
+                DockContext.SetWorkspace(item, this);
                 DockContext.ClearPreferredTabPanelId(item);
                 success = true;
             }
@@ -217,6 +197,58 @@ namespace Meringue.AvaDock.Managers
             DockItemViewModel? existingItem = this.DockTree.FindItem<DockItemViewModel>(itemId);
             existingItem ??= this.MinimizedItems.FirstOrDefault(item => item.Id == itemId);
             return existingItem;
+        }
+
+        /// <summary>
+        /// Minimizes a <see cref="DockItemViewModel"/> from the current instance.
+        /// </summary>
+        /// <param name="item">The <see cref="DockItemViewModel"/> to process.</param>
+        /// <returns><c>true</c> if the <see cref="DockItemViewModel"/> was minimized; otherwise <c>false</c>.</returns>
+        public Boolean MinimizeItem(DockItemViewModel item)
+        {
+            TargetFrameworkHelper.ThrowIfArgumentNull(item);
+            Boolean success = false;
+
+            if (!this.minimizedItems.Contains(item))
+            {
+                DockTabNodeViewModel? tabNode = this.DockTree.FindOwningTabNode(item.Id);
+
+                if (tabNode is not null)
+                {
+                    DockContext.SetPreferredTabPanelId(item, tabNode.Id);
+
+                    if (tabNode.Tabs.Count == 1)
+                    {
+                        DockSplitNodeViewModel? split = this.DockTree.GetContainingSplit(tabNode);
+                        System.Diagnostics.Debug.Assert(split is not null, "Unable to find containing split node.");
+                        split?.RemoveChild(tabNode);
+                        success = true;
+                    }
+                    else if (tabNode.RemoveTab(item))
+                    {
+                        success = true;
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.Assert(false, "Failed to remove item from workspace.");
+                    }
+                }
+                else
+                {
+                    success = true;
+                }
+
+                if (success)
+                {
+                    this.CommitChanges();
+                    this.minimizedItems.Add(item);
+                    this.MinimizedItemsChanged?.Invoke(
+                        this,
+                        new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, item));
+                }
+            }
+
+            return success;
         }
 
         /// <summary>
@@ -268,138 +300,38 @@ namespace Meringue.AvaDock.Managers
         }
 
         /// <summary>
+        /// Restores a <see cref="DockItemViewModel"/> from the current instance.
+        /// </summary>
+        /// <param name="item">The <see cref="DockItemViewModel"/> to process.</param>
+        /// <returns><c>true</c> if the <see cref="DockItemViewModel"/> was restored; otherwise <c>false</c>.</returns>
+        public Boolean RestoreItem(DockItemViewModel item)
+        {
+            TargetFrameworkHelper.ThrowIfArgumentNull(item);
+            Boolean success = false;
+
+            if (this.minimizedItems.Contains(item))
+            {
+                if (this.minimizedItems.Remove(item))
+                {
+                    _ = this.AddItem(item);
+                    this.CommitChanges();
+                    this.MinimizedItemsChanged?.Invoke(
+                        this,
+                        new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, item));
+                }
+            }
+
+            return success;
+        }
+
+        /// <summary>
         /// Handles hooking a single <see cref="DockItemViewModel"/> so the current instance
         /// will be notified of changes.
         /// </summary>
         /// <param name="item">The <see cref="DockItemViewModel"/> to process.</param>
         private void HookItem(DockItemViewModel item)
         {
-            item.HideRequested += this.HandleItemHideRequested;
-            item.MinimizeRequested += this.HandleItemMinimizeRequested;
-            item.RestoreRequested += this.HandleItemRestoreRequested;
-            DockContext.SetWorkspace(item, this);
             this.items.Add(item);
-        }
-
-        /// <summary>
-        /// Handles a request from a <see cref="DockItemViewModel"/> to be hidden in the UI.
-        /// </summary>
-        /// <param name="sender">The <see cref="Object"/> that requested to be hidden.</param>
-        /// <param name="eventArgs">The event arguments containing additional information about the hide request.</param>
-        private void HandleItemHideRequested(Object? sender, DockItemHideRequestedEventArgs eventArgs)
-        {
-            DockItemViewModel item = eventArgs.Item;
-            DockTabNodeViewModel? owningTab = this.DockTree.FindOwningTabNode(item.Id);
-
-            if (owningTab is not null)
-            {
-                DockContext.SetPreferredTabPanelId(item, owningTab.Id);
-            }
-        }
-
-        /// <summary>
-        /// Handles a request from a <see cref="DockItemViewModel"/> to be minimized in the UI.
-        /// </summary>
-        /// <param name="sender">The <see cref="Object"/> that requested to be minimized.</param>
-        /// <param name="eventArgs">The event arguments containing additional information about the minize request.</param>
-        private void HandleItemMinimizeRequested(Object? sender, DockItemMinimizeRequestedEventArgs eventArgs)
-        {
-            DockItemViewModel item = eventArgs.Item;
-            System.Diagnostics.Debug.Assert(!this.minimizedItems.Contains(item), "Item should not already be minimized when minimizing it.");
-
-            DockTabNodeViewModel? owningTab = this.DockTree.FindOwningTabNode(item.Id);
-
-            if (owningTab is not null)
-            {
-                Boolean operationPermitted = !this.OnItemMinimizing(item);
-
-                if (operationPermitted)
-                {
-                    DockContext.SetPreferredTabPanelId(item, owningTab.Id);
-                    Boolean removed = this.RemoveItem(item);
-                    System.Diagnostics.Debug.Assert(removed, "Failed to remove item from DockTree. Not minimized.");
-
-                    if (removed)
-                    {
-                        this.minimizedItems.Add(item);
-                        this.CommitChanges();
-
-                        this.MinimizedItemsChanged?.Invoke(
-                            this,
-                            new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, item));
-
-                        this.OnItemMinimized(item);
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Handles a request from a <see cref="DockItemViewModel"/> to be restored from the minimized state
-        /// back to its original <see cref="DockTabNodeViewModel"/> panel.
-        /// </summary>
-        /// <param name="sender">The <see cref="Object"/> that requested restoration.</param>
-        /// <param name="eventArgs">The event arguments containing additional information about the restore request.</param>
-        private void HandleItemRestoreRequested(Object? sender, DockItemRestoreRequestedEventArgs eventArgs)
-        {
-            this.HoveredItem = null;
-
-            DockItemViewModel item = eventArgs.Item;
-
-            Boolean operationPermitted = !this.OnItemRestoring(item);
-
-            if (operationPermitted)
-            {
-                Boolean success = this.minimizedItems.Remove(item);
-
-                if (success)
-                {
-                    _ = this.AddItem(item);
-                    this.CommitChanges();
-
-                    this.MinimizedItemsChanged?.Invoke(
-                        this,
-                        new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, item));
-
-                    this.OnItemRestored(item);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Raises the <see cref="ItemMinimized"/> event.
-        /// </summary>
-        /// <param name="item">The <see cref="DockItemViewModel"/> that was minimized.</param>
-        private void OnItemMinimized(DockItemViewModel item) => this.ItemMinimized?.Invoke(this, new DockItemMinimizedEventArgs(item));
-
-        /// <summary>
-        /// Raises the <see cref="ItemMinimizing"/> event when an item is in the process of being minimized.
-        /// </summary>
-        /// <param name="item">The <see cref="DockItemViewModel"/> that is being minimized.</param>
-        /// <returns><c>true</c> if the minimized should be canceled; otherwise, <c>false</c>.</returns>
-        private Boolean OnItemMinimizing(DockItemViewModel item)
-        {
-            DockItemMinimizingEventArgs eventArgs = new(item);
-            this.ItemMinimizing?.Invoke(this, eventArgs);
-            return eventArgs.Cancel;
-        }
-
-        /// <summary>
-        /// Raises the <see cref="ItemRestored"/> event.
-        /// </summary>
-        /// <param name="item">The <see cref="DockItemViewModel"/> that was restored.</param>
-        private void OnItemRestored(DockItemViewModel item) => this.ItemRestored?.Invoke(this, new DockItemRestoredEventArgs(item));
-
-        /// <summary>
-        /// Raises the <see cref="ItemRestoring"/> event when an item is in the process of being restored.
-        /// </summary>
-        /// <param name="item">The <see cref="DockItemViewModel"/> that is being restored.</param>
-        /// <returns><c>true</c> if the restore should be canceled; otherwise, <c>false</c>.</returns>
-        private Boolean OnItemRestoring(DockItemViewModel item)
-        {
-            DockItemRestoringEventArgs eventArgs = new(item);
-            this.ItemRestoring?.Invoke(this, eventArgs);
-            return eventArgs.Cancel;
         }
 
         /// <summary>
@@ -415,22 +347,6 @@ namespace Meringue.AvaDock.Managers
         /// </param>
         private void OnMinimizedItemsChanged(Object? sender, NotifyCollectionChangedEventArgs eventArgs)
         {
-            if (eventArgs.Action is NotifyCollectionChangedAction.Add && eventArgs.NewItems is not null)
-            {
-                foreach (DockItemViewModel item in eventArgs.NewItems)
-                {
-                    this.HookItem(item);
-                }
-            }
-
-            if (eventArgs.Action is NotifyCollectionChangedAction.Remove or NotifyCollectionChangedAction.Reset && eventArgs.OldItems is not null)
-            {
-                foreach (DockItemViewModel item in eventArgs.OldItems)
-                {
-                    this.UnhookItem(item);
-                }
-            }
-
             this.OnPropertyChanged(nameof(this.ShouldShowMinimizedItems));
         }
 
@@ -441,10 +357,6 @@ namespace Meringue.AvaDock.Managers
         /// <param name="item">The <see cref="DockItemViewModel"/> to process.</param>
         private void UnhookItem(DockItemViewModel item)
         {
-            item.HideRequested -= this.HandleItemHideRequested;
-            item.MinimizeRequested -= this.HandleItemMinimizeRequested;
-            item.RestoreRequested -= this.HandleItemRestoreRequested;
-            DockContext.ClearWorkspace(item);
             _ = this.items.Remove(item);
         }
 

@@ -6,7 +6,7 @@ using Meringue.AvaDock.ViewModels;
 namespace Meringue.AvaDock.Events
 {
     /// <summary>
-    /// Provides data for the <see cref="DockWorkspaceManager.ItemRestored"/> event which is raised after a
+    /// Provides data for the <see cref="DockControlManager.ItemRestored"/> event which is raised after a
     /// <see cref="DockItemViewModel"/> is restored.
     /// </summary>
     public class DockItemRestoredEventArgs : DockItemDoneEventArgs

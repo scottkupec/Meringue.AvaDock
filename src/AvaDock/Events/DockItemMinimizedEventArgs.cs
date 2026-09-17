@@ -6,7 +6,7 @@ using Meringue.AvaDock.ViewModels;
 namespace Meringue.AvaDock.Events
 {
     /// <summary>
-    /// Provides data for the <see cref="DockWorkspaceManager.ItemMinimized"/> event which is raised after a
+    /// Provides data for the <see cref="DockControlManager.ItemMinimized"/> event which is raised after a
     /// <see cref="DockItemViewModel"/> is minimized.
     /// </summary>
     public class DockItemMinimizedEventArgs : DockItemDoneEventArgs
