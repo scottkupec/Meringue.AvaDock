@@ -34,7 +34,6 @@ namespace Meringue.AvaDock.Controls
         private Point? dragStartPoint;
 
         /// <summary>Indicates for a drag operation is currently in effect.</summary>
-        // CONSIDER: Refactor to be a check for DragOperationContext not being null?
         private Boolean isDragging;
 
         /// <summary>
@@ -65,6 +64,12 @@ namespace Meringue.AvaDock.Controls
             get => this.GetValue(ShouldShowTabStripProperty);
             set => this.SetValue(ShouldShowTabStripProperty, value);
         }
+
+        /// <summary>
+        /// Gets or sets the last <see cref="DockTabPanel"/> that the pointer was last over in order to work around
+        /// OnDragLeave not always being called.
+        /// </summary>
+        private static DockTabPanel? LastPanelOver { get; set; }
 
         /// <summary>
         /// Gets or sets the collection of items currently subscribed to.
@@ -149,6 +154,11 @@ namespace Meringue.AvaDock.Controls
         /// <param name="eventArgs">The <see cref="DragEventArgs"/> for the event.</param>
         private void OnDragEnter(Object? sender, DragEventArgs eventArgs)
         {
+            // HACK: OnDragLeave is not always called when the pointer leaves a control, so we need to manually
+            //       clean up the previous panel's adorners.
+            DockTabPanel.LastPanelOver?.OnDragLeave(sender, eventArgs);
+            DockTabPanel.LastPanelOver = this;
+
             if (eventArgs.Data.Contains(DockContext.DragDropContextName))
             {
                 this.DragOperationContext ??= new DragContext(this, eventArgs);
@@ -239,7 +249,7 @@ namespace Meringue.AvaDock.Controls
                 // Only start drag if moved beyond a threshold
                 if (!this.isDragging && (Math.Abs(delta.X) > 4 || Math.Abs(delta.Y) > 4))
                 {
-                    this.isDragging = TryStartDrag(dockItem, eventArgs);
+                    this.isDragging = DockTabPanel.TryStartDrag(dockItem, eventArgs);
                 }
             }
         }
@@ -267,6 +277,7 @@ namespace Meringue.AvaDock.Controls
         private void SubscribeToItemsCollection()
         {
             this.CurrentItemsCollection?.CollectionChanged -= this.OnItemsCollectionChanged;
+
             this.CurrentItemsCollection = this.ItemsSource as INotifyCollectionChanged;
             this.CurrentItemsCollection?.CollectionChanged += this.OnItemsCollectionChanged;
         }
