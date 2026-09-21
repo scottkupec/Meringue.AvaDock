@@ -45,7 +45,7 @@ namespace Meringue.AvaDock.Managers
         /// <param name="rootNode">The root <see cref="DockSplitNodeViewModel"/> for the dock control tree.</param>
         public DockWorkspaceManager(DockSplitNodeViewModel rootNode)
         {
-            this.DockMonitor = new(this.HookItem, this.UnhookItem);
+            this.DockMonitor = new(this.HookItem, this.UnhookItem, this.HookNode, this.UnhookNode);
             this.DockMonitor.Monitor(rootNode);
             this.DockTree = rootNode;
             this.Items = new ReadOnlyObservableCollection<DockItemViewModel>(this.items);
@@ -335,6 +335,19 @@ namespace Meringue.AvaDock.Managers
         }
 
         /// <summary>
+        /// Handles hooking a single <see cref="DockNodeViewModel"/> so the current instance
+        /// will be notified of changes.
+        /// </summary>
+        /// <param name="node">The <see cref="DockNodeViewModel"/> to process.</param>
+        private void HookNode(DockNodeViewModel node)
+        {
+            if (node is DockTabNodeViewModel)
+            {
+                DockContext.SetWorkspace(node, this);
+            }
+        }
+
+        /// <summary>
         /// Handles changes to the <see cref="MinimizedItems"/> collection by attaching
         /// or detaching event handlers for each added or removed <see cref="DockItemViewModel"/>.
         /// </summary>
@@ -358,6 +371,19 @@ namespace Meringue.AvaDock.Managers
         private void UnhookItem(DockItemViewModel item)
         {
             _ = this.items.Remove(item);
+        }
+
+        /// <summary>
+        /// Removes all handlers for a <see cref="DockNodeViewModel"/> so the current instance
+        /// will no longer be notified of changes.
+        /// </summary>
+        /// <param name="node">The <see cref="DockNodeViewModel"/> to process.</param>
+        private void UnhookNode(DockNodeViewModel node)
+        {
+            if (node is DockTabNodeViewModel)
+            {
+                DockContext.ClearWorkspace(node);
+            }
         }
 
         /// <inheritdoc/>
