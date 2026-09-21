@@ -22,7 +22,7 @@ namespace Meringue.AvaDock.Services.UnitTests
             String? returnedId = DockContext.GetPreferredTabPanelId(item);
 
             returnedId
-                .ShouldBeNull($"{nameof(DockContext.GetPreferredTabPanelId)} should return null after {DockContext.ClearPreferredTabPanelId} is called.");
+                .ShouldBeNull($"{nameof(DockContext.GetPreferredTabPanelId)} should return null after {nameof(DockContext.ClearPreferredTabPanelId)} is called.");
         }
 
         [Fact]
@@ -36,7 +36,7 @@ namespace Meringue.AvaDock.Services.UnitTests
             String? returnedId = DockContext.GetPreferredWorkspaceId(item);
 
             returnedId
-                .ShouldBeNull($"{nameof(DockContext.GetPreferredWorkspaceId)} should return null after {DockContext.ClearPreferredWorkspaceId} is called.");
+                .ShouldBeNull($"{nameof(DockContext.GetPreferredWorkspaceId)} should return null after {nameof(DockContext.ClearPreferredWorkspaceId)} is called.");
         }
 
         [Fact]
@@ -51,7 +51,7 @@ namespace Meringue.AvaDock.Services.UnitTests
             DockWorkspaceManager? returnedManager = DockContext.GetWorkspace(item);
 
             returnedManager
-                .ShouldBeNull($"{nameof(DockContext.GetWorkspace)} should return null after {DockContext.ClearWorkspace} is called.");
+                .ShouldBeNull($"{nameof(DockContext.GetWorkspace)} should return null after {nameof(DockContext.ClearWorkspace)} is called.");
         }
 
         [Fact]

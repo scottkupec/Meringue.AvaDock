@@ -69,6 +69,16 @@ namespace Meringue.AvaDock.Services
         }
 
         /// <summary>
+        /// Clears the <see cref="DockWorkspaceManager"/> for the specified <see cref="DockNodeViewModel"/>.
+        /// </summary>
+        /// <param name="node">The <see cref="DockNodeViewModel"/> whose workspace is being cleared.</param>
+        public static void ClearWorkspace(DockNodeViewModel node)
+        {
+            TargetFrameworkHelper.ThrowIfArgumentNull(node);
+            _ = node.Tags.Remove(DockContext.DockWorkspaceManagerPropertyName);
+        }
+
+        /// <summary>
         /// Gets the <see cref="DockControlManager"/> for the specified <see cref="DockItemViewModel"/>.
         /// </summary>
         /// <param name="item">The <see cref="DockItemViewModel"/> for which to retrieve the <see cref="DockControlManager"/>.</param>
@@ -128,6 +138,21 @@ namespace Meringue.AvaDock.Services
         }
 
         /// <summary>
+        /// Gets the <see cref="DockWorkspaceManager"/> for the specified <see cref="DockNodeViewModel"/>.
+        /// </summary>
+        /// <param name="node">The <see cref="DockNodeViewModel"/> for which to retrieve the <see cref="DockWorkspaceManager"/>.</param>
+        /// <returns>
+        /// The <see cref="DockWorkspaceManager"/>, or <c>null</c> if no host root has been set.
+        /// </returns>
+        public static DockWorkspaceManager? GetWorkspace(DockNodeViewModel node)
+        {
+            TargetFrameworkHelper.ThrowIfArgumentNull(node);
+            return node.Tags.TryGetValue(DockContext.DockWorkspaceManagerPropertyName, out Object? value)
+                ? value as DockWorkspaceManager
+                : null;
+        }
+
+        /// <summary>
         /// Sets the <see cref="DockControlManager"/> for the specified <see cref="DockItemViewModel"/>.
         /// </summary>
         /// <param name="item">The <see cref="DockItemViewModel"/> whose dock control is being set.</param>
@@ -171,6 +196,17 @@ namespace Meringue.AvaDock.Services
         {
             TargetFrameworkHelper.ThrowIfArgumentNull(item);
             item.Tags[DockContext.DockWorkspaceManagerPropertyName] = workspace;
+        }
+
+        /// <summary>
+        /// Sets the <see cref="DockWorkspaceManager"/> for the specified <see cref="DockItemViewModel"/>.
+        /// </summary>
+        /// <param name="node">The <see cref="DockNodeViewModel"/> whose dock control is being set.</param>
+        /// <param name="workspace">The <see cref="DockWorkspaceManager"/> to associate with this tab.</param>
+        public static void SetWorkspace(DockNodeViewModel node, DockWorkspaceManager workspace)
+        {
+            TargetFrameworkHelper.ThrowIfArgumentNull(node);
+            node.Tags[DockContext.DockWorkspaceManagerPropertyName] = workspace;
         }
     }
 }

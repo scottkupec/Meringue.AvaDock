@@ -9,7 +9,7 @@ namespace Meringue.AvaDock.Services
 {
     /// <summary>
     /// Monitors a <see cref="DockNodeViewModel"/> tree for <see cref="DockItemViewModel"/> instances
-    /// being added or removed. Provides callbacks for hooking and unhooking individual items.
+    /// or <see cref="DockNodeViewModel"/> instances being added or removed. Provides callbacks for hooking and unhooking individual items or nodes.
     /// <para>
     /// This class handles all traversal and subscription to child node collections so that
     /// consumers do not need to duplicate the boilerplate monitoring logic.
@@ -18,32 +18,82 @@ namespace Meringue.AvaDock.Services
     public sealed class DockNodeMonitor
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="DockNodeMonitor"/> class.
+        /// Initializes a new instance of the <see cref="DockNodeMonitor"/> class for monitoring item changes.
         /// </summary>
-        /// <param name="hookCallback">
+        /// <param name="hookItemCallback">
         /// Action invoked for every <see cref="DockItemViewModel"/> encountered in the monitored tree.
         /// Called once for each existing item and again whenever an item is added.
         /// </param>
-        /// <param name="unhookCallback">
+        /// <param name="unhookItemCallback">
         /// Action invoked when a <see cref="DockItemViewModel"/> is removed from the monitored tree.
         /// </param>
-        public DockNodeMonitor(Action<DockItemViewModel> hookCallback, Action<DockItemViewModel> unhookCallback)
+        public DockNodeMonitor(Action<DockItemViewModel>? hookItemCallback, Action<DockItemViewModel>? unhookItemCallback)
+            : this(hookItemCallback, unhookItemCallback, null, null)
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(hookCallback);
-            TargetFrameworkHelper.ThrowIfArgumentNull(unhookCallback);
+            this.HookItemCallback = hookItemCallback;
+            this.UnhookItemCallback = unhookItemCallback;
+        }
 
-            this.HookCallback = hookCallback;
-            this.UnhookCallback = unhookCallback;
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DockNodeMonitor"/> class for monitoring node changes.
+        /// </summary>
+        /// <param name="hookNodeCallback">
+        /// Action invoked for every <see cref="DockNodeViewModel"/> encountered in the monitored tree.
+        /// Called once for each existing node and again whenever a node is added.
+        /// </param>
+        /// <param name="unhookNodeCallback">
+        /// Action invoked when a <see cref="DockNodeViewModel"/> is removed from the monitored tree.
+        /// </param>
+        public DockNodeMonitor(Action<DockNodeViewModel>? hookNodeCallback, Action<DockNodeViewModel>? unhookNodeCallback)
+            : this(null, null, hookNodeCallback, unhookNodeCallback)
+        {
+            this.HookNodeCallback = hookNodeCallback;
+            this.UnhookNodeCallback = unhookNodeCallback;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DockNodeMonitor"/> class for monitoring both item and node changes.
+        /// </summary>
+        /// <param name="hookItemCallback">
+        /// Action invoked for every <see cref="DockItemViewModel"/> encountered in the monitored tree.
+        /// Called once for each existing item and again whenever an item is added.
+        /// </param>
+        /// <param name="unhookItemCallback">
+        /// Action invoked when a <see cref="DockItemViewModel"/> is removed from the monitored tree.
+        /// </param>
+        /// <param name="hookNodeCallback">
+        /// Action invoked for every <see cref="DockNodeViewModel"/> encountered in the monitored tree.
+        /// Called once for each existing node and again whenever a node is added.
+        /// </param>
+        /// <param name="unhookNodeCallback">
+        /// Action invoked when a <see cref="DockNodeViewModel"/> is removed from the monitored tree.
+        /// </param>
+        public DockNodeMonitor(
+            Action<DockItemViewModel>? hookItemCallback,
+            Action<DockItemViewModel>? unhookItemCallback,
+            Action<DockNodeViewModel>? hookNodeCallback,
+            Action<DockNodeViewModel>? unhookNodeCallback)
+        {
+            this.HookItemCallback = hookItemCallback;
+            this.UnhookItemCallback = unhookItemCallback;
+            this.HookNodeCallback = hookNodeCallback;
+            this.UnhookNodeCallback = unhookNodeCallback;
         }
 
         /// <summary>Gets the action to be called when a <see cref="DockItemViewModel"/> is added to the tree.</summary>
-        private Action<DockItemViewModel> HookCallback { get; }
+        private Action<DockItemViewModel>? HookItemCallback { get; }
+
+        /// <summary>Gets the action to be called when a <see cref="DockNodeViewModel"/> is added to the tree.</summary>
+        private Action<DockNodeViewModel>? HookNodeCallback { get; }
 
         /// <summary>Gets the collection of <see cref="DockNodeViewModel"/>s currently being monitored.</summary>
         private HashSet<DockNodeViewModel> MonitoredRoots { get; } = [];
 
         /// <summary>Gets the action to be called when a <see cref="DockItemViewModel"/> is removed from the tree.</summary>
-        private Action<DockItemViewModel> UnhookCallback { get; }
+        private Action<DockItemViewModel>? UnhookItemCallback { get; }
+
+        /// <summary>Gets the action to be called when a <see cref="DockNodeViewModel"/> is removed from the tree.</summary>
+        private Action<DockNodeViewModel>? UnhookNodeCallback { get; }
 
         /// <summary>
         /// Begins monitoring a <see cref="DockNodeViewModel"/> tree, applying hooks
@@ -80,13 +130,15 @@ namespace Meringue.AvaDock.Services
         /// <param name="node">The node to hook.</param>
         private void HookNode(DockNodeViewModel node)
         {
+            this.HookNodeCallback?.Invoke(node);
+
             if (node is DockTabNodeViewModel tabNode)
             {
                 tabNode.ObservableTabs.CollectionChanged += this.OnTabNodeCollectionChanged;
 
                 foreach (DockItemViewModel item in tabNode.Tabs)
                 {
-                    this.HookCallback(item);
+                    this.HookItemCallback?.Invoke(item);
                 }
             }
             else if (node is DockSplitNodeViewModel splitNode)
@@ -135,7 +187,7 @@ namespace Meringue.AvaDock.Services
             {
                 foreach (DockItemViewModel item in eventArgs.NewItems)
                 {
-                    this.HookCallback(item);
+                    this.HookItemCallback?.Invoke(item);
                 }
             }
 
@@ -143,7 +195,7 @@ namespace Meringue.AvaDock.Services
             {
                 foreach (DockItemViewModel item in eventArgs.OldItems)
                 {
-                    this.UnhookCallback(item);
+                    this.UnhookItemCallback?.Invoke(item);
                 }
             }
         }
@@ -160,7 +212,7 @@ namespace Meringue.AvaDock.Services
 
                 foreach (DockItemViewModel item in tabNode.Tabs)
                 {
-                    this.UnhookCallback(item);
+                    this.UnhookItemCallback?.Invoke(item);
                 }
             }
             else if (node is DockSplitNodeViewModel splitNode)
@@ -172,6 +224,8 @@ namespace Meringue.AvaDock.Services
                     this.UnhookNode(child);
                 }
             }
+
+            this.UnhookNodeCallback?.Invoke(node);
         }
     }
 }
