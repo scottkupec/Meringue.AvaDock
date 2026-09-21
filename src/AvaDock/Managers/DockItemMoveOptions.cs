@@ -1,7 +1,6 @@
 ﻿// Copyright (C) Scott Kupec. All rights reserved.
 
 using Avalonia.Layout;
-using Meringue.AvaDock.ViewModels;
 
 namespace Meringue.AvaDock.Managers
 {
@@ -13,10 +12,10 @@ namespace Meringue.AvaDock.Managers
     // TODO: Task 179 to remove.
     internal record DockItemMoveOptions
     {
-        /// <summary>Gets the <see cref="Managers.DropZone"/> for the current operation.</summary>
-        public DropZone DropZone { get; init; }
+        /// <summary>Gets the <see cref="MovePlacement"/> for the current operation.</summary>
+        public MovePlacement Placement { get; init; }
 
-        /// <summary>Gets the <see cref="DockSplitNodeViewModel.Orientation"/> necessary for the current operation.</summary>
+        /// <summary>Gets the <see cref="Avalonia.Layout.Orientation"/> necessary for the current operation.</summary>
         public Orientation? RequiredOrientation { get; init; }
     }
 }

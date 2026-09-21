@@ -60,7 +60,7 @@ namespace Meringue.AvaDock.Managers
         /// The event is raised whenever items are added to, removed from, or replaced
         /// within the <see cref="Items"/> collection. It mirrors the behavior of
         /// the <see cref="ObservableCollection{T}.CollectionChanged"/> event on the
-        /// internal backing collection.
+        /// private backing collection.
         /// </remarks>
         public event NotifyCollectionChangedEventHandler? ItemsChanged
         {
@@ -75,7 +75,7 @@ namespace Meringue.AvaDock.Managers
         /// The event is raised whenever items are added to, removed from, or replaced
         /// within the <see cref="MinimizedItems"/> collection. It mirrors the behavior of
         /// the <see cref="ObservableCollection{T}.CollectionChanged"/> event on the
-        /// internal backing collection.
+        /// private backing collection.
         /// </remarks>
         // Intentionally not tied directly to this.minimizedItems so we can defer events
         // until after we've run this.DockTree.RemoveEmptyPanels when necessary and not

@@ -220,7 +220,9 @@ namespace Meringue.AvaDock.Controls
             {
                 if (!this.DragOperationContext.TryReorder())
                 {
-                    if (this.DragOperationContext.TryPanelDrop() && this is SelectingItemsControl selecting)
+                    this.DragOperationContext.DropPanel();
+
+                    if (this is SelectingItemsControl selecting)
                     {
                         selecting.SelectedItem = this.DragOperationContext.DraggedTab;
                     }
@@ -311,7 +313,7 @@ namespace Meringue.AvaDock.Controls
 
                 this.DockControl = this.DraggedTab != null ? DockContext.GetDockHost(this.DraggedTab) : null;
                 this.DropIndex = this.HitTestTabIndex(eventArgs.GetPosition(owner));
-                this.TargetNode = GetTargetNode(eventArgs);
+                this.TargetNode = DragContext.GetTargetNode(eventArgs);
             }
 
             /// <summary>
@@ -356,6 +358,19 @@ namespace Meringue.AvaDock.Controls
             private TabReorderAdorner? ReorderAdorner { get; set; }
 
             /// <summary>
+            /// Attempts to drop the dragged tab into the panel using the current drop zone and orientation.
+            /// Raises a move request on the dragged tab.
+            /// </summary>
+            public void DropPanel()
+            {
+                this.DraggedTab?.RequestMove(
+                    (this.Owner.DataContext as DockTabNodeViewModel)!,
+                    this.TargetNode!,
+                    DragContext.GetMovePlacement(this.DropAdorner?.HoveredZone),
+                    DragContext.GetRequiredOrientation(this.DropAdorner?.HoveredZone));
+            }
+
+            /// <summary>
             /// Removes drag adorners from the visual tree and clears their state.
             /// </summary>
             public void RemoveAdorners()
@@ -386,35 +401,24 @@ namespace Meringue.AvaDock.Controls
             }
 
             /// <summary>
-            /// Attempts to drop the dragged tab into the panel using the current drop zone and orientation.
-            /// Returns <c>true</c> if the tab was successfully moved.
-            /// </summary>
-            /// <returns><c>true</c> if the tab was successfully moved; otherwise, <c>false</c>.</returns>
-            public Boolean TryPanelDrop()
-            {
-                DockItemMoveOptions options = this.BuildMoveOptions();
-                return this.DockControl!.MoveItem(this.DraggedTab!, this.TargetNode!, options);
-            }
-
-            /// <summary>
             /// Attempts to reorder the dragged tab within the target tab node.
             /// </summary>
             /// <returns><c>true</c> if the tab was successfully moved to a new index; otherwise, <c>false</c>.</returns>
             public Boolean TryReorder()
             {
-                if (this.DropIndex is null || this.DraggedTab is null || !this.TargetNode!.Tabs.Contains(this.DraggedTab))
+                if (this.DraggedTab is null || !this.TargetNode!.Tabs.Contains(this.DraggedTab))
                 {
                     return false;
                 }
 
                 Int32 oldIndex = this.TargetNode.ObservableTabs.IndexOf(this.DraggedTab);
-                if (oldIndex != this.DropIndex.Value)
+                if (oldIndex != this.DropIndex)
                 {
-                    this.TargetNode.ObservableTabs.Move(oldIndex, this.DropIndex.Value);
+                    this.TargetNode.ObservableTabs.Move(oldIndex, this.DropIndex ?? 0);
                     return true;
                 }
 
-                return false;
+                return true;
             }
 
             /// <summary>
@@ -454,6 +458,45 @@ namespace Meringue.AvaDock.Controls
             }
 
             /// <summary>
+            /// Converts a <see cref="DropZone"/> value to the corresponding <see cref="MovePlacement"/> value.
+            /// </summary>
+            /// <param name="zone">The <see cref="DropZone"/> to be converted.</param>
+            /// <returns>The necessary <see cref="MovePlacement"/> based on the specified <paramref name="zone"/>.</returns>
+            private static MovePlacement GetMovePlacement(DropZone? zone)
+            {
+                return zone switch
+                {
+                    DropZone.Bottom => MovePlacement.After,
+                    DropZone.Center => MovePlacement.On,
+                    DropZone.Left => MovePlacement.Before,
+                    DropZone.None => MovePlacement.After,
+                    DropZone.Right => MovePlacement.After,
+                    DropZone.Top => MovePlacement.Before,
+                    _ => MovePlacement.On,
+                };
+            }
+
+            /// <summary>
+            /// Converts a <see cref="DropZone"/> value to the corresponding <see cref="Orientation"/> value, if applicable.
+            /// </summary>
+            /// <param name="zone">The <see cref="DropZone"/> to be converted.</param>
+            /// <returns>The necessary split <see cref="Orientation"/> based on the specified <paramref name="zone"/> or <c>null</c> if orientation
+            /// doesn't apply to the provided <paramref name="zone"/>.</returns>
+            private static Orientation? GetRequiredOrientation(DropZone? zone)
+            {
+                return zone switch
+                {
+                    DropZone.Bottom => Orientation.Vertical,
+                    DropZone.Center => null,
+                    DropZone.Left => Orientation.Horizontal,
+                    DropZone.None => null,
+                    DropZone.Right => Orientation.Horizontal,
+                    DropZone.Top => Orientation.Vertical,
+                    _ => null,
+                };
+            }
+
+            /// <summary>
             /// Attempts to locate the target <see cref="DockTabNodeViewModel"/> from the drag event's visual source.
             /// </summary>
             /// <param name="e">The drag event arguments.</param>
@@ -466,29 +509,6 @@ namespace Meringue.AvaDock.Controls
                     .Select(c => c.DataContext)
                     .OfType<DockTabNodeViewModel>()
                     .FirstOrDefault();
-            }
-
-            /// <summary>
-            /// Builds the <see cref="DockItemMoveOptions"/> based on the current drop adorner state.
-            /// </summary>
-            /// <returns>A configured <see cref="DockItemMoveOptions"/> instance.</returns>
-            private DockItemMoveOptions BuildMoveOptions()
-            {
-                return new DockItemMoveOptions
-                {
-                    DropZone = this.DropAdorner?.HoveredZone ?? DropZone.Center,
-                    RequiredOrientation = this.DropAdorner?.HoveredZone switch
-                    {
-                        DropZone.Bottom => Orientation.Vertical,
-                        DropZone.Center => null,
-                        DropZone.Left => Orientation.Horizontal,
-                        DropZone.None => null,
-                        DropZone.Right => Orientation.Horizontal,
-                        DropZone.Top => Orientation.Vertical,
-                        null => throw new NotImplementedException(),
-                        _ => null,
-                    },
-                };
             }
 
             /// <summary>

@@ -100,24 +100,9 @@ namespace Meringue.AvaDock.Managers.UnitTests
                 .WithMoveItem(
                     item: initialTree.FindItem<DockItemViewModel>("item2")!,
                     target: initialTree.FindOwningTabNode("item1")!,
-                    zone: DropZone.Center)
+                    placement: MovePlacement.On,
+                    orientation: null)
                 .ExpectTree(expectedTree)
-                .Assert(displayActualTree: true);
-        }
-
-        [AvaloniaFact]
-        public void MoveItem_DropNoneWorks()
-        {
-            DockSplitNodeViewModel initialTree = DockTree.Horizontal(
-                DockTree.Tab("item1", "item2"));
-
-            new DockMutationTestBuilder()
-                .WithInitialTree(initialTree)
-                .WithMoveItem(
-                    item: initialTree.FindItem<DockItemViewModel>("item1")!,
-                    target: initialTree.FindOwningTabNode("item1")!,
-                    zone: DropZone.None)
-                .ExpectTree(initialTree)
                 .Assert(displayActualTree: true);
         }
 
@@ -132,7 +117,8 @@ namespace Meringue.AvaDock.Managers.UnitTests
                 .WithMoveItem(
                     item: initialTree.FindItem<DockItemViewModel>("item1")!,
                     target: initialTree.FindOwningTabNode("item1")!,
-                    zone: DropZone.Center)
+                    placement: MovePlacement.On,
+                    orientation: null)
                 .ExpectTree(initialTree)
                 .Assert(displayActualTree: true);
         }
@@ -161,7 +147,8 @@ namespace Meringue.AvaDock.Managers.UnitTests
                 .WithMoveItem(
                     item: initialTree.FindItem<DockItemViewModel>("right-item")!,
                     target: initialTree.FindOwningTabNode("move-item")!,
-                    zone: DropZone.Right)
+                    placement: MovePlacement.After,
+                    orientation: Orientation.Horizontal)
                 .ExpectTree(expectedTree)
                 .Assert();
         }
@@ -186,7 +173,7 @@ namespace Meringue.AvaDock.Managers.UnitTests
                 foreach (DockItemViewModel item in tabNode.Tabs.ToList())
                 {
                     DockTabNodeViewModel targetTab = new();
-                    Boolean result = manager.MoveItem(item, targetTab, new DockItemMoveOptions { DropZone = DropZone.Center });
+                    Boolean result = manager.MoveItem(item, targetTab, placement: MovePlacement.On, orientation: null);
                     result
                         .ShouldBeTrue($"Move of '{item.Id}' should succeed.");
                 }
@@ -221,7 +208,8 @@ namespace Meringue.AvaDock.Managers.UnitTests
                 .WithMoveItem(
                     item: initialTree.FindItem<DockItemViewModel>("bottom-item")!,
                     target: initialTree.FindOwningTabNode("bottom-item")!,
-                    zone: DropZone.Bottom)
+                    placement: MovePlacement.After,
+                    orientation: Orientation.Vertical)
                 .ExpectTree(expectedTree)
                 .Assert(displayActualTree: true);
         }
@@ -244,7 +232,8 @@ namespace Meringue.AvaDock.Managers.UnitTests
                 .WithMoveItem(
                     item: initialTree.FindItem<DockItemViewModel>("move-item")!,
                     target: initialTree.FindOwningTabNode("target-item")!,
-                    zone: DropZone.Right)
+                    placement: MovePlacement.After,
+                    orientation: Orientation.Horizontal)
                 .ExpectTree(expectedTree)
                 .Assert();
         }
@@ -264,7 +253,8 @@ namespace Meringue.AvaDock.Managers.UnitTests
                 .WithMoveItem(
                     item: initialTree.FindItem<DockItemViewModel>("left-item")!,
                     target: initialTree.FindOwningTabNode("left-item")!,
-                    zone: DropZone.Left)
+                    placement: MovePlacement.Before,
+                    orientation: Orientation.Horizontal)
                 .ExpectTree(expectedTree)
                 .Assert(displayActualTree: true);
         }
@@ -284,7 +274,8 @@ namespace Meringue.AvaDock.Managers.UnitTests
                 .WithMoveItem(
                     item: initialTree.FindItem<DockItemViewModel>("right-item")!,
                     target: initialTree.FindOwningTabNode("left-item")!,
-                    zone: DropZone.Right)
+                    placement: MovePlacement.After,
+                    orientation: Orientation.Horizontal)
                 .ExpectTree(expectedTree)
                 .Assert(displayActualTree: true);
         }
@@ -305,7 +296,8 @@ namespace Meringue.AvaDock.Managers.UnitTests
                 .WithMoveItem(
                     item: initialTree.FindItem<DockItemViewModel>("top-item")!,
                     target: initialTree.FindOwningTabNode("bottom-item")!,
-                    zone: DropZone.Top)
+                    placement: MovePlacement.Before,
+                    orientation: Orientation.Vertical)
                 .ExpectTree(expectedTree)
                 .Assert(displayActualTree: true);
         }
@@ -333,7 +325,8 @@ namespace Meringue.AvaDock.Managers.UnitTests
                 .WithMoveItem(
                     item: initialTree.FindItem<DockItemViewModel>("right-item")!,
                     target: initialTree.FindOwningTabNode("center-item")!,
-                    zone: DropZone.Top)
+                    placement: MovePlacement.Before,
+                    orientation: Orientation.Vertical)
                 .ExpectTree(expectedTree)
                 .Assert();
         }
@@ -358,7 +351,8 @@ namespace Meringue.AvaDock.Managers.UnitTests
                 .WithMoveItem(
                     item: initialTree.FindItem<DockItemViewModel>("move-item")!,
                     target: initialTree.FindOwningTabNode("left-item")!,
-                    zone: DropZone.Top)
+                    placement: MovePlacement.Before,
+                    orientation: Orientation.Vertical)
                 .ExpectTree(expectedTree)
                 .Assert();
         }
@@ -676,8 +670,9 @@ namespace Meringue.AvaDock.Managers.UnitTests
             private DockNodeViewModel? expectedTree;
             private DockItemViewModel? itemToMove;
             private DockControlManager? manager;
-            private DockItemMoveOptions? moveOptions;
-            private DockNodeViewModel? targetNode;
+            private Orientation? orientation;
+            private MovePlacement? placement;
+            private DockTabNodeViewModel? targetNode;
 
             /// <summary>Validates the the current <see cref="DockTree"/> matches the expected <see cref="DockTree"/>.</summary>
             public void Assert(Boolean displayActualTree = false)
@@ -685,10 +680,11 @@ namespace Meringue.AvaDock.Managers.UnitTests
                 this.manager.ShouldNotBeNull("Initial tree must be set");
                 this.itemToMove.ShouldNotBeNull("Item to move must be set");
                 this.targetNode.ShouldNotBeNull("Target node must be set");
-                this.moveOptions.ShouldNotBeNull("Move options must be set");
+                this.placement.ShouldNotBeNull("Placement must be set");
                 this.expectedTree.ShouldNotBeNull("Expected tree must be set");
 
-                Boolean result = this.manager.MoveItem(this.itemToMove, this.targetNode, this.moveOptions);
+                Boolean result = this.manager.MoveItem(this.itemToMove, this.targetNode, this.placement.Value, this.orientation);
+
                 Avalonia.Threading.Dispatcher.UIThread.RunJobs();
                 result.ShouldBeTrue("Move operation should succeed");
 
@@ -717,11 +713,12 @@ namespace Meringue.AvaDock.Managers.UnitTests
             }
 
             /// <summary>Define the move operation to be made.</summary>
-            public DockMutationTestBuilder WithMoveItem(DockItemViewModel item, DockNodeViewModel target, DropZone zone)
+            public DockMutationTestBuilder WithMoveItem(DockItemViewModel item, DockTabNodeViewModel target, MovePlacement placement, Orientation? orientation)
             {
                 this.itemToMove = item;
                 this.targetNode = target;
-                this.moveOptions = new DockItemMoveOptions { DropZone = zone };
+                this.placement = placement;
+                this.orientation = orientation;
                 return this;
             }
 

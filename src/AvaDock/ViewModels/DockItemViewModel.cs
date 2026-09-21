@@ -3,10 +3,12 @@
 using System;
 using System.Collections.Generic;
 using System.Windows.Input;
+using Avalonia.Layout;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Meringue.AvaDock.Controls;
 using Meringue.AvaDock.Events;
+using Meringue.AvaDock.Managers;
 
 namespace Meringue.AvaDock.ViewModels
 {
@@ -60,6 +62,11 @@ namespace Meringue.AvaDock.ViewModels
         /// Occurs when a request is made to minimize this item.
         /// </summary>
         public event EventHandler<DockItemMinimizeRequestedEventArgs>? MinimizeRequested;
+
+        /// <summary>
+        /// Occurs when a request is made to move this item.
+        /// </summary>
+        public event EventHandler<DockItemMoveRequestedEventArgs>? MoveRequested;
 
         /// <summary>
         /// Occurs when a request is made to restore this item.
@@ -140,6 +147,27 @@ namespace Meringue.AvaDock.ViewModels
         /// Gets a property dictionary usable for implementation specific purposes.
         /// </summary>
         public Dictionary<Object, Object> Tags { get; } = [];
+
+        /// <summary>
+        /// Requests a move to be performed on the current instance.
+        /// </summary>
+        /// <param name="sourceNode">The <see cref="DockTabNodeViewModel"/> that the item is being moved from.</param>
+        /// <param name="targetNode">The <see cref="DockTabNodeViewModel"/> representing the target of the move.</param>
+        /// <param name="placement">The <see cref="MovePlacement"/> indicating how the item should be placed relative to the <paramref name="targetNode"/>.</param>
+        /// <param name="requiredOrientation">
+        /// The <see cref="Orientation"/> to be used when placing the node if <paramref name="placement"/> is <see cref="MovePlacement.Before"/> or
+        /// <see cref="MovePlacement.After"/>. Optional and ignored for <see cref="MovePlacement.On"/>.
+        /// </param>
+        public void RequestMove(DockTabNodeViewModel sourceNode, DockTabNodeViewModel targetNode, MovePlacement placement, Orientation? requiredOrientation)
+        {
+            DockItemMoveRequestedEventArgs moveEvent = new(
+                this,
+                sourceNode,
+                targetNode,
+                placement,
+                requiredOrientation);
+            this.MoveRequested?.Invoke(this, moveEvent);
+        }
 
         /// <summary>
         /// Invokes the <see cref="CloseRequested"/> event if <see cref="DisableClose"/> is <c>false</c>.

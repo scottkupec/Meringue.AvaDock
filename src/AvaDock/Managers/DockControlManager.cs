@@ -28,7 +28,7 @@ namespace Meringue.AvaDock.Managers
         /// </summary>
         private static readonly DockItemMoveOptions NewWindowMoveOptions = new()
         {
-            DropZone = DropZone.Center,
+            Placement = MovePlacement.On,
         };
 
         /// <summary>Mutatable backing field for <see cref="HiddenItems"/>.</summary>
@@ -143,12 +143,6 @@ namespace Meringue.AvaDock.Managers
         /// Occurs when items are added to or removed from the items collection
         /// across all managed <see cref="DockWorkspaceManager"/> instances.
         /// </summary>
-        /// <remarks>
-        /// This event aggregates changes from both the primary workspace and all secondary (floating) workspaces.
-        /// Use this event if you want to be notified about any item change regardless of which workspace
-        /// the item belongs to. For workspace-specific changes, subscribe to the <see cref="DockWorkspaceManager.MinimizedItemsChanged"/>
-        /// event on individual workspaces.
-        /// </remarks>
         public event NotifyCollectionChangedEventHandler? ItemsChanged
         {
             add
@@ -179,12 +173,6 @@ namespace Meringue.AvaDock.Managers
         /// Occurs when items are added to or removed from the minimized items collection
         /// across all managed <see cref="DockWorkspaceManager"/> instances.
         /// </summary>
-        /// <remarks>
-        /// This event aggregates changes from both the primary workspace and all secondary (floating) workspaces.
-        /// Use this event if you want to be notified about any minimized item change regardless of which workspace
-        /// the item belongs to. For workspace-specific changes, subscribe to the <see cref="DockWorkspaceManager.MinimizedItemsChanged"/>
-        /// event on individual workspaces.
-        /// </remarks>
         public event NotifyCollectionChangedEventHandler? MinimizedItemsChanged
         {
             add
@@ -593,7 +581,7 @@ namespace Meringue.AvaDock.Managers
                     };
 
                     child.Show(this.WindowManager.MainWindow);
-                    _ = this.MoveItem(item, floatingTabNode, NewWindowMoveOptions);
+                    _ = this.MoveItem(item, floatingTabNode, DockControlManager.NewWindowMoveOptions.Placement, DockControlManager.NewWindowMoveOptions.RequiredOrientation);
 
                     DockControlManager.EnsureWorkspaceHasTabNode(this.PrimaryWorkspace);
                 }
@@ -608,29 +596,34 @@ namespace Meringue.AvaDock.Managers
         /// </summary>
         /// <param name="item">The <see cref="DockItemViewModel"/> being moved.</param>
         /// <param name="targetNode">The <see cref="DockNodeViewModel"/> that is the drop target for the operation.</param>
-        /// <param name="options">Options that describe the drop location and required orientation.</param>
+        /// <param name="placement">How the item should be placed relative to the target node.</param>
+        /// <param name="orientation">The orientation required for the placing the <see cref="DockItemViewModel"/>.</param>
         /// <returns>
         /// <c>true</c> if the <see cref="DockItemViewModel"/> was successfully moved; otherwise, <c>false</c>.
         /// </returns>
-        internal Boolean MoveItem(DockItemViewModel item, DockNodeViewModel targetNode, DockItemMoveOptions options)
+        internal Boolean MoveItem(DockItemViewModel item, DockTabNodeViewModel targetNode, MovePlacement placement, Orientation? orientation)
         {
             TargetFrameworkHelper.ThrowIfArgumentNull(item);
             TargetFrameworkHelper.ThrowIfArgumentNull(targetNode);
-            TargetFrameworkHelper.ThrowIfArgumentNull(options);
 
             DockTabNodeViewModel? sourceTabNode = this.FindParentTabNode(item);
-            DockItemMovingEventArgs movingEventArgs = new(item, sourceTabNode, targetNode);
+            DockItemMovingEventArgs movingEventArgs = new(item, sourceTabNode, targetNode, placement, orientation);
 
             if (!movingEventArgs.Cancel)
             {
-                MoveOperation operation = new(this, item, targetNode, options);
+                MoveOperation operation = new(
+                    this,
+                    item,
+                    targetNode,
+                    placement,
+                    orientation);
 
                 Boolean result = operation.Execute();
                 DockControlManager.EnsureWorkspaceHasTabNode(this.PrimaryWorkspace);
 
                 if (result)
                 {
-                    this.OnItemMoved(new DockItemMovedEventArgs(item, sourceTabNode, targetNode));
+                    this.OnItemMoved(new DockItemMovedEventArgs(item, sourceTabNode, targetNode, placement, orientation));
                 }
 
                 return result;
@@ -933,6 +926,14 @@ namespace Meringue.AvaDock.Managers
         }
 
         /// <summary>
+        /// Handles a request from a <see cref="DockItemViewModel"/> to be moved in the UI.
+        /// </summary>
+        /// <param name="sender">The <see cref="Object"/> that requested the move.</param>
+        /// <param name="eventArgs">The event arguments containing additional information about the move request.</param>
+        private void HandleItemMoveRequested(Object? sender, DockItemMoveRequestedEventArgs eventArgs) =>
+            _ = this.MoveItem(eventArgs.Item, eventArgs.ToNode, eventArgs.Placement, eventArgs.RequiredOrientation);
+
+        /// <summary>
         /// Handles a request from a <see cref="DockItemViewModel"/> to be restored from the minimized state
         /// back to its original <see cref="DockTabNodeViewModel"/> panel.
         /// </summary>
@@ -1043,6 +1044,9 @@ namespace Meringue.AvaDock.Managers
                 }
             }
 
+            // This will be called a bit too aggressively, but the cost is cheap. We'll worry about improving
+            // if we ever see it in a hotspot.
+            DockControlManager.EnsureWorkspaceHasTabNode(this.PrimaryWorkspace);
             this.minimizedItemsChanged?.Invoke(sender, eventArgs);
         }
 
@@ -1057,6 +1061,7 @@ namespace Meringue.AvaDock.Managers
             ////item.FloatRequested += this.HandleItemFloatRequested;
             item.HideRequested += this.HandleItemHideRequested;
             item.MinimizeRequested += this.HandleItemMinimizeRequested;
+            item.MoveRequested += this.HandleItemMoveRequested;
             item.RestoreRequested += this.HandleItemRestoreRequested;
             item.ShowRequested += this.HandleItemShowRequested;
 
@@ -1134,6 +1139,7 @@ namespace Meringue.AvaDock.Managers
             ////item.FloatRequested -= this.HandleItemFloatRequested;
             item.HideRequested -= this.HandleItemHideRequested;
             item.MinimizeRequested -= this.HandleItemMinimizeRequested;
+            item.MoveRequested -= this.HandleItemMoveRequested;
             item.RestoreRequested -= this.HandleItemRestoreRequested;
             item.ShowRequested -= this.HandleItemShowRequested;
         }
@@ -1149,23 +1155,32 @@ namespace Meringue.AvaDock.Managers
             /// <param name="owner">The <see cref="DockLayoutManager"/> that owns this operation.</param>
             /// <param name="item">The <see cref="DockItemViewModel"/> being moved.</param>
             /// <param name="targetNode">The target node to which the <see cref="DockItemViewModel"/> is being moved.</param>
-            /// <param name="options">The move options describing drop location and orientation.</param>
+            /// <param name="placement">How the item should be placed relative to the target node.</param>
+            /// <param name="orientation">The orientation required for the placing the <see cref="DockItemViewModel"/>.</param>
             public MoveOperation(
                 DockControlManager owner,
                 DockItemViewModel item,
-                DockNodeViewModel targetNode,
-                DockItemMoveOptions options)
+                DockTabNodeViewModel targetNode,
+                MovePlacement placement,
+                Orientation? orientation)
             {
-                this.Owner = owner;
                 this.Item = item;
+                this.Owner = owner;
+                this.Placement = placement;
+                this.RequiredOrientation = orientation;
                 this.TargetNode = targetNode;
-                this.Options = options;
             }
 
             /// <summary>
-            /// Gets the move options describing drop location and orientation.
+            /// Gets the <see cref="MovePlacement"/> for how the item should be placed in <see cref="TargetNode"/>.
             /// </summary>
-            private DockItemMoveOptions Options { get; }
+            public MovePlacement Placement { get; }
+
+            /// <summary>
+            /// Gets the <see cref="MovePlacement"/> for how the item should be placed in <see cref="TargetNode"/> when <see cref="Placement"/>
+            /// is <see cref="MovePlacement.After"/> or <see cref="MovePlacement.Before"/>.
+            /// </summary>
+            public Orientation? RequiredOrientation { get; }
 
             /// <summary>
             /// Gets the <see cref="DockLayoutManager"/> that owns this operation.
@@ -1196,13 +1211,13 @@ namespace Meringue.AvaDock.Managers
                 Boolean result;
                 DockTabNodeViewModel sourceTabNode = this.Owner.FindParentTabNode(this.Item)!;
 
-                if (this.Options.DropZone == DropZone.None || (sourceTabNode == this.TargetNode && sourceTabNode.Tabs.Count == 1))
+                if (this.Placement == MovePlacement.On && sourceTabNode == this.TargetNode && sourceTabNode.Tabs.Count == 1)
                 {
                     result = true; // No-op move
                 }
                 else
                 {
-                    result = this.Options.DropZone == DropZone.Center
+                    result = this.Placement == MovePlacement.On
                         ? MoveOperation.HandleDropCenter(this, sourceTabNode)
                         : MoveOperation.HandleDropSplit(this, sourceTabNode);
                 }
@@ -1220,16 +1235,10 @@ namespace Meringue.AvaDock.Managers
                 DockTabNodeViewModel newTabNode = new();
                 newTabNode.AddTab(operation.Item);
 
-                Orientation splitOrientation = operation.Options.DropZone switch
-                {
-                    DropZone.Left or DropZone.Right => Orientation.Horizontal,
-                    DropZone.Top or DropZone.Bottom => Orientation.Vertical,
-                    DropZone.Center or DropZone.None => throw new InvalidOperationException("Unsupported drop zone."),
-                    _ => throw new InvalidOperationException("Unsupported drop zone."),
-                };
+                Orientation splitOrientation = operation.RequiredOrientation!.Value;
 
                 DockSplitNodeViewModel wrappedSplit = new(splitOrientation);
-                if (operation.Options.DropZone is DropZone.Left or DropZone.Top)
+                if (operation.Placement is MovePlacement.Before)
                 {
                     wrappedSplit.AddChild(newTabNode);
                     wrappedSplit.AddChild(operation.TargetNode);
@@ -1253,7 +1262,7 @@ namespace Meringue.AvaDock.Managers
             {
                 Boolean result = false;
 
-                System.Diagnostics.Debug.Assert(operation.Options.DropZone == DropZone.Center, "Invalid code path.");
+                System.Diagnostics.Debug.Assert(operation.Placement == MovePlacement.On, "Invalid code path.");
 
                 DockWorkspaceManager sourceWorkspace = operation.Owner.GetWorkspace(sourceTabNode)!;
                 DockWorkspaceManager? destinationWorkspace = operation.Owner.GetWorkspace(operation.TargetNode);
@@ -1356,6 +1365,18 @@ namespace Meringue.AvaDock.Managers
                 DockWorkspaceManager? workspace = operation.Owner.GetWorkspace(sourceTabNode);
                 return workspace is not null;
             }
+        }
+
+        /// <summary>
+        /// Simple record for holding parameters related to tab creating in new windows.
+        /// </summary>
+        private record DockItemMoveOptions
+        {
+            /// <summary>Gets the <see cref="Managers.MovePlacement"/> for the current operation.</summary>
+            public MovePlacement Placement { get; init; }
+
+            /// <summary>Gets the <see cref="DockSplitNodeViewModel.Orientation"/> necessary for the current operation.</summary>
+            public Orientation? RequiredOrientation { get; init; }
         }
     }
 }

@@ -57,7 +57,7 @@ namespace Meringue.AvaDock.ViewModels
         /// The event is raised whenever items are added to, removed from, or replaced
         /// within the <see cref="Children"/> collection. It mirrors the behavior of
         /// the <see cref="ObservableCollection{T}.CollectionChanged"/> event on the
-        /// internal backing collection.
+        /// backing collection.
         /// </remarks>
         public event NotifyCollectionChangedEventHandler? ChildrenChanged;
 

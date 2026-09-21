@@ -169,6 +169,7 @@ namespace Meringue.AvaDock.Tests.Controls
             root.AddChild(tabNode);
 
             DockWorkspaceManager workspace = new(root);
+            _ = new DockControlManager(workspace);
             DockContext.SetWorkspace(item, workspace);
             item.MinimizeCommand.Execute(null);
             workspace.MinimizedItems.Count.ShouldBe(1, "Item should be in MinimizedTabs.");
