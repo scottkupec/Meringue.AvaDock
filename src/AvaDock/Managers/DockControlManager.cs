@@ -2,7 +2,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
@@ -24,17 +23,6 @@ namespace Meringue.AvaDock.Managers
     public partial class DockControlManager : ObservableObject
     {
         /// <summary>
-        /// The <see cref="DockItemMoveOptions"/> used when moving an item to a newly created floating window.
-        /// </summary>
-        private static readonly DockItemMoveOptions NewWindowMoveOptions = new()
-        {
-            Placement = MovePlacement.On,
-        };
-
-        /// <summary>Mutatable backing field for <see cref="HiddenItems"/>.</summary>
-        private readonly ObservableCollection<DockItemViewModel> hiddenItems = [];
-
-        /// <summary>
         /// Gets or sets the top-level <see cref="DockNodeViewModel"/>.
         /// </summary>
         [ObservableProperty]
@@ -46,11 +34,25 @@ namespace Meringue.AvaDock.Managers
         /// <param name="rootNode">The root <see cref="DockNodeViewModel"/> for the dock control tree.</param>
         public DockControlManager(DockWorkspaceManager rootNode)
         {
-            this.hiddenItems.CollectionChanged += this.OnHiddenItemsChanged;
             this.DockMonitor = new(this.HookItem, this.UnhookItem);
 
             this.PrimaryWorkspace = rootNode;
-            this.PrimaryWorkspace.MinimizedItemsChanged += this.HandleWorkspaceMinimizedItemsChanged;
+            this.PrimaryWorkspace.HiddenItemsChanged += this.ForwardHiddenItemsChanged;
+            this.PrimaryWorkspace.ItemsChanged += this.ForwardItemsChanged;
+            this.PrimaryWorkspace.MinimizedItemsChanged += this.ForwardMinimizedItemsChanged;
+            this.PrimaryWorkspace.ItemClosed += this.ForwardItemClosed;
+            this.PrimaryWorkspace.ItemClosing += this.ForwardItemClosing;
+            this.PrimaryWorkspace.ItemHidden += this.ForwardItemHidden;
+            this.PrimaryWorkspace.ItemHiding += this.ForwardItemHiding;
+            this.PrimaryWorkspace.ItemMinimized += this.ForwardItemMinimized;
+            this.PrimaryWorkspace.ItemMinimizing += this.ForwardItemMinimizing;
+            this.PrimaryWorkspace.ItemMoved += this.ForwardItemMoved;
+            this.PrimaryWorkspace.ItemMoving += this.ForwardItemMoving;
+            this.PrimaryWorkspace.ItemRestored += this.ForwardItemRestored;
+            this.PrimaryWorkspace.ItemRestoring += this.ForwardItemRestoring;
+            this.PrimaryWorkspace.ItemShowing += this.ForwardItemShowing;
+            this.PrimaryWorkspace.ItemShown += this.ForwardItemShown;
+
             this.DockMonitor.Monitor(this.PrimaryWorkspace.DockTree);
         }
 
@@ -143,7 +145,7 @@ namespace Meringue.AvaDock.Managers
         /// Occurs when items are added to or removed from the items collection
         /// across all managed <see cref="DockWorkspaceManager"/> instances.
         /// </summary>
-        public event NotifyCollectionChangedEventHandler? ItemsChanged
+        public event NotifyCollectionChangedEventHandler? HiddenItemsChanged
         {
             add
             {
@@ -151,7 +153,7 @@ namespace Meringue.AvaDock.Managers
                 // When adding a subscriber, also subscribe to all current workspaces
                 foreach (DockWorkspaceManager workspace in this.SecondaryWorkspaces)
                 {
-                    workspace.ItemsChanged += this.HandleWorkspaceItemsChanged;
+                    workspace.HiddenItemsChanged += this.ForwardHiddenItemsChanged;
                 }
             }
 
@@ -163,7 +165,37 @@ namespace Meringue.AvaDock.Managers
                 {
                     foreach (DockWorkspaceManager workspace in this.SecondaryWorkspaces)
                     {
-                        workspace.ItemsChanged -= this.HandleWorkspaceItemsChanged;
+                        workspace.HiddenItemsChanged -= this.ForwardHiddenItemsChanged;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Occurs when items are added to or removed from the items collection
+        /// across all managed <see cref="DockWorkspaceManager"/> instances.
+        /// </summary>
+        public event NotifyCollectionChangedEventHandler? ItemsChanged
+        {
+            add
+            {
+                this.itemsChanged += value;
+                // When adding a subscriber, also subscribe to all current workspaces
+                foreach (DockWorkspaceManager workspace in this.SecondaryWorkspaces)
+                {
+                    workspace.ItemsChanged += this.ForwardItemsChanged;
+                }
+            }
+
+            remove
+            {
+                this.itemsChanged -= value;
+                // When removing a subscriber, unsubscribe from all workspaces if no subscribers left
+                if (this.itemsChanged is null)
+                {
+                    foreach (DockWorkspaceManager workspace in this.SecondaryWorkspaces)
+                    {
+                        workspace.ItemsChanged -= this.ForwardItemsChanged;
                     }
                 }
             }
@@ -181,7 +213,7 @@ namespace Meringue.AvaDock.Managers
                 // When adding a subscriber, also subscribe to all current workspaces
                 foreach (DockWorkspaceManager workspace in this.SecondaryWorkspaces)
                 {
-                    workspace.MinimizedItemsChanged += this.HandleWorkspaceMinimizedItemsChanged;
+                    workspace.MinimizedItemsChanged += this.ForwardMinimizedItemsChanged;
                 }
             }
 
@@ -193,11 +225,19 @@ namespace Meringue.AvaDock.Managers
                 {
                     foreach (DockWorkspaceManager workspace in this.SecondaryWorkspaces)
                     {
-                        workspace.MinimizedItemsChanged -= this.HandleWorkspaceMinimizedItemsChanged;
+                        workspace.MinimizedItemsChanged -= this.ForwardMinimizedItemsChanged;
                     }
                 }
             }
         }
+
+        /// <summary>
+        /// Backing field for the <see cref="HiddenItemsChanged"/> event. This is used to manage subscriptions and forward
+        /// events from individual workspaces.
+        /// </summary>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.NamingRules", "SA1300:ElementMustBeginWithUpperCaseLetter", Justification = "Private backing event.")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Private backing event.")]
+        private event NotifyCollectionChangedEventHandler? hiddenItemsChanged;
 
         /// <summary>
         /// Backing field for the <see cref="ItemsChanged"/> event. This is used to manage subscriptions and forward
@@ -218,12 +258,17 @@ namespace Meringue.AvaDock.Managers
         /// <summary>
         /// Gets the list of <see cref="DockItemViewModel"/> that are currently soft-closed and not part of the visuals.
         /// </summary>
-        public IEnumerable<DockItemViewModel> HiddenItems => this.hiddenItems;
+        public IEnumerable<DockItemViewModel> HiddenItems => this.EnumerateHiddenItems();
 
         /// <summary>
         /// Gets the list of <see cref="DockItemViewModel"/> that are currently soft-closed and not part of the visuals.
         /// </summary>
         public IEnumerable<DockItemViewModel> Items => this.EnumerateItems();
+
+        /// <summary>
+        /// Gets the list of <see cref="DockItemViewModel"/> that are currently minimized.
+        /// </summary>
+        public IEnumerable<DockItemViewModel> MinimizedItems => this.EnumerateMinimizedItems();
 
         /// <summary>
         /// Gets the dictionary to maps each <see cref="DockItemViewModel"/> to its original <see cref="DockTabNodeViewModel"/>.
@@ -288,8 +333,21 @@ namespace Meringue.AvaDock.Managers
                                 // usable to get back to the IWindow so we have to explicitly remove the window from the
                                 // manager as well.
                                 this.WindowManager.RemoveWindow(child);
-                                workspace.MinimizedItemsChanged -= this.HandleWorkspaceMinimizedItemsChanged;
-                                workspace.ItemsChanged -= this.HandleWorkspaceItemsChanged;
+                                workspace.HiddenItemsChanged -= this.ForwardHiddenItemsChanged;
+                                workspace.ItemsChanged -= this.ForwardItemsChanged;
+                                workspace.ItemClosed -= this.ForwardItemClosed;
+                                workspace.ItemClosing -= this.ForwardItemClosing;
+                                workspace.ItemHidden -= this.ForwardItemHidden;
+                                workspace.ItemHiding -= this.ForwardItemHiding;
+                                workspace.ItemMinimized -= this.ForwardItemMinimized;
+                                workspace.ItemMinimizing -= this.ForwardItemMinimizing;
+                                workspace.ItemMoved -= this.ForwardItemMoved;
+                                workspace.ItemMoving -= this.ForwardItemMoving;
+                                workspace.ItemRestored -= this.ForwardItemRestored;
+                                workspace.ItemRestoring -= this.ForwardItemRestoring;
+                                workspace.ItemShowing -= this.ForwardItemShowing;
+                                workspace.ItemShown -= this.ForwardItemShown;
+                                workspace.MinimizedItemsChanged -= this.ForwardMinimizedItemsChanged;
                             }
                         });
                 };
@@ -303,8 +361,21 @@ namespace Meringue.AvaDock.Managers
 
                 child.Closed += (sender, eventArgs) => this.OnWorkspaceDetached(new DockWorkspaceDetachedEventArgs(workspace));
 
-                workspace.MinimizedItemsChanged += this.HandleWorkspaceMinimizedItemsChanged;
-                workspace.ItemsChanged += this.HandleWorkspaceItemsChanged;
+                workspace.HiddenItemsChanged += this.ForwardHiddenItemsChanged;
+                workspace.ItemsChanged += this.ForwardItemsChanged;
+                workspace.ItemClosed += this.ForwardItemClosed;
+                workspace.ItemClosing += this.ForwardItemClosing;
+                workspace.ItemHidden += this.ForwardItemHidden;
+                workspace.ItemHiding += this.ForwardItemHiding;
+                workspace.ItemMinimized += this.ForwardItemMinimized;
+                workspace.ItemMinimizing += this.ForwardItemMinimizing;
+                workspace.ItemMoved += this.ForwardItemMoved;
+                workspace.ItemMoving += this.ForwardItemMoving;
+                workspace.ItemRestored += this.ForwardItemRestored;
+                workspace.ItemRestoring += this.ForwardItemRestoring;
+                workspace.ItemShowing += this.ForwardItemShowing;
+                workspace.ItemShown += this.ForwardItemShown;
+                workspace.MinimizedItemsChanged += this.ForwardMinimizedItemsChanged;
 
                 this.DockMonitor.Monitor(workspace.DockTree);
                 this.OnWorkspaceAttached(new DockWorkspaceAttachedEventArgs(workspace));
@@ -314,22 +385,6 @@ namespace Meringue.AvaDock.Managers
             {
                 return null;
             }
-        }
-
-        /// <summary>Closes the <paramref name="item"/>.</summary>
-        /// <param name="item">The <see cref="DockItemViewModel"/> to close.</param>
-        public void CloseItem(DockItemViewModel item)
-        {
-            TargetFrameworkHelper.ThrowIfArgumentNull(item);
-
-            // If the item is already closed or not allowed to be closed, do nothing
-            if (item.DisableClose || !this.Items.Contains(item))
-            {
-                return;
-            }
-
-            this.HandleItemCloseRequested(this, new DockItemCloseRequestedEventArgs(item));
-            DockControlManager.EnsureWorkspaceHasTabNode(this.PrimaryWorkspace);
         }
 
         /// <summary>Find an existing <see cref="DockItemViewModel"/> by id.</summary>
@@ -380,109 +435,6 @@ namespace Meringue.AvaDock.Managers
             return existingNode;
         }
 
-        /// <summary>Find an existing <see cref="DockItemViewModel"/> by id.</summary>
-        /// <param name="itemId">The id of the <see cref="DockItemViewModel"/> whose owning <see cref="DockTabNodeViewModel"/> is to be found.</param>
-        /// <returns>The <see cref="DockTabNodeViewModel"/> found or <c>null</c> if no such <see cref="DockTabNodeViewModel"/> exists.</returns>
-        public DockTabNodeViewModel? FindOwningTabNode(String itemId)
-        {
-            DockTabNodeViewModel? existingNode = this.PrimaryWorkspace.DockTree.FindOwningTabNode(itemId);
-
-            if (existingNode is null)
-            {
-                foreach (DockWorkspaceManager workspace in this.SecondaryWorkspaces)
-                {
-                    existingNode = workspace.DockTree.FindOwningTabNode(itemId);
-
-                    if (existingNode is not null)
-                    {
-                        break;
-                    }
-                }
-            }
-
-            return existingNode;
-        }
-
-        /// <summary>Gets the dimensions for a floating workspace window.</summary>
-        /// <param name="workspace">The <see cref="DockWorkspaceManager"/>.</param>
-        /// <returns>The <see cref="Rect"/> dimensions for the corresponding <see cref="Window"/> or null
-        /// if no such <see cref="Window"/> exists.</returns>
-        [EditorBrowsable(EditorBrowsableState.Advanced)]
-        public Rect? GetFloatingWorkspaceBounds(DockWorkspaceManager workspace)
-        {
-            IWindow? child = this.WindowManager?
-                .Windows
-                .FirstOrDefault(window => (window.DataContext as DockWorkspaceManager) == workspace);
-
-            return child?.Bounds;
-        }
-
-        /// <summary>
-        /// Gets the <see cref="DockWorkspaceManager"/> that contains the provided <paramref name="root"/>.
-        /// </summary>
-        /// <param name="root">The <see cref="DockNodeViewModel"/> to look for.</param>
-        /// <returns>The found <see cref="DockWorkspaceManager"/>, if any.</returns>
-        [EditorBrowsable(EditorBrowsableState.Advanced)]
-        public DockWorkspaceManager? GetWorkspace(DockNodeViewModel root)
-        {
-            TargetFrameworkHelper.ThrowIfArgumentNull(root);
-
-            if (this.PrimaryWorkspace.DockTree == root)
-            {
-                return this.PrimaryWorkspace;
-            }
-            else if (this.PrimaryWorkspace.DockTree.FindNode(root.Id) != null)
-            {
-                return this.PrimaryWorkspace;
-            }
-            else
-            {
-                foreach (IWindow window in this.WindowManager.Windows)
-                {
-                    DockWorkspaceManager? workspace = window.DataContext as DockWorkspaceManager;
-
-                    if (workspace?.DockTree == root)
-                    {
-                        return workspace;
-                    }
-                    else if (workspace?.DockTree.FindNode(root.Id) != null)
-                    {
-                        return workspace;
-                    }
-                }
-            }
-
-            return null;
-        }
-
-        /// <summary>
-        /// Gets the <see cref="DockWorkspaceManager"/> that contains the provided <paramref name="item"/>.
-        /// </summary>
-        /// <param name="item">The <see cref="DockItemViewModel"/> to look for.</param>
-        /// <returns>The found <see cref="DockWorkspaceManager"/>, if any.</returns>
-        [EditorBrowsable(EditorBrowsableState.Advanced)]
-        public DockWorkspaceManager? GetWorkspace(DockItemViewModel item)
-        {
-            TargetFrameworkHelper.ThrowIfArgumentNull(item);
-
-            if (this.PrimaryWorkspace.FindItem(item.Id) is not null)
-            {
-                return this.PrimaryWorkspace;
-            }
-            else
-            {
-                foreach (DockWorkspaceManager workspace in this.SecondaryWorkspaces)
-                {
-                    if (workspace.FindItem(item.Id) is not null)
-                    {
-                        return workspace;
-                    }
-                }
-            }
-
-            return null;
-        }
-
         /// <summary>
         /// Removes the floating window associated with the specified
         /// <see cref="DockWorkspaceManager"/> and detaches it from management.
@@ -496,6 +448,21 @@ namespace Meringue.AvaDock.Managers
             IWindow? child = this.WindowManager?
                 .Windows
                 .FirstOrDefault(window => (window.DataContext as DockWorkspaceManager) == workspace);
+
+            foreach (DockItemViewModel item in workspace.HiddenItems)
+            {
+                _ = this.PrimaryWorkspace.AddItem(item);
+            }
+
+            foreach (DockItemViewModel item in workspace.Items)
+            {
+                _ = this.PrimaryWorkspace.AddItem(item);
+            }
+
+            foreach (DockItemViewModel item in workspace.MinimizedItems)
+            {
+                _ = this.PrimaryWorkspace.AddItem(item);
+            }
 
             this.DockMonitor.Unmonitor(workspace.DockTree);
             child?.Close();
@@ -516,9 +483,11 @@ namespace Meringue.AvaDock.Managers
         /// are handled correctly.
         /// </summary>
         /// <param name="item">The <see cref="DockItemViewModel"/> to add as a closed item.</param>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Refactor in progress.")]
         internal void AddHiddenItem(DockItemViewModel item)
         {
-            this.hiddenItems.Add(item);
+            DockContext.SetItemState(item, DockItemState.Hidden);
+            _ = this.PrimaryWorkspace.AddItem(item);
         }
 
         /// <summary>
@@ -539,21 +508,12 @@ namespace Meringue.AvaDock.Managers
 
             if (parent is not null)
             {
-                DockSplitNodeViewModel split = new(Orientation.Horizontal)
-                {
-                    Id = $"float:{Guid.NewGuid():N}",
-                };
-
-                DockTabNodeViewModel floatingTabNode = new();
-
-                split.AddChild(floatingTabNode);
-
-                DockWorkspaceManager newWindowViewModel = new(split);
+                DockWorkspaceManager newWorkspace = DockControlManager.CreateMinimalWorkspace();
 
                 windowSize ??= new Size(300, 200);
 
                 IWindow? child = this.AttachSecondaryWorkspace(
-                    newWindowViewModel,
+                    newWorkspace,
                     screenLocation,
                     windowSize.Value);
 
@@ -563,13 +523,13 @@ namespace Meringue.AvaDock.Managers
                     {
                         if (eventArgs.CloseReason == WindowCloseReason.WindowClosing)
                         {
-                            if (newWindowViewModel.Items.ToList().Any(item => item.DisableClose))
+                            if (newWorkspace.Items.ToList().Any(item => item.DisableClose))
                             {
                                 eventArgs.Cancel = true;
                             }
                             else
                             {
-                                foreach (DockItemViewModel item in newWindowViewModel.Items.ToList())
+                                foreach (DockItemViewModel item in newWorkspace.Items.ToList())
                                 {
                                     if (item.HideCommand.CanExecute(null))
                                     {
@@ -581,94 +541,13 @@ namespace Meringue.AvaDock.Managers
                     };
 
                     child.Show(this.WindowManager.MainWindow);
-                    _ = this.MoveItem(item, floatingTabNode, DockControlManager.NewWindowMoveOptions.Placement, DockControlManager.NewWindowMoveOptions.RequiredOrientation);
-
-                    DockControlManager.EnsureWorkspaceHasTabNode(this.PrimaryWorkspace);
+                    item.RequestMove(parent, newWorkspace.DockTree.FindFirstTabNode()!, MovePlacement.On, null);
                 }
                 else
                 {
                 }
             }
         }
-
-        /// <summary>
-        /// Moves the specified <paramref name="item"/> to a new location in the layout.
-        /// </summary>
-        /// <param name="item">The <see cref="DockItemViewModel"/> being moved.</param>
-        /// <param name="targetNode">The <see cref="DockNodeViewModel"/> that is the drop target for the operation.</param>
-        /// <param name="placement">How the item should be placed relative to the target node.</param>
-        /// <param name="orientation">The orientation required for the placing the <see cref="DockItemViewModel"/>.</param>
-        /// <returns>
-        /// <c>true</c> if the <see cref="DockItemViewModel"/> was successfully moved; otherwise, <c>false</c>.
-        /// </returns>
-        internal Boolean MoveItem(DockItemViewModel item, DockTabNodeViewModel targetNode, MovePlacement placement, Orientation? orientation)
-        {
-            TargetFrameworkHelper.ThrowIfArgumentNull(item);
-            TargetFrameworkHelper.ThrowIfArgumentNull(targetNode);
-
-            DockTabNodeViewModel? sourceTabNode = this.FindParentTabNode(item);
-            DockItemMovingEventArgs movingEventArgs = new(item, sourceTabNode, targetNode, placement, orientation);
-
-            if (!movingEventArgs.Cancel)
-            {
-                MoveOperation operation = new(
-                    this,
-                    item,
-                    targetNode,
-                    placement,
-                    orientation);
-
-                Boolean result = operation.Execute();
-                DockControlManager.EnsureWorkspaceHasTabNode(this.PrimaryWorkspace);
-
-                if (result)
-                {
-                    this.OnItemMoved(new DockItemMovedEventArgs(item, sourceTabNode, targetNode, placement, orientation));
-                }
-
-                return result;
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Raises the <see cref="ItemClosed"/> event.
-        /// </summary>
-        /// <param name="eventArgs">The <see cref="DockItemClosedEventArgs"/> for the event.</param>
-        protected virtual void OnItemClosed(DockItemClosedEventArgs eventArgs) => this.ItemClosed?.Invoke(this, eventArgs);
-
-        /// <summary>
-        /// Raises the <see cref="ItemClosing"/> event when a workspace is in the process of being attached.
-        /// </summary>
-        /// <param name="eventArgs">The <see cref="DockItemClosingEventArgs"/> for the event.</param>
-        protected virtual void OnItemClosing(DockItemClosingEventArgs eventArgs) => this.ItemClosing?.Invoke(this, eventArgs);
-
-        /// <summary>
-        /// Raises the <see cref="ItemHidden"/> event when an item is hidden.
-        /// </summary>
-        /// <param name="eventArgs">The <see cref="DockItemHiddenEventArgs"/> for the event.</param>
-        protected virtual void OnItemHidden(DockItemHiddenEventArgs eventArgs) => this.ItemHidden?.Invoke(this, eventArgs);
-
-        /// <summary>
-        /// Raises the <see cref="ItemHiding"/> event when a item is being hidden.
-        /// </summary>
-        /// <param name="eventArgs">The <see cref="DockItemHidingEventArgs"/> for the event.</param>
-        protected virtual void OnItemHiding(DockItemHidingEventArgs eventArgs) => this.ItemHiding?.Invoke(this, eventArgs);
-
-        /// <summary>
-        /// Raises the <see cref="ItemMinimized"/> event.
-        /// </summary>
-        /// <param name="eventArgs">The <see cref="DockItemMinimizedEventArgs"/> that is being attached.</param>
-        protected virtual void OnItemMinimized(DockItemMinimizedEventArgs eventArgs) => this.ItemMinimized?.Invoke(this, eventArgs);
-
-        /// <summary>
-        /// Raises the <see cref="ItemMinimizing"/> event when an item is in the process of being minimized.
-        /// </summary>
-        /// <param name="eventArgs">The <see cref="DockItemMinimizingEventArgs"/> that is being attached.</param>
-        protected virtual void OnItemMinimizing(DockItemMinimizingEventArgs eventArgs) => this.ItemMinimizing?.Invoke(this, eventArgs);
 
         /// <summary>
         /// Raises the <see cref="ItemMoved"/> event when an item has been moved.
@@ -683,41 +562,20 @@ namespace Meringue.AvaDock.Managers
         protected virtual void OnItemMoving(DockItemMovingEventArgs eventArgs) => this.ItemMoving?.Invoke(this, eventArgs);
 
         /// <summary>
-        /// Raises the <see cref="ItemRestored"/> event.
-        /// </summary>
-        /// <param name="eventArgs">The <see cref="DockItemRestoredEventArgs"/> for the event.</param>
-        protected virtual void OnItemRestored(DockItemRestoredEventArgs eventArgs) => this.ItemRestored?.Invoke(this, eventArgs);
-
-        /// <summary>
-        /// Raises the <see cref="ItemRestoring"/> event when an item is in the process of being restored.
-        /// </summary>
-        /// <param name="eventArgs">The <see cref="DockItemRestoringEventArgs"/> for the event.</param>
-        protected virtual void OnItemRestoring(DockItemRestoringEventArgs eventArgs) => this.ItemRestoring?.Invoke(this, eventArgs);
-
-        /// <summary>
-        /// Raises the <see cref="ItemShown"/> event.
-        /// </summary>
-        /// <param name="eventArgs">The <see cref="DockItemShownEventArgs"/> for the event.</param>
-        protected virtual void OnItemShown(DockItemShownEventArgs eventArgs) => this.ItemShown?.Invoke(this, eventArgs);
-
-        /// <summary>
-        /// Raises the <see cref="ItemShowing"/> event when a workspace is in the process of being attached.
-        /// </summary>
-        /// <param name="eventArgs">The <see cref="DockItemShowingEventArgs"/> for the event.</param>
-        protected virtual void OnItemShowing(DockItemShowingEventArgs eventArgs) => this.ItemShowing?.Invoke(this, eventArgs);
-
-        /// <summary>
         /// Handles a request from a <see cref="DockItemViewModel"/> to be show in the UI.
         /// </summary>
         /// <param name="eventArgs">The <see cref="LayoutChangedEventArgs"/> for the event.</param>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0051:Remove unused private members", Justification = "WIP")]
         protected virtual void OnLayoutChanged(LayoutChangedEventArgs eventArgs) => this.LayoutChanged?.Invoke(this, eventArgs);
 
         /// <summary>
         /// Raises the <see cref="WorkspaceAttached"/> event.
         /// </summary>
         /// <param name="eventArgs">The <see cref="DockWorkspaceAttachedEventArgs"/> for the event.</param>
-        protected virtual void OnWorkspaceAttached(DockWorkspaceAttachedEventArgs eventArgs) => this.WorkspaceAttached?.Invoke(this, eventArgs);
+        protected virtual void OnWorkspaceAttached(DockWorkspaceAttachedEventArgs eventArgs)
+        {
+            this.WorkspaceAttached?.Invoke(this, eventArgs);
+            this.OnLayoutChanged(new LayoutChangedEventArgs());
+        }
 
         /// <summary>
         /// Raises the <see cref="WorkspaceAttached"/> event when a workspace is in the process of being attached.
@@ -730,7 +588,11 @@ namespace Meringue.AvaDock.Managers
         /// </summary>
         /// <param name="eventArgs">The <see cref="DockWorkspaceDetachedEventArgs"/> for the event.</param>
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0051:Remove unused private members", Justification = "WIP")]
-        protected virtual void OnWorkspaceDetached(DockWorkspaceDetachedEventArgs eventArgs) => this.WorkspaceDetached?.Invoke(this, eventArgs);
+        protected virtual void OnWorkspaceDetached(DockWorkspaceDetachedEventArgs eventArgs)
+        {
+            this.WorkspaceDetached?.Invoke(this, eventArgs);
+            this.OnLayoutChanged(new LayoutChangedEventArgs());
+        }
 
         /// <summary>
         /// Raises the <see cref="WorkspaceDetached"/> event.
@@ -740,21 +602,45 @@ namespace Meringue.AvaDock.Managers
         protected virtual void OnWorkspaceDetaching(DockWorkspaceDetachingEventArgs eventArgs) => this.WorkspaceDetaching?.Invoke(this, eventArgs);
 
         /// <summary>
-        /// Ensures that <see cref="PrimaryWorkspace"/> always has at least one <see cref="DockTabNodeViewModel"/>
-        /// so that it is always a valid drop target.
+        /// Helper method to initialize a new <see cref="DockWorkspaceManager"/>.
         /// </summary>
-        /// <param name="workspace">The <see cref="DockWorkspaceManager"/> to validate.</param>
-        private static void EnsureWorkspaceHasTabNode(DockWorkspaceManager workspace)
+        /// <param name="id">If provided, the value for the new workspace's ID property. If null,
+        /// the new workspace will be created with a random ID.</param>
+        /// <returns>The new <see cref="DockWorkspaceManager"/>.</returns>
+        private static DockWorkspaceManager CreateMinimalWorkspace(String? id = null)
         {
-            if (workspace.DockTree is not DockSplitNodeViewModel splitNode)
+            if (String.IsNullOrEmpty(id))
             {
-                return;
+                id = $"{Guid.NewGuid():N}";
             }
 
-            if (!splitNode.Children.Any())
+            DockSplitNodeViewModel split = new(Orientation.Horizontal)
             {
-                splitNode.AddChild(new DockTabNodeViewModel() { Id = $"default:{Guid.NewGuid()}" });
-                workspace.CommitChanges(collapseTree: false);
+                Id = $"float:{id}",
+            };
+
+            DockTabNodeViewModel floatingTabNode = new();
+            split.AddChild(floatingTabNode);
+            return new DockWorkspaceManager(split);
+        }
+
+        /// <summary>
+        /// Enumerates all of the <see cref="DockItemViewModel"/> in the current instance.
+        /// </summary>
+        /// <returns>The enumeration of <see cref="DockItemViewModel"/>s found.</returns>
+        private IEnumerable<DockItemViewModel> EnumerateHiddenItems()
+        {
+            foreach (DockItemViewModel item in this.PrimaryWorkspace.HiddenItems)
+            {
+                yield return item;
+            }
+
+            foreach (DockWorkspaceManager workspace in this.SecondaryWorkspaces)
+            {
+                foreach (DockItemViewModel item in workspace.HiddenItems)
+                {
+                    yield return item;
+                }
             }
         }
 
@@ -780,6 +666,26 @@ namespace Meringue.AvaDock.Managers
             foreach (DockItemViewModel item in this.HiddenItems)
             {
                 yield return item;
+            }
+        }
+
+        /// <summary>
+        /// Enumerates all of the hidden <see cref="DockItemViewModel"/> in the current instance.
+        /// </summary>
+        /// <returns>The enumeration of <see cref="DockItemViewModel"/>s found.</returns>
+        private IEnumerable<DockItemViewModel> EnumerateMinimizedItems()
+        {
+            foreach (DockItemViewModel item in this.PrimaryWorkspace.MinimizedItems)
+            {
+                yield return item;
+            }
+
+            foreach (DockWorkspaceManager workspace in this.SecondaryWorkspaces)
+            {
+                foreach (DockItemViewModel item in workspace.MinimizedItems)
+                {
+                    yield return item;
+                }
             }
         }
 
@@ -810,245 +716,140 @@ namespace Meringue.AvaDock.Managers
         }
 
         /// <summary>
-        /// Handles a request from a <see cref="DockItemViewModel"/> to be closed
-        /// from the hidden state back to its original <see cref="DockTabNodeViewModel"/> panel.
+        /// Handles hidden items changes in individual workspaces and forwards to the aggregate event.
         /// </summary>
-        /// <param name="sender">The <see cref="Object"/> that requested closing.</param>
-        /// <param name="eventArgs">The event arguments containing additional information about the restore request.</param>
-        private void HandleItemCloseRequested(Object? sender, DockItemCloseRequestedEventArgs eventArgs)
-        {
-            DockItemViewModel item = eventArgs.Item;
-            DockItemClosingEventArgs closingEventArgs = new(item);
-            this.OnItemClosing(closingEventArgs);
-
-            if (!closingEventArgs.Cancel)
-            {
-                if (this.hiddenItems.Contains(item))
-                {
-                    _ = this.hiddenItems.Remove(item);
-                }
-                else
-                {
-                    DockTabNodeViewModel? tabNode = this.FindParentTabNode(item);
-                    System.Diagnostics.Debug.Assert(tabNode is not null, "Couldn't find item being closed.");
-
-                    if (tabNode is not null)
-                    {
-                        DockWorkspaceManager? workspace = this.GetWorkspace(tabNode);
-                        _ = tabNode.RemoveTab(item);
-                        workspace?.CommitChanges();
-                    }
-                }
-
-                this.OnItemClosed(new DockItemClosedEventArgs(item));
-            }
-        }
-
-        /// <summary>
-        /// Handles a request from a <see cref="DockItemViewModel"/> to be hidden in the UI.
-        /// </summary>
-        /// <param name="sender">The <see cref="Object"/> that requested to be hidden.</param>
-        /// <param name="eventArgs">The event arguments containing additional information about the hide request.</param>
-        private void HandleItemHideRequested(Object? sender, DockItemHideRequestedEventArgs eventArgs)
-        {
-            DockItemViewModel item = eventArgs.Item;
-
-            if (!this.hiddenItems.Contains(item))
-            {
-                DockTabNodeViewModel? tabNode = this.FindParentTabNode(item);
-                System.Diagnostics.Debug.Assert(tabNode is not null, "Couldn't find item being hidden.");
-
-                if (tabNode is not null)
-                {
-                    DockWorkspaceManager? workspace = this.GetWorkspace(tabNode);
-                    System.Diagnostics.Debug.Assert(workspace is not null, "Couldn't find workspace for owned item.");
-
-                    if (workspace is not null)
-                    {
-                        DockItemHidingEventArgs hidingEventArgs = new(item);
-                        this.OnItemHiding(hidingEventArgs);
-
-                        if (!hidingEventArgs.Cancel)
-                        {
-                            DockContext.SetPreferredWorkspaceId(item, workspace.Id);
-
-                            if (workspace.RemoveItem(item))
-                            {
-                                this.hiddenItems.Add(item);
-                                this.OnPropertyChanged(nameof(this.HiddenItems));
-                                workspace.CommitChanges();
-                                this.OnItemHidden(new DockItemHiddenEventArgs(item));
-                            }
-                        }
-                    }
-                }
-            }
-            else
-            {
-                System.Diagnostics.Debug.Assert(!this.hiddenItems.Contains(item), "Can't re-hide a hidden item.");
-            }
-
-            DockControlManager.EnsureWorkspaceHasTabNode(this.PrimaryWorkspace);
-        }
-
-        /// <summary>
-        /// Handles a request from a <see cref="DockItemViewModel"/> to be minimized in the UI.
-        /// </summary>
-        /// <param name="sender">The <see cref="Object"/> that requested to be minimized.</param>
-        /// <param name="eventArgs">The event arguments containing additional information about the minize request.</param>
-        private void HandleItemMinimizeRequested(Object? sender, DockItemMinimizeRequestedEventArgs eventArgs)
-        {
-            DockWorkspaceManager? workspace = this.GetWorkspace(eventArgs.Item);
-
-            if (workspace != null)
-            {
-                workspace.HoveredItem = null;
-                DockItemViewModel item = eventArgs.Item;
-                System.Diagnostics.Debug.Assert(!workspace.MinimizedItems.Contains(item), "Item should not already be minimized when minimizing it.");
-
-                DockTabNodeViewModel? owningTab = workspace.DockTree.FindOwningTabNode(item.Id);
-
-                if (owningTab is not null)
-                {
-                    DockItemMinimizingEventArgs minimizingEventArgs = new(item);
-                    this.OnItemMinimizing(minimizingEventArgs);
-
-                    if (!minimizingEventArgs.Cancel)
-                    {
-                        if (workspace.MinimizeItem(item))
-                        {
-                            this.HookItem(item);
-                            this.OnItemMinimized(new DockItemMinimizedEventArgs(item));
-                        }
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Handles a request from a <see cref="DockItemViewModel"/> to be moved in the UI.
-        /// </summary>
-        /// <param name="sender">The <see cref="Object"/> that requested the move.</param>
-        /// <param name="eventArgs">The event arguments containing additional information about the move request.</param>
-        private void HandleItemMoveRequested(Object? sender, DockItemMoveRequestedEventArgs eventArgs) =>
-            _ = this.MoveItem(eventArgs.Item, eventArgs.ToNode, eventArgs.Placement, eventArgs.RequiredOrientation);
-
-        /// <summary>
-        /// Handles a request from a <see cref="DockItemViewModel"/> to be restored from the minimized state
-        /// back to its original <see cref="DockTabNodeViewModel"/> panel.
-        /// </summary>
-        /// <param name="sender">The <see cref="Object"/> that requested restoration.</param>
-        /// <param name="eventArgs">The event arguments containing additional information about the restore request.</param>
-        private void HandleItemRestoreRequested(Object? sender, DockItemRestoreRequestedEventArgs eventArgs)
-        {
-            DockWorkspaceManager? workspace = this.GetWorkspace(eventArgs.Item);
-
-            if (workspace != null)
-            {
-                workspace.HoveredItem = null;
-
-                DockItemViewModel item = eventArgs.Item;
-                DockItemRestoringEventArgs restoringEventArgs = new(item);
-
-                this.OnItemRestoring(restoringEventArgs);
-
-                if (!restoringEventArgs.Cancel)
-                {
-                    if (workspace.RestoreItem(item))
-                    {
-                        this.OnItemRestored(new DockItemRestoredEventArgs(item));
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Handles a request from a <see cref="DockItemViewModel"/> to be show in the UI.
-        /// </summary>
-        /// <param name="sender">The <see cref="Object"/> that requested to be shown.</param>
-        /// <param name="eventArgs">The event arguments containing additional information about the show request.</param>
-        private void HandleItemShowRequested(Object? sender, DockItemShowRequestedEventArgs eventArgs)
-        {
-            DockItemViewModel item = eventArgs.Item;
-
-            if (this.hiddenItems.Contains(item))
-            {
-                String? workspaceId = DockContext.GetPreferredWorkspaceId(item);
-                DockWorkspaceManager workspace = this.PrimaryWorkspace;
-
-                if (workspaceId is not null && workspaceId != this.PrimaryWorkspace.Id)
-                {
-                    foreach (DockWorkspaceManager floatingWorkspace in this.SecondaryWorkspaces.ToList())
-                    {
-                        if (floatingWorkspace.Id == workspaceId)
-                        {
-                            workspace = floatingWorkspace;
-                            break;
-                        }
-                    }
-                }
-
-                DockItemShowingEventArgs showingEventArgs = new(item);
-                this.OnItemShowing(showingEventArgs);
-
-                if (!showingEventArgs.Cancel)
-                {
-                    if (this.hiddenItems.Remove(item))
-                    {
-                        Boolean added = workspace.AddItem(item);
-                        System.Diagnostics.Debug.Assert(added, "Failed to add item to workspace during show request.");
-
-                        this.OnPropertyChanged(nameof(this.HiddenItems));
-                        DockContext.ClearPreferredWorkspaceId(item);
-                        workspace.CommitChanges();
-                        this.OnItemShown(new DockItemShownEventArgs(item));
-                    }
-                }
-            }
-            else
-            {
-                System.Diagnostics.Debug.Assert(this.hiddenItems.Contains(item), "Can't show an item that isn't hidden.");
-            }
-        }
+        /// <param name="sender">The workspace whose items changed.</param>
+        /// <param name="eventArgs">Information about the change.</param>
+        private void ForwardHiddenItemsChanged(Object? sender, NotifyCollectionChangedEventArgs eventArgs) => this.hiddenItemsChanged?.Invoke(sender, eventArgs);
 
         /// <summary>
         /// Handles items changes in individual workspaces and forwards to the aggregate event.
         /// </summary>
         /// <param name="sender">The workspace whose items changed.</param>
         /// <param name="eventArgs">Information about the change.</param>
-        private void HandleWorkspaceItemsChanged(Object? sender, NotifyCollectionChangedEventArgs eventArgs)
-        {
-            this.itemsChanged?.Invoke(sender, eventArgs);
-        }
+        private void ForwardItemsChanged(Object? sender, NotifyCollectionChangedEventArgs eventArgs) => this.itemsChanged?.Invoke(sender, eventArgs);
 
         /// <summary>
         /// Handles minimized items changes in individual workspaces and forwards to the aggregate event.
         /// </summary>
         /// <param name="sender">The workspace whose minimized items changed.</param>
         /// <param name="eventArgs">Information about the change.</param>
-        private void HandleWorkspaceMinimizedItemsChanged(Object? sender, NotifyCollectionChangedEventArgs eventArgs)
+        private void ForwardMinimizedItemsChanged(Object? sender, NotifyCollectionChangedEventArgs eventArgs) => this.minimizedItemsChanged?.Invoke(sender, eventArgs);
+
+        /// <summary>
+        /// Forwards <see cref="DockItemClosedEventArgs"/> events from all workspaces to event subscribers.
+        /// </summary>
+        /// <param name="sender">The <see cref="Object"/> that raised the event.</param>
+        /// <param name="eventArgs">The event arguments containing additional information about the event request.</param>
+        private void ForwardItemClosed(Object? sender, DockItemClosedEventArgs eventArgs)
         {
-            if (eventArgs.Action is NotifyCollectionChangedAction.Add && eventArgs.NewItems is not null)
-            {
-                foreach (DockItemViewModel item in eventArgs.NewItems)
-                {
-                    this.HookItem(item);
-                }
-            }
-
-            if (eventArgs.Action is NotifyCollectionChangedAction.Remove or NotifyCollectionChangedAction.Reset && eventArgs.OldItems is not null)
-            {
-                foreach (DockItemViewModel item in eventArgs.OldItems)
-                {
-                    this.UnhookItem(item);
-                }
-            }
-
-            // This will be called a bit too aggressively, but the cost is cheap. We'll worry about improving
-            // if we ever see it in a hotspot.
-            DockControlManager.EnsureWorkspaceHasTabNode(this.PrimaryWorkspace);
-            this.minimizedItemsChanged?.Invoke(sender, eventArgs);
+            this.ItemClosed?.Invoke(sender, eventArgs);
+            this.OnLayoutChanged(new LayoutChangedEventArgs());
         }
+
+        /// <summary>
+        /// Forwards <see cref="DockItemClosingEventArgs"/> events from all workspaces to event subscribers.
+        /// </summary>
+        /// <param name="sender">The <see cref="Object"/> that raised the event.</param>
+        /// <param name="eventArgs">The event arguments containing additional information about the event request.</param>
+        private void ForwardItemClosing(Object? sender, DockItemClosingEventArgs eventArgs) => this.ItemClosing?.Invoke(sender, eventArgs);
+
+        /// <summary>
+        /// Forwards <see cref="DockItemHiddenEventArgs"/> events from all workspaces to event subscribers.
+        /// </summary>
+        /// <param name="sender">The <see cref="Object"/> that raised the event.</param>
+        /// <param name="eventArgs">The event arguments containing additional information about the event request.</param>
+        private void ForwardItemHidden(Object? sender, DockItemHiddenEventArgs eventArgs)
+        {
+            this.ItemHidden?.Invoke(sender, eventArgs);
+            this.OnLayoutChanged(new LayoutChangedEventArgs());
+        }
+
+        /// <summary>
+        /// Forwards <see cref="DockItemHidingEventArgs"/> events from all workspaces to event subscribers.
+        /// </summary>
+        /// <param name="sender">The <see cref="Object"/> that raised the event.</param>
+        /// <param name="eventArgs">The event arguments containing additional information about the event request.</param>
+        private void ForwardItemHiding(Object? sender, DockItemHidingEventArgs eventArgs) => this.ItemHiding?.Invoke(sender, eventArgs);
+
+        /// <summary>
+        /// Forwards <see cref="DockItemMinimizedEventArgs"/> events from all workspaces to event subscribers.
+        /// </summary>
+        /// <param name="sender">The <see cref="Object"/> that raised the event.</param>
+        /// <param name="eventArgs">The event arguments containing additional information about the event request.</param>
+        private void ForwardItemMinimized(Object? sender, DockItemMinimizedEventArgs eventArgs)
+        {
+            this.ItemMinimized?.Invoke(sender, eventArgs);
+            this.OnLayoutChanged(new LayoutChangedEventArgs());
+        }
+
+        /// <summary>
+        /// Forwards <see cref="DockItemMinimizingEventArgs"/> events from all workspaces to event subscribers.
+        /// </summary>
+        /// <param name="sender">The <see cref="Object"/> that raised the event.</param>
+        /// <param name="eventArgs">The event arguments containing additional information about the event request.</param>
+        private void ForwardItemMinimizing(Object? sender, DockItemMinimizingEventArgs eventArgs) => this.ItemMinimizing?.Invoke(sender, eventArgs);
+
+        /// <summary>
+        /// Forwards <see cref="DockItemMovedEventArgs"/> events from all workspaces to event subscribers.
+        /// </summary>
+        /// <param name="sender">The <see cref="Object"/> that raised the event.</param>
+        /// <param name="eventArgs">The event arguments containing additional information about the event request.</param>
+        private void ForwardItemMoved(Object? sender, DockItemMovedEventArgs eventArgs)
+        {
+            this.ItemMoved?.Invoke(sender, eventArgs);
+            this.OnLayoutChanged(new LayoutChangedEventArgs());
+        }
+
+        /// <summary>
+        /// Forwards <see cref="DockItemMovingEventArgs"/> events from all workspaces to event subscribers.
+        /// </summary>
+        /// <param name="sender">The <see cref="Object"/> that raised the event.</param>
+        /// <param name="eventArgs">The event arguments containing additional information about the event request.</param>
+        private void ForwardItemMoving(Object? sender, DockItemMovingEventArgs eventArgs) => this.ItemMoving?.Invoke(sender, eventArgs);
+
+        /// <summary>
+        /// Forwards <see cref="DockItemRestoredEventArgs"/> events from all workspaces to event subscribers.
+        /// </summary>
+        /// <param name="sender">The <see cref="Object"/> that raised the event.</param>
+        /// <param name="eventArgs">The event arguments containing additional information about the event request.</param>
+        private void ForwardItemRestored(Object? sender, DockItemRestoredEventArgs eventArgs)
+        {
+            this.ItemRestored?.Invoke(sender, eventArgs);
+            this.OnLayoutChanged(new LayoutChangedEventArgs());
+        }
+
+        /// <summary>
+        /// Forwards <see cref="DockItemRestoringEventArgs"/> events from all workspaces to event subscribers.
+        /// </summary>
+        /// <param name="sender">The <see cref="Object"/> that raised the event.</param>
+        /// <param name="eventArgs">The event arguments containing additional information about the event request.</param>
+        private void ForwardItemRestoring(Object? sender, DockItemRestoringEventArgs eventArgs) => this.ItemRestoring?.Invoke(sender, eventArgs);
+
+        /// <summary>
+        /// Forwards <see cref="DockItemShowingEventArgs"/> events from all workspaces to event subscribers.
+        /// </summary>
+        /// <param name="sender">The <see cref="Object"/> that raised the event.</param>
+        /// <param name="eventArgs">The event arguments containing additional information about the event request.</param>
+        private void ForwardItemShowing(Object? sender, DockItemShowingEventArgs eventArgs) => this.ItemShowing?.Invoke(sender, eventArgs);
+
+        /// <summary>
+        /// Forwards <see cref="DockItemShownEventArgs"/> events from all workspaces to event subscribers.
+        /// </summary>
+        /// <param name="sender">The <see cref="Object"/> that raised the event.</param>
+        /// <param name="eventArgs">The event arguments containing additional information about the event request.</param>
+        private void ForwardItemShown(Object? sender, DockItemShownEventArgs eventArgs)
+        {
+            this.ItemShown?.Invoke(sender, eventArgs);
+            this.OnLayoutChanged(new LayoutChangedEventArgs());
+        }
+
+        /// <summary>
+        /// Handles a request from a <see cref="DockItemViewModel"/> to be floated in the UI.
+        /// </summary>
+        /// <param name="sender">The <see cref="Object"/> that requested to be minimized.</param>
+        /// <param name="eventArgs">The event arguments containing additional information about the float request.</param>
+        private void HandleItemFloatRequested(Object? sender, DockItemFloatRequestedEventArgs eventArgs) => this.FloatItem(eventArgs.Item, eventArgs.ScreenLocation, eventArgs.WindowSize);
 
         /// <summary>
         /// Handles hooking a single <see cref="DockItemViewModel"/> so the current <see cref="DockControlManager"/>
@@ -1057,74 +858,7 @@ namespace Meringue.AvaDock.Managers
         /// <param name="item">The <see cref="DockItemViewModel"/> to proces.</param>
         private void HookItem(DockItemViewModel item)
         {
-            item.CloseRequested += this.HandleItemCloseRequested;
-            ////item.FloatRequested += this.HandleItemFloatRequested;
-            item.HideRequested += this.HandleItemHideRequested;
-            item.MinimizeRequested += this.HandleItemMinimizeRequested;
-            item.MoveRequested += this.HandleItemMoveRequested;
-            item.RestoreRequested += this.HandleItemRestoreRequested;
-            item.ShowRequested += this.HandleItemShowRequested;
-
-            DockContext.SetDockHost(item, this);
-        }
-
-        /// <summary>
-        /// Handles changes to the <see cref="hiddenItems"/> collection by attaching
-        /// or detaching event handlers for each added or removed <see cref="DockItemViewModel"/>.
-        /// </summary>
-        /// <param name="sender">
-        /// The <see cref="Object"/> that raised the event (the <see cref="ObservableCollection{T}"/>).
-        /// </param>
-        /// <param name="eventArgs">
-        /// The <see cref="NotifyCollectionChangedEventArgs"/> containing details
-        /// about which items were added, removed, or reset.
-        /// </param>
-        private void OnHiddenItemsChanged(Object? sender, NotifyCollectionChangedEventArgs eventArgs)
-        {
-            if (eventArgs.Action is NotifyCollectionChangedAction.Add && eventArgs.NewItems is not null)
-            {
-                foreach (DockItemViewModel item in eventArgs.NewItems)
-                {
-                    this.HookItem(item);
-                }
-            }
-
-            if (eventArgs.Action is NotifyCollectionChangedAction.Remove && eventArgs.OldItems is not null)
-            {
-                foreach (DockItemViewModel item in eventArgs.OldItems)
-                {
-                    this.UnhookItem(item);
-                }
-            }
-
-            // Reset - collection replaced (rare, but possible)
-            if (eventArgs.Action is NotifyCollectionChangedAction.Reset)
-            {
-                foreach (DockItemViewModel item in eventArgs.OldItems ?? Array.Empty<DockItemViewModel>())
-                {
-                    this.UnhookItem(item);
-                }
-
-                foreach (DockItemViewModel item in this.hiddenItems)
-                {
-                    this.HookItem(item);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Raises the <see cref="ItemMinimized"/> event when an item is being minimized.
-        /// </summary>
-        /// <param name="sender">The <see cref="Object"/> that raised the event.</param>
-        /// <param name="eventArgs">The <see cref="DockItemMinimizedEventArgs"/> for the event.</param>
-        private void HandleWorkspaceItemMinimized(Object? sender, DockItemMinimizedEventArgs eventArgs)
-        {
-            if (sender is DockWorkspaceManager workspace)
-            {
-                DockControlManager.EnsureWorkspaceHasTabNode(workspace);
-            }
-
-            this.ItemMinimized?.Invoke(sender, eventArgs);
+            item.FloatRequested += this.HandleItemFloatRequested;
         }
 
         /// <summary>
@@ -1132,251 +866,9 @@ namespace Meringue.AvaDock.Managers
         /// will no longer be notified of changes.
         /// </summary>
         /// <param name="item">The <see cref="DockItemViewModel"/> to process.</param>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Placeholder method.")]
         private void UnhookItem(DockItemViewModel item)
         {
-            item.CloseRequested -= this.HandleItemCloseRequested;
-            ////item.FloatRequested -= this.HandleItemFloatRequested;
-            item.HideRequested -= this.HandleItemHideRequested;
-            item.MinimizeRequested -= this.HandleItemMinimizeRequested;
-            item.MoveRequested -= this.HandleItemMoveRequested;
-            item.RestoreRequested -= this.HandleItemRestoreRequested;
-            item.ShowRequested -= this.HandleItemShowRequested;
-        }
-
-        /// <summary>
-        /// Encapsulates the logic for moving a <see cref="DockItemViewModel"/> within the dock layout.
-        /// </summary>
-        private sealed class MoveOperation
-        {
-            /// <summary>
-            /// Initializes a new instance of the <see cref="MoveOperation"/> class.
-            /// </summary>
-            /// <param name="owner">The <see cref="DockLayoutManager"/> that owns this operation.</param>
-            /// <param name="item">The <see cref="DockItemViewModel"/> being moved.</param>
-            /// <param name="targetNode">The target node to which the <see cref="DockItemViewModel"/> is being moved.</param>
-            /// <param name="placement">How the item should be placed relative to the target node.</param>
-            /// <param name="orientation">The orientation required for the placing the <see cref="DockItemViewModel"/>.</param>
-            public MoveOperation(
-                DockControlManager owner,
-                DockItemViewModel item,
-                DockTabNodeViewModel targetNode,
-                MovePlacement placement,
-                Orientation? orientation)
-            {
-                this.Item = item;
-                this.Owner = owner;
-                this.Placement = placement;
-                this.RequiredOrientation = orientation;
-                this.TargetNode = targetNode;
-            }
-
-            /// <summary>
-            /// Gets the <see cref="MovePlacement"/> for how the item should be placed in <see cref="TargetNode"/>.
-            /// </summary>
-            public MovePlacement Placement { get; }
-
-            /// <summary>
-            /// Gets the <see cref="MovePlacement"/> for how the item should be placed in <see cref="TargetNode"/> when <see cref="Placement"/>
-            /// is <see cref="MovePlacement.After"/> or <see cref="MovePlacement.Before"/>.
-            /// </summary>
-            public Orientation? RequiredOrientation { get; }
-
-            /// <summary>
-            /// Gets the <see cref="DockLayoutManager"/> that owns this operation.
-            /// </summary>
-            private DockControlManager Owner { get; }
-
-            /// <summary>
-            /// Gets the <see cref="DockNodeViewModel"/> to which the <see cref="DockItemViewModel"/> is being moved.
-            /// </summary>
-            private DockNodeViewModel TargetNode { get; }
-
-            /// <summary>
-            /// Gets the <see cref="DockItemViewModel"/> being moved.
-            /// </summary>
-            private DockItemViewModel Item { get; }
-
-            /// <summary>
-            /// Executes the move operation.
-            /// </summary>
-            /// <returns><c>true</c> if the <see cref="DockItemViewModel"/> was successfully moved; otherwise, <c>false</c>.</returns>
-            public Boolean Execute()
-            {
-                if (!MoveOperation.IsOperationValid(this))
-                {
-                    return false;
-                }
-
-                Boolean result;
-                DockTabNodeViewModel sourceTabNode = this.Owner.FindParentTabNode(this.Item)!;
-
-                if (this.Placement == MovePlacement.On && sourceTabNode == this.TargetNode && sourceTabNode.Tabs.Count == 1)
-                {
-                    result = true; // No-op move
-                }
-                else
-                {
-                    result = this.Placement == MovePlacement.On
-                        ? MoveOperation.HandleDropCenter(this, sourceTabNode)
-                        : MoveOperation.HandleDropSplit(this, sourceTabNode);
-                }
-
-                return result;
-            }
-
-            /// <summary>
-            /// Handles dropping a <see cref="DockItemViewModel"/> to <see cref="DropZone.Center"/> of a <see cref="DockNodeViewModel"/>.
-            /// </summary>
-            /// <param name="operation">The <see cref="MoveOperation"/> being processed.</param>
-            /// <returns>The <see cref="DockSplitNodeViewModel"/> created.</returns>
-            private static DockSplitNodeViewModel CreateSplit(MoveOperation operation)
-            {
-                DockTabNodeViewModel newTabNode = new();
-                newTabNode.AddTab(operation.Item);
-
-                Orientation splitOrientation = operation.RequiredOrientation!.Value;
-
-                DockSplitNodeViewModel wrappedSplit = new(splitOrientation);
-                if (operation.Placement is MovePlacement.Before)
-                {
-                    wrappedSplit.AddChild(newTabNode);
-                    wrappedSplit.AddChild(operation.TargetNode);
-                }
-                else
-                {
-                    wrappedSplit.AddChild(operation.TargetNode);
-                    wrappedSplit.AddChild(newTabNode);
-                }
-
-                return wrappedSplit;
-            }
-
-            /// <summary>
-            /// Handles dropping a <see cref="DockItemViewModel"/> to <see cref="DropZone.Center"/> of a <see cref="DockNodeViewModel"/>.
-            /// </summary>
-            /// <param name="operation">The <see cref="MoveOperation"/> being processed.</param>
-            /// <param name="sourceTabNode">The <see cref="DockTabNodeViewModel"/> that contains the <see cref="DockItemViewModel"/> being dropped.</param>
-            /// <returns><c>true</c> if the operation was successfully moved; otherwise, <c>false</c>.</returns>
-            private static Boolean HandleDropCenter(MoveOperation operation, DockTabNodeViewModel sourceTabNode)
-            {
-                Boolean result = false;
-
-                System.Diagnostics.Debug.Assert(operation.Placement == MovePlacement.On, "Invalid code path.");
-
-                DockWorkspaceManager sourceWorkspace = operation.Owner.GetWorkspace(sourceTabNode)!;
-                DockWorkspaceManager? destinationWorkspace = operation.Owner.GetWorkspace(operation.TargetNode);
-
-                if (operation.TargetNode is DockTabNodeViewModel targetTabNode)
-                {
-                    if (sourceWorkspace.RemoveItem(operation.Item))
-                    {
-                        targetTabNode.AddTab(operation.Item);
-                        result = true;
-                        sourceWorkspace.CommitChanges();
-
-                        if (sourceWorkspace != destinationWorkspace)
-                        {
-                            destinationWorkspace?.CommitChanges();
-                        }
-                    }
-                }
-                else
-                {
-                    throw new InvalidOperationException("DropZone.Center requires a DockTabNodeViewModel target.");
-                }
-
-                return result;
-            }
-
-            /// <summary>
-            /// Handles dropping a <see cref="DockItemViewModel"/> to <see cref="DropZone.Center"/> of a <see cref="DockNodeViewModel"/>.
-            /// </summary>
-            /// <param name="operation">The <see cref="MoveOperation"/> being processed.</param>
-            /// <param name="sourceTabNode">The <see cref="DockTabNodeViewModel"/> that contains the <see cref="DockItemViewModel"/> being dropped.</param>
-            /// <returns><c>true</c> if the operation was successfully moved; otherwise, <c>false</c>.</returns>
-            private static Boolean HandleDropSplit(MoveOperation operation, DockTabNodeViewModel sourceTabNode)
-            {
-                Boolean result = false;
-
-                DockWorkspaceManager sourceWorkspace = operation.Owner.GetWorkspace(sourceTabNode)!;
-                DockWorkspaceManager? destinationWorkspace = operation.Owner.GetWorkspace(operation.TargetNode);
-                DockSplitNodeViewModel wrappedSplit = MoveOperation.CreateSplit(operation);
-                DockSplitNodeViewModel? parentSplit = destinationWorkspace?.DockTree.GetContainingSplit(operation.TargetNode);
-
-                if (parentSplit is not null)
-                {
-                    Int32 targetIndex = parentSplit.IndexOf(operation.TargetNode);
-
-                    if (targetIndex >= 0 && sourceWorkspace.RemoveItem(operation.Item))
-                    {
-                        // Must recalculate targetIndex because the RemoveItem() call may have changed the
-                        // targetNode's location.
-                        targetIndex = parentSplit.IndexOf(operation.TargetNode);
-                        parentSplit.ReplaceChildAt(targetIndex, wrappedSplit);
-
-                        DockSplitNodeViewModel? grandparentSplit = destinationWorkspace?.DockTree.GetContainingSplit(parentSplit);
-                        if (grandparentSplit is not null)
-                        {
-                            Int32 parentIndex = grandparentSplit.IndexOf(parentSplit);
-                            if (parentIndex >= 0 && grandparentSplit.Orientation != parentSplit.Orientation)
-                            {
-                                DockSplitNodeViewModel wrap = new(grandparentSplit.Orientation == Orientation.Horizontal
-                                    ? Orientation.Vertical
-                                    : Orientation.Horizontal);
-
-                                foreach (DockNodeViewModel child in parentSplit.Children)
-                                {
-                                    wrap.AddChild(child);
-                                }
-
-                                grandparentSplit.ReplaceChildAt(parentIndex, wrap);
-                            }
-                        }
-
-                        result = true;
-                        sourceWorkspace.CommitChanges();
-
-                        if (sourceWorkspace != destinationWorkspace)
-                        {
-                            // Needed specifically for dropping to the default panel in the PrimaryWorkspace when the
-                            // panel is currently empty.
-                            destinationWorkspace?.CommitChanges();
-                        }
-                    }
-                }
-
-                return result;
-            }
-
-            /// <summary>
-            /// Verifies a <see cref="MoveOperation"/> is valid.
-            /// </summary>
-            /// <param name="operation">The <see cref="MoveOperation"/> to validate.</param>
-            /// <returns><c>true</c> if <paramref name="operation"/> is valid; otherwise, <c>false</c>.</returns>
-            private static Boolean IsOperationValid(MoveOperation operation)
-            {
-                DockTabNodeViewModel? sourceTabNode = operation.Owner.FindParentTabNode(operation.Item);
-                if (sourceTabNode is null)
-                {
-                    return false;
-                }
-
-                DockWorkspaceManager? workspace = operation.Owner.GetWorkspace(sourceTabNode);
-                return workspace is not null;
-            }
-        }
-
-        /// <summary>
-        /// Simple record for holding parameters related to tab creating in new windows.
-        /// </summary>
-        private record DockItemMoveOptions
-        {
-            /// <summary>Gets the <see cref="Managers.MovePlacement"/> for the current operation.</summary>
-            public MovePlacement Placement { get; init; }
-
-            /// <summary>Gets the <see cref="DockSplitNodeViewModel.Orientation"/> necessary for the current operation.</summary>
-            public Orientation? RequiredOrientation { get; init; }
+            item.FloatRequested -= this.HandleItemFloatRequested;
         }
     }
 }

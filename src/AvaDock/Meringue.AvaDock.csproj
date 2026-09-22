@@ -3,7 +3,7 @@
     <Authors>Scott Kupec</Authors>
     <Description>A docking system for Avalonia.</Description>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>0.0.3</Version>
+    <Version>0.0.4</Version>
   </PropertyGroup>
 
   <PropertyGroup>

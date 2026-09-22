@@ -311,15 +311,9 @@ namespace Meringue.AvaDock.Controls
 
                 this.DraggedTab = eventArgs.Data.Get(DockContext.DragDropContextName) as DockItemViewModel;
 
-                this.DockControl = this.DraggedTab != null ? DockContext.GetDockHost(this.DraggedTab) : null;
                 this.DropIndex = this.HitTestTabIndex(eventArgs.GetPosition(owner));
                 this.TargetNode = DragContext.GetTargetNode(eventArgs);
             }
-
-            /// <summary>
-            /// Gets the dock host root associated with the dragged tab.
-            /// </summary>
-            public DockControlManager? DockControl { get; }
 
             /// <summary>
             /// Gets the tab being dragged, if available.
@@ -339,7 +333,7 @@ namespace Meringue.AvaDock.Controls
             /// <summary>
             /// Gets a value indicating whether the drag operation is valid and actionable.
             /// </summary>
-            public Boolean IsValid => this.DraggedTab != null && this.TargetNode != null && this.DockControl != null;
+            public Boolean IsValid => this.DraggedTab != null && this.TargetNode != null;
 
             /// <summary>
             /// Gets or sets the overlay used when dropping new items to the panel.

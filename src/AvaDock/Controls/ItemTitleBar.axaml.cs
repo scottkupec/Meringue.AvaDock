@@ -5,8 +5,6 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
-using Meringue.AvaDock.Managers;
-using Meringue.AvaDock.Services;
 using Meringue.AvaDock.ViewModels;
 
 namespace Meringue.AvaDock.Controls
@@ -49,8 +47,6 @@ namespace Meringue.AvaDock.Controls
         /// </param>
         private void OnFloatMenuClicked(DockItemViewModel item)
         {
-            DockControlManager? host = DockContext.GetDockHost(item);
-
             DockItem? dockItem = this.FindAncestorOfType<DockItem>();
 
             if (dockItem is not null)
@@ -58,7 +54,7 @@ namespace Meringue.AvaDock.Controls
                 PixelPoint topLeft = dockItem.PointToScreen(new Point(0, 0));
                 // DesiredSize excludes the ItemHeader and results in an area that is too small.
                 Size size = new(dockItem.Bounds.Width, dockItem.Bounds.Height);
-                host?.FloatItem(item, topLeft, size);
+                item.RequestFloat(topLeft, size);
             }
         }
 

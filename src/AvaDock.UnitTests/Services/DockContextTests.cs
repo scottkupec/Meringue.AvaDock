@@ -55,26 +55,6 @@ namespace Meringue.AvaDock.Services.UnitTests
         }
 
         [Fact]
-        public void GetDockHost_ReturnsNullWhenNotSet()
-        {
-            DockItemViewModel item = new();
-            DockControlManager? result = DockContext.GetDockHost(item);
-
-            result
-                .ShouldBeNull($"{nameof(DockContext.GetDockHost)} should return null when no value is set.");
-        }
-
-        [Fact]
-        public void GetWorkspace_ReturnsNullWhenNotSet()
-        {
-            DockItemViewModel item = new();
-            DockWorkspaceManager? result = DockContext.GetWorkspace(item);
-
-            result
-                .ShouldBeNull($"{nameof(DockContext.GetWorkspace)} should return null when no value is set.");
-        }
-
-        [Fact]
         public void GetPreferredTabPanelId_ReturnsNullWhenNotSet()
         {
             DockItemViewModel item = new();
@@ -95,19 +75,13 @@ namespace Meringue.AvaDock.Services.UnitTests
         }
 
         [Fact]
-        public void SetDockHost_CanBeRetrieved()
+        public void GetWorkspace_ReturnsNullWhenNotSet()
         {
             DockItemViewModel item = new();
-            DockControlManager host = new(new DockWorkspaceManager(new DockSplitNodeViewModel(Orientation.Vertical)));
+            DockWorkspaceManager? result = DockContext.GetWorkspace(item);
 
-            DockContext.SetDockHost(item, host);
-            DockControlManager? storedHost = DockContext.GetDockHost(item);
-
-            storedHost
-                .ShouldNotBeNull($"Storing a {nameof(DockControlManager)} should allow it to be returned.");
-
-            storedHost
-                .ShouldBe(host, $"Tag value should match the assigned {nameof(DockControlManager)} instance.");
+            result
+                .ShouldBeNull($"{nameof(DockContext.GetWorkspace)} should return null when no value is set.");
         }
 
         [Fact]

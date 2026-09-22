@@ -69,10 +69,11 @@ namespace Meringue.AvaDock.Services
 
                 if (controlData.Hidden is not null)
                 {
-                    foreach (DockItemData itemData in controlData.Hidden ?? [])
+                    foreach (DockItemData itemData in controlData.Hidden)
                     {
                         T item = BuildItem<T>(itemData);
-                        control.AddHiddenItem(item);
+                        DockContext.SetItemState(item, DockItemState.Hidden);
+                        _ = workspace.AddItem(item);
                     }
                 }
 
@@ -268,6 +269,16 @@ namespace Meringue.AvaDock.Services
                             }
                         }
                     }
+
+                    if (workspaceData.Hidden is not null)
+                    {
+                        foreach (DockItemData itemData in workspaceData.Hidden)
+                        {
+                            T item = BuildItem<T>(itemData);
+                            DockContext.SetItemState(item, DockItemState.Hidden);
+                            _ = workspace.AddItem(item);
+                        }
+                    }
                 }
                 else
                 {
@@ -301,11 +312,6 @@ namespace Meringue.AvaDock.Services
                 {
                     PrimaryWorkspace = BuildWorkspaceData(control.PrimaryWorkspace),
                 };
-
-                if (control.HiddenItems.Any())
-                {
-                    controlData.Hidden = [.. BuildItemDataList(control.HiddenItems)];
-                }
 
                 if (control.SecondaryWorkspaces.Any())
                 {
@@ -447,6 +453,11 @@ namespace Meringue.AvaDock.Services
                 if (workspace.MinimizedItems.Any())
                 {
                     workspaceData.Minimized = [.. BuildItemDataList(workspace.MinimizedItems)];
+                }
+
+                if (workspace.HiddenItems.Any())
+                {
+                    workspaceData.Hidden = [.. BuildItemDataList(workspace.HiddenItems)];
                 }
 
                 return workspaceData;

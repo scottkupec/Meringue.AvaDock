@@ -1,6 +1,7 @@
 ﻿// Copyright (C) Scott Kupec. All rights reserved.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Avalonia;
@@ -188,16 +189,16 @@ namespace Meringue.AvaDock.Managers
             DockControlManager rootBeingBuilt = DockSerializationConverter.BuildViewModel<T>(layout);
             DockControlManager rootGoingAway = this.DockControl;
 
-            foreach (DockItemViewModel runtimeItem in rootGoingAway.Items.ToList())
+            IEnumerable<DockItemViewModel> allExistingItems = rootGoingAway.Items
+                .Concat(rootGoingAway.MinimizedItems)
+                .Concat(rootGoingAway.HiddenItems);
+
+            foreach (DockItemViewModel runtimeItem in allExistingItems.ToList())
             {
                 DockItemViewModel? serializedItem = rootBeingBuilt.FindItem(runtimeItem.Id);
 
-                runtimeItem.DisableClose = false;
-                runtimeItem.CloseCommand.Execute(null);
-
                 if (serializedItem is not null)
                 {
-                    DockContext.SetDockHost(serializedItem, rootBeingBuilt);
                     serializedItem.Context = runtimeItem.Context;
                 }
                 else

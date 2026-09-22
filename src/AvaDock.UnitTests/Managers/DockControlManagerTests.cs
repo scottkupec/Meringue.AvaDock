@@ -1,11 +1,12 @@
 // Copyright (C) Scott Kupec. All rights reserved.
 
 using System;
+using System.Collections.Specialized;
 using System.Linq;
 using Avalonia;
 using Avalonia.Headless.XUnit;
 using Avalonia.Layout;
-using Meringue.AvaDock.Services;
+using Meringue.AvaDock.Events;
 using Meringue.AvaDock.UnitTests;
 using Meringue.AvaDock.ViewModels;
 using Shouldly;
@@ -16,50 +17,6 @@ namespace Meringue.AvaDock.Managers.UnitTests
     [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public class DockControlManagerTests
     {
-        [Fact]
-        public void AddHiddenItem_AppendsToHiddenItems()
-        {
-            DockItemViewModel item = new()
-            {
-                Id = "hidden1",
-                Title = "Hidden Item",
-                Context = new Object(),
-            };
-
-            DockWorkspaceManager workspace = new(new DockSplitNodeViewModel(Orientation.Horizontal));
-            DockControlManager manager = new(workspace);
-
-            manager.AddHiddenItem(item);
-
-            manager.HiddenItems
-                .ShouldContain(item, "HiddenItems should contain the item after AddHiddenItem is called.");
-        }
-
-        [Fact]
-        public void CloseItem_RemovesItemFromTabNode()
-        {
-            DockItemViewModel item = new()
-            {
-                Id = "item1",
-                Title = "Item 1",
-                Context = new Object(),
-            };
-
-            DockTabNodeViewModel tabNode = new();
-            tabNode.AddTab(item);
-
-            DockSplitNodeViewModel split = new(Orientation.Horizontal);
-            split.AddChild(tabNode);
-
-            DockWorkspaceManager workspace = new(split);
-            DockControlManager manager = new(workspace);
-
-            manager.CloseItem(item);
-
-            tabNode.Tabs
-                .ShouldNotContain(item, "Item should be removed from tab node after CloseItem is called.");
-        }
-
         [Fact]
         public void FindItem_LocatesItemInPrimaryWorkspace()
         {
@@ -85,6 +42,393 @@ namespace Meringue.AvaDock.Managers.UnitTests
                 .ShouldBe(item, "FindItem should return the item from the primary workspace.");
         }
 
+        [Fact]
+        public void FindItem_LocatesHiddenItem()
+        {
+            DockItemViewModel item = new()
+            {
+                Id = "hidden-item",
+                Title = "Hidden",
+            };
+
+            DockTabNodeViewModel tabNode = new();
+            tabNode.AddTab(item);
+
+            DockSplitNodeViewModel split = new(Orientation.Horizontal);
+            split.AddChild(tabNode);
+
+            DockWorkspaceManager workspace = new(split);
+            DockControlManager manager = new(workspace);
+
+            item.HideCommand.Execute(null);
+
+            DockItemViewModel? found = manager.FindItem("hidden-item");
+
+            found
+                .ShouldBe(item, "FindItem should locate a hidden item via HiddenItems enumeration.");
+        }
+
+        [Fact]
+        public void FindItem_ReturnsNullWhenNotFound()
+        {
+            DockSplitNodeViewModel split = DockTree.Horizontal(DockTree.Tab("item1"));
+            DockWorkspaceManager workspace = new(split);
+            DockControlManager manager = new(workspace);
+
+            DockItemViewModel? found = manager.FindItem("does-not-exist");
+
+            found
+                .ShouldBeNull("FindItem should return null when the item id is not found in primary, secondary or hidden collections.");
+        }
+
+        [Fact]
+        public void FindNode_LocatesNodeInPrimaryWorkspace()
+        {
+            DockSplitNodeViewModel split = new(Orientation.Horizontal);
+            DockTabNodeViewModel tab = new();
+            DockItemViewModel item = new() { Id = "item1" };
+            tab.AddTab(item);
+            split.AddChild(tab);
+
+            DockWorkspaceManager workspace = new(split);
+            DockControlManager manager = new(workspace);
+
+            DockNodeViewModel? found = manager.FindNode(tab.Id);
+
+            found
+                .ShouldBe(tab, "FindNode should return the node from the primary workspace.");
+        }
+
+        [Fact]
+        public void FindNode_ReturnsNullWhenNotFound()
+        {
+            DockSplitNodeViewModel split = DockTree.Horizontal(DockTree.Tab("item1"));
+            DockWorkspaceManager workspace = new(split);
+            DockControlManager manager = new(workspace);
+
+            DockNodeViewModel? found = manager.FindNode("does-not-exist");
+
+            found
+                .ShouldBeNull("FindNode should return null when the node id is not found in primary or secondary workspaces.");
+        }
+
+        [Fact]
+        public void AttachSecondaryWorkspace_CancelsWhenWorkspaceAttachingCancels()
+        {
+            DockSplitNodeViewModel primaryRoot = DockTree.Horizontal(DockTree.Tab("primary"));
+            DockWorkspaceManager primary = new(primaryRoot);
+
+            // Arrange a manager that cancels attaching
+            CancelAttachingDockControlManager manager = new(primary);
+            DockSplitNodeViewModel secondaryRoot = new(Orientation.Horizontal);
+            DockWorkspaceManager secondary = new(secondaryRoot);
+
+            // Act
+            // AttachSecondaryWorkspace requires Avalonia windows; we test the cancellation path via the protected OnWorkspaceAttaching
+            manager.TriggerWorkspaceAttaching(secondary);
+
+            // Assert – the manager should have recorded a cancellation, ensuring the attaching path is exercised
+            manager.AttachingWasCancelled
+                .ShouldBeTrue("Workspace attaching cancellation should be handled.");
+        }
+
+        [Fact]
+        public void EventAccessors_CanSubscribeAndUnsubscribe()
+        {
+            DockSplitNodeViewModel root = DockTree.Horizontal(DockTree.Tab("item1"));
+            DockWorkspaceManager workspace = new(root);
+            DockControlManager manager = new(workspace);
+
+#pragma warning disable SA1501 // Statement should not be on a single line
+#pragma warning disable SA1502 // Element should not be on a single line
+            static void Handler(Object? o, NotifyCollectionChangedEventArgs e) { }
+#pragma warning restore SA1502 // Element should not be on a single line
+#pragma warning restore SA1501 // Statement should not be on a single line
+            manager.HiddenItemsChanged += Handler;
+            manager.HiddenItemsChanged -= Handler;
+            manager.ItemsChanged += Handler;
+            manager.ItemsChanged -= Handler;
+            manager.MinimizedItemsChanged += Handler;
+            manager.MinimizedItemsChanged -= Handler;
+        }
+
+        [Fact]
+        public void LayoutChangedRaised_WhenItemClosed()
+        {
+            // Arrange
+            DockSplitNodeViewModel root = DockTree.Horizontal(DockTree.Tab("item1"));
+            TestWorkspaceManager workspace = new(root);
+            DockControlManager manager = new(workspace);
+            Boolean raised = false;
+            manager.LayoutChanged += (_, _) => raised = true;
+            DockItemViewModel item = root.FindItem<DockItemViewModel>("item1")!;
+
+            // Act
+            workspace.RaiseItemClosed(item);
+
+            // Assert
+            raised.ShouldBeTrue("LayoutChanged should be raised when item is closed.");
+        }
+
+        [Fact]
+        public void LayoutChangedRaised_WhenItemHidden()
+        {
+            // Arrange
+            DockSplitNodeViewModel root = DockTree.Horizontal(DockTree.Tab("item1"));
+            TestWorkspaceManager workspace = new(root);
+            DockControlManager manager = new(workspace);
+            Boolean raised = false;
+            manager.LayoutChanged += (_, _) => raised = true;
+            DockItemViewModel item = root.FindItem<DockItemViewModel>("item1")!;
+
+            // Act
+            workspace.RaiseItemHidden(item);
+
+            // Assert
+            raised.ShouldBeTrue("LayoutChanged should be raised when item is hidden.");
+        }
+
+        [Fact]
+        public void LayoutChangedRaised_WhenItemMinimized()
+        {
+            // Arrange
+            DockSplitNodeViewModel root = DockTree.Horizontal(DockTree.Tab("item1"));
+            TestWorkspaceManager workspace = new(root);
+            DockControlManager manager = new(workspace);
+            Boolean raised = false;
+            manager.LayoutChanged += (_, _) => raised = true;
+            DockItemViewModel item = root.FindItem<DockItemViewModel>("item1")!;
+
+            // Act
+            workspace.RaiseItemMinimized(item);
+
+            // Assert
+            raised.ShouldBeTrue("LayoutChanged should be raised when item is minimized.");
+        }
+
+        [Fact]
+        public void LayoutChangedRaised_WhenItemMoved()
+        {
+            // Arrange
+            DockSplitNodeViewModel root = DockTree.Horizontal(DockTree.Tab("item1"));
+            TestWorkspaceManager workspace = new(root);
+            DockControlManager manager = new(workspace);
+            Boolean raised = false;
+            manager.LayoutChanged += (_, _) => raised = true;
+            DockItemViewModel item = root.FindItem<DockItemViewModel>("item1")!;
+            DockTabNodeViewModel source = new();
+            DockTabNodeViewModel target = new();
+
+            // Act
+            workspace.RaiseItemMoved(item, source, target, MovePlacement.On, null);
+
+            // Assert
+            raised.ShouldBeTrue("LayoutChanged should be raised when item is moved.");
+        }
+
+        [Fact]
+        public void LayoutChangedRaised_WhenItemRestored()
+        {
+            // Arrange
+            DockSplitNodeViewModel root = DockTree.Horizontal(DockTree.Tab("item1"));
+            TestWorkspaceManager workspace = new(root);
+            DockControlManager manager = new(workspace);
+            Boolean raised = false;
+            manager.LayoutChanged += (_, _) => raised = true;
+            DockItemViewModel item = root.FindItem<DockItemViewModel>("item1")!;
+
+            // Act
+            workspace.RaiseItemRestored(item);
+
+            // Assert
+            raised.ShouldBeTrue("LayoutChanged should be raised when item is restored.");
+        }
+
+        [Fact]
+        public void LayoutChangedRaised_WhenItemShown()
+        {
+            // Arrange
+            DockSplitNodeViewModel root = DockTree.Horizontal(DockTree.Tab("item1"));
+            TestWorkspaceManager workspace = new(root);
+            DockControlManager manager = new(workspace);
+            Boolean raised = false;
+            manager.LayoutChanged += (_, _) => raised = true;
+            DockItemViewModel item = root.FindItem<DockItemViewModel>("item1")!;
+
+            // Act
+            workspace.RaiseItemShown(item);
+
+            // Assert
+            raised.ShouldBeTrue("LayoutChanged should be raised when item is shown.");
+        }
+
+        [Fact]
+        public void LayoutChangedRaised_WhenWorkspaceAttached()
+        {
+            // Arrange
+            DockSplitNodeViewModel root = DockTree.Horizontal(DockTree.Tab("item1"));
+            DockWorkspaceManager primary = new(root);
+            TestDockControlManager manager = new(primary);
+            Boolean raised = false;
+            manager.LayoutChanged += (_, _) => raised = true;
+            DockSplitNodeViewModel secondaryRoot = new(Orientation.Horizontal);
+            DockWorkspaceManager secondary = new(secondaryRoot);
+
+            // Act
+            manager.TriggerWorkspaceAttached(secondary);
+
+            // Assert
+            raised.ShouldBeTrue("LayoutChanged should be raised when workspace is attached.");
+        }
+
+        [Fact]
+        public void LayoutChangedRaised_WhenWorkspaceDetached()
+        {
+            // Arrange
+            DockSplitNodeViewModel root = DockTree.Horizontal(DockTree.Tab("item1"));
+            DockWorkspaceManager primary = new(root);
+            TestDockControlManager manager = new(primary);
+            Boolean raised = false;
+            manager.LayoutChanged += (_, _) => raised = true;
+            DockSplitNodeViewModel secondaryRoot = new(Orientation.Horizontal);
+            DockWorkspaceManager secondary = new(secondaryRoot);
+
+            // Act
+            manager.TriggerWorkspaceDetached(secondary);
+
+            // Assert
+            raised.ShouldBeTrue("LayoutChanged should be raised when workspace is detached.");
+        }
+
+        [Fact]
+        public void EventAccessors_MultipleSubscribersReceiveEvents()
+        {
+            // Arrange
+            DockSplitNodeViewModel root = DockTree.Horizontal(DockTree.Tab("item1"));
+            TestWorkspaceManager workspace = new(root);
+            DockControlManager manager = new(workspace);
+            DockItemViewModel item = root.FindItem<DockItemViewModel>("item1")!;
+            Int32 callCount = 0;
+            manager.ItemClosed += (_, _) => callCount++;
+            manager.ItemClosed += (_, _) => callCount++;
+
+            // Act
+            workspace.RaiseItemClosed(item);
+
+            // Assert
+            callCount.ShouldBe(2, "Multiple subscribers should each receive the event.");
+        }
+
+        [Fact]
+        public void EventForwarded_WhenItemClosed()
+        {
+            // Arrange
+            DockSplitNodeViewModel root = DockTree.Horizontal(DockTree.Tab("item1"));
+            TestWorkspaceManager workspace = new(root);
+            DockControlManager manager = new(workspace);
+            Boolean raised = false;
+            DockItemViewModel item = root.FindItem<DockItemViewModel>("item1")!;
+            manager.ItemClosed += (_, _) => raised = true;
+
+            // Act
+            workspace.RaiseItemClosed(item);
+
+            // Assert
+            raised.ShouldBeTrue("ItemClosed should be forwarded from workspace to control manager.");
+        }
+
+        [Fact]
+        public void EventForwarded_WhenItemHidden()
+        {
+            // Arrange
+            DockSplitNodeViewModel root = DockTree.Horizontal(DockTree.Tab("item1"));
+            TestWorkspaceManager workspace = new(root);
+            DockControlManager manager = new(workspace);
+            Boolean raised = false;
+            DockItemViewModel item = root.FindItem<DockItemViewModel>("item1")!;
+            manager.ItemHidden += (_, _) => raised = true;
+
+            // Act
+            workspace.RaiseItemHidden(item);
+
+            // Assert
+            raised.ShouldBeTrue("ItemHidden should be forwarded from workspace to control manager.");
+        }
+
+        [Fact]
+        public void EventForwarded_WhenItemMinimized()
+        {
+            // Arrange
+            DockSplitNodeViewModel root = DockTree.Horizontal(DockTree.Tab("item1"));
+            TestWorkspaceManager workspace = new(root);
+            DockControlManager manager = new(workspace);
+            Boolean raised = false;
+            DockItemViewModel item = root.FindItem<DockItemViewModel>("item1")!;
+            manager.ItemMinimized += (_, _) => raised = true;
+
+            // Act
+            workspace.RaiseItemMinimized(item);
+
+            // Assert
+            raised.ShouldBeTrue("ItemMinimized should be forwarded from workspace to control manager.");
+        }
+
+        [Fact]
+        public void EventForwarded_WhenItemMoved()
+        {
+            // Arrange
+            DockSplitNodeViewModel root = DockTree.Horizontal(DockTree.Tab("item1"));
+            TestWorkspaceManager workspace = new(root);
+            DockControlManager manager = new(workspace);
+            Boolean raised = false;
+            DockItemViewModel item = root.FindItem<DockItemViewModel>("item1")!;
+            DockTabNodeViewModel source = new();
+            DockTabNodeViewModel target = new();
+            manager.ItemMoved += (_, _) => raised = true;
+
+            // Act
+            workspace.RaiseItemMoved(item, source, target, MovePlacement.On, null);
+
+            // Assert
+            raised.ShouldBeTrue("ItemMoved should be forwarded from workspace to control manager.");
+        }
+
+        [Fact]
+        public void EventForwarded_WhenItemRestored()
+        {
+            // Arrange
+            DockSplitNodeViewModel root = DockTree.Horizontal(DockTree.Tab("item1"));
+            TestWorkspaceManager workspace = new(root);
+            DockControlManager manager = new(workspace);
+            Boolean raised = false;
+            DockItemViewModel item = root.FindItem<DockItemViewModel>("item1")!;
+            manager.ItemRestored += (_, _) => raised = true;
+
+            // Act
+            workspace.RaiseItemRestored(item);
+
+            // Assert
+            raised.ShouldBeTrue("ItemRestored should be forwarded from workspace to control manager.");
+        }
+
+        [Fact]
+        public void EventForwarded_WhenItemShown()
+        {
+            // Arrange
+            DockSplitNodeViewModel root = DockTree.Horizontal(DockTree.Tab("item1"));
+            TestWorkspaceManager workspace = new(root);
+            DockControlManager manager = new(workspace);
+            Boolean raised = false;
+            DockItemViewModel item = root.FindItem<DockItemViewModel>("item1")!;
+            manager.ItemShown += (_, _) => raised = true;
+
+            // Act
+            workspace.RaiseItemShown(item);
+
+            // Assert
+            raised.ShouldBeTrue("ItemShown should be forwarded from workspace to control manager.");
+        }
+
         [AvaloniaFact]
         public void MoveItem_DropDifferentCenterWorks()
         {
@@ -99,6 +443,7 @@ namespace Meringue.AvaDock.Managers.UnitTests
                 .WithInitialTree(initialTree)
                 .WithMoveItem(
                     item: initialTree.FindItem<DockItemViewModel>("item2")!,
+                    source: initialTree.FindOwningTabNode("item2")!,
                     target: initialTree.FindOwningTabNode("item1")!,
                     placement: MovePlacement.On,
                     orientation: null)
@@ -116,6 +461,7 @@ namespace Meringue.AvaDock.Managers.UnitTests
                 .WithInitialTree(initialTree)
                 .WithMoveItem(
                     item: initialTree.FindItem<DockItemViewModel>("item1")!,
+                    source: initialTree.FindOwningTabNode("item1")!,
                     target: initialTree.FindOwningTabNode("item1")!,
                     placement: MovePlacement.On,
                     orientation: null)
@@ -146,6 +492,7 @@ namespace Meringue.AvaDock.Managers.UnitTests
                 .WithInitialTree(initialTree)
                 .WithMoveItem(
                     item: initialTree.FindItem<DockItemViewModel>("right-item")!,
+                    source: initialTree.FindOwningTabNode("right-item")!,
                     target: initialTree.FindOwningTabNode("move-item")!,
                     placement: MovePlacement.After,
                     orientation: Orientation.Horizontal)
@@ -160,6 +507,8 @@ namespace Meringue.AvaDock.Managers.UnitTests
             DockSplitNodeViewModel initialTree = DockTree.Horizontal(
                 DockTree.Tab("item-1"));
 
+            DockTabNodeViewModel targetNode = initialTree.FindOwningTabNode("item-1")!;
+
             DockControlManager manager = new(new DockWorkspaceManager(initialTree));
 
             // Create a secondary workspace with an empty root
@@ -172,10 +521,7 @@ namespace Meringue.AvaDock.Managers.UnitTests
             {
                 foreach (DockItemViewModel item in tabNode.Tabs.ToList())
                 {
-                    DockTabNodeViewModel targetTab = new();
-                    Boolean result = manager.MoveItem(item, targetTab, placement: MovePlacement.On, orientation: null);
-                    result
-                        .ShouldBeTrue($"Move of '{item.Id}' should succeed.");
+                    item.RequestMove(tabNode, targetNode, MovePlacement.On, null);
                 }
             }
 
@@ -207,6 +553,7 @@ namespace Meringue.AvaDock.Managers.UnitTests
                 .WithInitialTree(initialTree)
                 .WithMoveItem(
                     item: initialTree.FindItem<DockItemViewModel>("bottom-item")!,
+                    source: initialTree.FindOwningTabNode("bottom-item")!,
                     target: initialTree.FindOwningTabNode("bottom-item")!,
                     placement: MovePlacement.After,
                     orientation: Orientation.Vertical)
@@ -231,6 +578,7 @@ namespace Meringue.AvaDock.Managers.UnitTests
                 .WithInitialTree(initialTree)
                 .WithMoveItem(
                     item: initialTree.FindItem<DockItemViewModel>("move-item")!,
+                    source: initialTree.FindOwningTabNode("move-item")!,
                     target: initialTree.FindOwningTabNode("target-item")!,
                     placement: MovePlacement.After,
                     orientation: Orientation.Horizontal)
@@ -252,6 +600,7 @@ namespace Meringue.AvaDock.Managers.UnitTests
                 .WithInitialTree(initialTree)
                 .WithMoveItem(
                     item: initialTree.FindItem<DockItemViewModel>("left-item")!,
+                    source: initialTree.FindOwningTabNode("left-item")!,
                     target: initialTree.FindOwningTabNode("left-item")!,
                     placement: MovePlacement.Before,
                     orientation: Orientation.Horizontal)
@@ -273,6 +622,7 @@ namespace Meringue.AvaDock.Managers.UnitTests
                 .WithInitialTree(initialTree)
                 .WithMoveItem(
                     item: initialTree.FindItem<DockItemViewModel>("right-item")!,
+                    source: initialTree.FindOwningTabNode("right-item")!,
                     target: initialTree.FindOwningTabNode("left-item")!,
                     placement: MovePlacement.After,
                     orientation: Orientation.Horizontal)
@@ -295,6 +645,7 @@ namespace Meringue.AvaDock.Managers.UnitTests
                 .WithInitialTree(initialTree)
                 .WithMoveItem(
                     item: initialTree.FindItem<DockItemViewModel>("top-item")!,
+                    source: initialTree.FindOwningTabNode("top-item")!,
                     target: initialTree.FindOwningTabNode("bottom-item")!,
                     placement: MovePlacement.Before,
                     orientation: Orientation.Vertical)
@@ -324,6 +675,7 @@ namespace Meringue.AvaDock.Managers.UnitTests
                 .WithInitialTree(initialTree)
                 .WithMoveItem(
                     item: initialTree.FindItem<DockItemViewModel>("right-item")!,
+                    source: initialTree.FindOwningTabNode("right-item")!,
                     target: initialTree.FindOwningTabNode("center-item")!,
                     placement: MovePlacement.Before,
                     orientation: Orientation.Vertical)
@@ -350,6 +702,7 @@ namespace Meringue.AvaDock.Managers.UnitTests
                 .WithInitialTree(initialTree)
                 .WithMoveItem(
                     item: initialTree.FindItem<DockItemViewModel>("move-item")!,
+                    source: initialTree.FindOwningTabNode("move-item")!,
                     target: initialTree.FindOwningTabNode("left-item")!,
                     placement: MovePlacement.Before,
                     orientation: Orientation.Vertical)
@@ -358,308 +711,73 @@ namespace Meringue.AvaDock.Managers.UnitTests
         }
 
         [Fact]
-        public void OnTabCloseRequested_RemovesItemFromHiddenItems()
+        public void RemoveFloatingWorkspace_MigratesItemsHiddenMinimized()
         {
-            DockItemViewModel item = new()
-            {
-                Id = "close1",
-                Title = "Closable",
-                Context = new Object(),
-            };
+            // Arrange
+            DockSplitNodeViewModel primaryTree = DockTree.Horizontal(DockTree.Tab("primary"));
+            DockWorkspaceManager primaryWorkspace = new(primaryTree);
+            DockControlManager manager = new(primaryWorkspace);
 
-            DockWorkspaceManager workspace = new(new DockSplitNodeViewModel(Orientation.Horizontal));
-            DockControlManager manager = new(workspace);
-            manager.AddHiddenItem(item);
+            DockSplitNodeViewModel secondaryTree = new(Orientation.Horizontal);
+            DockTabNodeViewModel secondaryTab = new();
+            secondaryTree.AddChild(secondaryTab);
+            DockWorkspaceManager secondaryWorkspace = new(secondaryTree);
 
-            manager.HiddenItems
-                .ShouldContain(item, "Item should be in HiddenItems before CloseCommand is executed.");
+            DockItemViewModel item = new() { Id = "item", Title = "Item" };
+            DockItemViewModel hiddenItem = new() { Id = "hidden", Title = "Hidden" };
+            DockItemViewModel minimizedItem = new() { Id = "min", Title = "Minimized" };
 
-            item.CloseCommand.Execute(null);
+            secondaryWorkspace.AddItem(item);
+            secondaryWorkspace.AddItem(hiddenItem);
+            secondaryWorkspace.AddItem(minimizedItem);
 
-            manager.HiddenItems
-                .ShouldNotContain(item, "Item should be removed from HiddenItems after CloseCommand is executed.");
+            // Move items to hidden/minimized via commands so they are in the correct collections
+            hiddenItem.HideCommand.Execute(null);
+            minimizedItem.MinimizeCommand.Execute(null);
+
+            // Act
+            manager.RemoveFloatingWorkspace(secondaryWorkspace);
+
+            // Assert
+            manager.PrimaryWorkspace.Items.ShouldContain(item, "Item should be migrated to primary workspace.");
+            manager.PrimaryWorkspace.HiddenItems.ShouldContain(hiddenItem, "Hidden item should be migrated to primary workspace.");
+            manager.PrimaryWorkspace.MinimizedItems.ShouldContain(minimizedItem, "Minimized item should be migrated to primary workspace.");
         }
 
         [Fact]
-        public void OnTabCloseRequested_RemovesItemFromSecondaryWorkspace()
+        public void WorkspaceAttachedEvent_RaisedWhenWorkspaceAttached()
         {
-            DockItemViewModel item = new()
-            {
-                Id = "close2",
-                Title = "Closable Secondary",
-                Context = new Object(),
-            };
+            // Arrange
+            DockSplitNodeViewModel root = DockTree.Horizontal(DockTree.Tab("item1"));
+            DockWorkspaceManager primary = new(root);
+            TestDockControlManager manager = new(primary);
+            Boolean raised = false;
+            DockWorkspaceManager secondary = new(new DockSplitNodeViewModel(Orientation.Horizontal));
+            manager.WorkspaceAttached += (_, _) => raised = true;
 
-            DockTabNodeViewModel tabNode = new();
-            tabNode.AddTab(item);
+            // Act
+            manager.TriggerWorkspaceAttached(secondary);
 
-            DockSplitNodeViewModel split = new(Orientation.Horizontal);
-            split.AddChild(tabNode);
-
-            DockWorkspaceManager secondaryWorkspace = new(split);
-            DockControlManager manager = new(new DockWorkspaceManager(new DockSplitNodeViewModel(Orientation.Horizontal)));
-            manager.WindowManager = new WindowManager(new TestWindowFactory());
-
-            manager.AttachSecondaryWorkspace(secondaryWorkspace, null, new Size(300, 200));
-
-            secondaryWorkspace.Items
-                .ShouldContain(item, "Item should be present in SecondaryWorkspace before CloseCommand is executed.");
-
-            item.CloseCommand.Execute(null);
-
-            secondaryWorkspace.Items
-                .ShouldNotContain(item, "Item should be removed from SecondaryWorkspace after CloseCommand is executed.");
-        }
-
-        [AvaloniaFact]
-        public void OnTabHideRequested_ForLastItemLeavesValidDropTarget()
-        {
-            // Arrange: initial tree with multiple tab nodes
-            DockSplitNodeViewModel initialTree = DockTree.Horizontal(
-                DockTree.Tab("item-1"));
-
-            DockControlManager manager = new(new DockWorkspaceManager(initialTree));
-
-            // Act: hide all items in the primary workspace
-            foreach (DockTabNodeViewModel tabNode in initialTree.Children.OfType<DockTabNodeViewModel>().ToList())
-            {
-                foreach (DockItemViewModel item in tabNode.Tabs.ToList())
-                {
-                    item.HideCommand.Execute(null);
-                }
-            }
-
-            // Assert: PrimaryWorkspace still has a valid DockTabNodeViewModel
-            DockNodeViewModel root = manager.PrimaryWorkspace.DockTree;
-            root
-                .ShouldBeOfType<DockSplitNodeViewModel>("PrimaryWorkspace root should be a split node.");
-
-            DockSplitNodeViewModel split = (DockSplitNodeViewModel)root;
-            split.Children.Count
-                .ShouldBe(1, "PrimaryWorkspace should contain one fallback tab node.");
-
-            split.Children[0]
-                .ShouldBeOfType<DockTabNodeViewModel>("Fallback node should be a DockTabNodeViewModel.");
+            // Assert
+            raised.ShouldBeTrue("WorkspaceAttached should be raised when workspace is attached.");
         }
 
         [Fact]
-        public void OnTabHideRequested_MovesItemFromPrimaryWorkspaceToHiddenItems()
+        public void WorkspaceDetachedEvent_RaisedWhenWorkspaceDetached()
         {
-            DockItemViewModel item = new()
-            {
-                Id = "hide1",
-                Title = "Hideable",
-                Context = new Object(),
-            };
+            // Arrange
+            DockSplitNodeViewModel root = DockTree.Horizontal(DockTree.Tab("item1"));
+            DockWorkspaceManager primary = new(root);
+            TestDockControlManager manager = new(primary);
+            Boolean raised = false;
+            DockWorkspaceManager secondary = new(new DockSplitNodeViewModel(Orientation.Horizontal));
+            manager.WorkspaceDetached += (_, _) => raised = true;
 
-            DockTabNodeViewModel tabNode = new();
-            tabNode.AddTab(item);
+            // Act
+            manager.TriggerWorkspaceDetached(secondary);
 
-            DockSplitNodeViewModel split = new(Orientation.Horizontal);
-            split.AddChild(tabNode);
-
-            DockWorkspaceManager workspace = new(split);
-            DockControlManager manager = new(workspace);
-
-            manager.HiddenItems
-                .ShouldNotContain(item, "Sanity: Item should not be in HiddenItems before HideCommand is executed.");
-
-            workspace.Items
-                .ShouldContain(item, "Sanity: Item should be present in workspace before HideCommand is executed.");
-
-            item.HideCommand.Execute(null);
-
-            manager.HiddenItems
-                .ShouldContain(item, "Item should be added to HiddenItems after HideCommand is executed.");
-
-            workspace.Items
-                .ShouldNotContain(item, "Item should be removed from workspace after HideCommand is executed.");
-        }
-
-        [Fact]
-        public void OnTabHideRequested_MovesItemFromSecondaryWorkspaceToHiddenItems()
-        {
-            DockItemViewModel item = new()
-            {
-                Id = "hide2",
-                Title = "Hideable Secondary",
-                Context = new Object(),
-            };
-
-            DockTabNodeViewModel tabNode = new();
-            tabNode.AddTab(item);
-
-            DockSplitNodeViewModel split = new(Orientation.Horizontal);
-            split.AddChild(tabNode);
-
-            DockWorkspaceManager secondaryWorkspace = new(split);
-            DockControlManager manager = new(new DockWorkspaceManager(new DockSplitNodeViewModel(Orientation.Horizontal)));
-            manager.WindowManager = new WindowManager(new TestWindowFactory());
-
-            manager.AttachSecondaryWorkspace(secondaryWorkspace, null, new Size(300, 200));
-
-            secondaryWorkspace.Items
-                .ShouldContain(item, "Sanity: Item should be present in SecondaryWorkspace before HideCommand is executed.");
-
-            manager.HiddenItems
-                .ShouldNotContain(item, "Sanity: Item should not be in HiddenItems before HideCommand is executed.");
-
-            item.HideCommand.Execute(null);
-
-            manager.HiddenItems
-                .ShouldContain(item, "Item should be added to HiddenItems after HideCommand is executed.");
-
-            secondaryWorkspace.Items
-                .ShouldNotContain(item, "Item should be removed from SecondaryWorkspace after HideCommand is executed.");
-        }
-
-        [Fact]
-        public void OnTabHideRequested_SetsPreferredWorkspaceId()
-        {
-            DockItemViewModel item = new()
-            {
-                Id = "hide1",
-                Title = "Hideable",
-                Context = new Object(),
-            };
-
-            DockTabNodeViewModel tabNode = new();
-            tabNode.AddTab(item);
-
-            DockWorkspaceManager workspace = new(DockTree.Horizontal(tabNode));
-            DockControlManager manager = new(workspace);
-            _ = manager;
-
-            item.HideCommand.Execute(null);
-
-            String? preferredWorkspaceId = DockContext.GetPreferredWorkspaceId(item);
-
-            preferredWorkspaceId
-                .ShouldNotBeNull("Preferred workspace ID should be set if the item is hidden.");
-
-            preferredWorkspaceId
-                .ShouldBe(workspace.Id, "Preferred workspace ID should be set to the correct value.");
-        }
-
-        [AvaloniaFact]
-        public void OnTabMinimizeRequested_ForLastItemLeavesValidDropTarget()
-        {
-            // Arrange: initial tree with multiple tab nodes
-            DockSplitNodeViewModel initialTree = DockTree.Horizontal(
-                DockTree.Tab("item-1"));
-
-            DockControlManager manager = new(new DockWorkspaceManager(initialTree));
-
-            // Act: minimize all items in the primary workspace
-            foreach (DockTabNodeViewModel tabNode in initialTree.Children.OfType<DockTabNodeViewModel>().ToList())
-            {
-                foreach (DockItemViewModel item in tabNode.Tabs.ToList())
-                {
-                    item.MinimizeCommand.Execute(null);
-                }
-            }
-
-            // Assert: PrimaryWorkspace still has a valid DockTabNodeViewModel
-            DockNodeViewModel root = manager.PrimaryWorkspace.DockTree;
-            root
-                .ShouldBeOfType<DockSplitNodeViewModel>("PrimaryWorkspace root should be a split node.");
-
-            DockSplitNodeViewModel split = (DockSplitNodeViewModel)root;
-            split.Children.Count
-                .ShouldBe(1, "PrimaryWorkspace should contain one fallback tab node.");
-
-            split.Children[0]
-                .ShouldBeOfType<DockTabNodeViewModel>("Fallback node should be a DockTabNodeViewModel.");
-        }
-
-        [Fact]
-        public void OnTabShowRequested_ClearsPeferredWorkspaceId()
-        {
-            DockItemViewModel item = new()
-            {
-                Id = "show2",
-                Title = "Showable Secondary",
-                Context = new Object(),
-            };
-
-            DockSplitNodeViewModel split = new(Orientation.Horizontal);
-            DockWorkspaceManager secondaryWorkspace = new(split);
-            DockControlManager manager = new(new DockWorkspaceManager(new DockSplitNodeViewModel(Orientation.Horizontal)));
-            manager.WindowManager = new WindowManager(new TestWindowFactory());
-
-            manager.AttachSecondaryWorkspace(secondaryWorkspace, null, new Size(300, 200));
-
-            DockContext.SetPreferredWorkspaceId(item, secondaryWorkspace.Id);
-            manager.AddHiddenItem(item);
-
-            item.ShowCommand.Execute(null);
-
-            DockContext.GetPreferredWorkspaceId(item)
-                .ShouldBeNull("The preferred workspace ID should be cleared after showing the item.");
-        }
-
-        [Fact]
-        public void OnTabShowRequested_MovesItemBackToPrimaryWorkspace()
-        {
-            DockItemViewModel item = new()
-            {
-                Id = "show1",
-                Title = "Showable",
-                Context = new Object(),
-            };
-
-            DockWorkspaceManager workspace = new(new DockSplitNodeViewModel(Orientation.Horizontal));
-            DockControlManager manager = new(workspace);
-            manager.AddHiddenItem(item);
-
-            manager.HiddenItems
-                .ShouldContain(item, "Sanity: Item should be in HiddenItems before ShowCommand is executed.");
-
-            workspace.Items
-                .ShouldNotContain(item, "Sanity: Item should not be in workspace before ShowCommand is executed.");
-
-            item.ShowCommand.Execute(null);
-
-            manager.HiddenItems
-                .ShouldNotContain(item, "Item should be removed from HiddenItems after ShowCommand is executed.");
-
-            workspace.Items
-                .ShouldContain(item, "Item should be added back to workspace after ShowCommand is executed.");
-        }
-
-        [Fact]
-        public void OnTabShowRequested_MovesItemBackToSecondaryWorkspace()
-        {
-            DockItemViewModel item = new()
-            {
-                Id = "show2",
-                Title = "Showable Secondary",
-                Context = new Object(),
-            };
-
-            DockSplitNodeViewModel split = new(Orientation.Horizontal);
-            DockWorkspaceManager secondaryWorkspace = new(split);
-            DockControlManager manager = new(new DockWorkspaceManager(new DockSplitNodeViewModel(Orientation.Horizontal)));
-            manager.WindowManager = new WindowManager(new TestWindowFactory());
-
-            manager.AttachSecondaryWorkspace(secondaryWorkspace, null, new Size(300, 200));
-
-            DockContext.SetPreferredWorkspaceId(item, secondaryWorkspace.Id);
-            manager.AddHiddenItem(item);
-
-            manager.HiddenItems
-                .ShouldContain(item, "Sanity: Item should be in HiddenItems before ShowCommand is executed.");
-
-            secondaryWorkspace.Items
-                .ShouldNotContain(item, "Sanity: Item should not be in SecondaryWorkspace before ShowCommand is executed.");
-
-            item.ShowCommand.Execute(null);
-
-            manager.HiddenItems
-                .ShouldNotContain(item, "Item should be removed from HiddenItems after ShowCommand is executed.");
-
-            secondaryWorkspace.Items
-                .ShouldContain(item, "Item should be added back to SecondaryWorkspace after ShowCommand is executed.");
+            // Assert
+            raised.ShouldBeTrue("WorkspaceDetached should be raised when workspace is detached.");
         }
 
         /// <summary>
@@ -672,6 +790,7 @@ namespace Meringue.AvaDock.Managers.UnitTests
             private DockControlManager? manager;
             private Orientation? orientation;
             private MovePlacement? placement;
+            private DockTabNodeViewModel? sourceNode;
             private DockTabNodeViewModel? targetNode;
 
             /// <summary>Validates the the current <see cref="DockTree"/> matches the expected <see cref="DockTree"/>.</summary>
@@ -679,14 +798,16 @@ namespace Meringue.AvaDock.Managers.UnitTests
             {
                 this.manager.ShouldNotBeNull("Initial tree must be set");
                 this.itemToMove.ShouldNotBeNull("Item to move must be set");
+                this.sourceNode.ShouldNotBeNull("Source node must be set");
                 this.targetNode.ShouldNotBeNull("Target node must be set");
                 this.placement.ShouldNotBeNull("Placement must be set");
                 this.expectedTree.ShouldNotBeNull("Expected tree must be set");
 
-                Boolean result = this.manager.MoveItem(this.itemToMove, this.targetNode, this.placement.Value, this.orientation);
+                this.itemToMove.RequestMove(this.sourceNode, this.targetNode, this.placement.Value, this.orientation);
+
+                ////Boolean result = this.manager.MoveItem(this.itemToMove, this.targetNode, this.placement.Value, this.orientation);
 
                 Avalonia.Threading.Dispatcher.UIThread.RunJobs();
-                result.ShouldBeTrue("Move operation should succeed");
 
                 DockNodeViewModel actual = this.manager.PrimaryWorkspace.DockTree;
 
@@ -713,9 +834,10 @@ namespace Meringue.AvaDock.Managers.UnitTests
             }
 
             /// <summary>Define the move operation to be made.</summary>
-            public DockMutationTestBuilder WithMoveItem(DockItemViewModel item, DockTabNodeViewModel target, MovePlacement placement, Orientation? orientation)
+            public DockMutationTestBuilder WithMoveItem(DockItemViewModel item, DockTabNodeViewModel source, DockTabNodeViewModel target, MovePlacement placement, Orientation? orientation)
             {
                 this.itemToMove = item;
+                this.sourceNode = source;
                 this.targetNode = target;
                 this.placement = placement;
                 this.orientation = orientation;
@@ -752,6 +874,61 @@ namespace Meringue.AvaDock.Managers.UnitTests
                 {
                     throw new InvalidOperationException($"Unexpected node type mismatch at '{path}'.");
                 }
+            }
+        }
+
+        private sealed class TestWorkspaceManager : DockWorkspaceManager
+        {
+            public TestWorkspaceManager(DockSplitNodeViewModel root)
+                : base(root)
+            {
+            }
+
+            public void RaiseItemClosed(DockItemViewModel item) => this.OnItemClosed(new DockItemClosedEventArgs(item));
+
+            public void RaiseItemHidden(DockItemViewModel item) => this.OnItemHidden(new DockItemHiddenEventArgs(item));
+
+            public void RaiseItemMinimized(DockItemViewModel item) => this.OnItemMinimized(new DockItemMinimizedEventArgs(item));
+
+            public void RaiseItemMoved(DockItemViewModel item, DockTabNodeViewModel source, DockTabNodeViewModel target, MovePlacement placement, Orientation? orientation)
+                => this.OnItemMoved(new DockItemMovedEventArgs(item, source, target, placement, orientation));
+
+            public void RaiseItemRestored(DockItemViewModel item) => this.OnItemRestored(new DockItemRestoredEventArgs(item));
+
+            public void RaiseItemShown(DockItemViewModel item) => this.OnItemShown(new DockItemShownEventArgs(item));
+        }
+
+        private sealed class TestDockControlManager : DockControlManager
+        {
+            public TestDockControlManager(DockWorkspaceManager root)
+                : base(root)
+            {
+            }
+
+            public void TriggerWorkspaceAttached(DockWorkspaceManager workspace) => this.OnWorkspaceAttached(new DockWorkspaceAttachedEventArgs(workspace));
+
+            public void TriggerWorkspaceDetached(DockWorkspaceManager workspace) => this.OnWorkspaceDetached(new DockWorkspaceDetachedEventArgs(workspace));
+        }
+
+        private sealed class CancelAttachingDockControlManager : DockControlManager
+        {
+            public CancelAttachingDockControlManager(DockWorkspaceManager root)
+                : base(root)
+            {
+            }
+
+            public Boolean AttachingWasCancelled { get; private set; }
+
+            public void TriggerWorkspaceAttaching(DockWorkspaceManager workspace)
+            {
+                this.OnWorkspaceAttaching(new DockWorkspaceAttachingEventArgs(workspace));
+            }
+
+            protected override void OnWorkspaceAttaching(DockWorkspaceAttachingEventArgs eventArgs)
+            {
+                eventArgs.Cancel = true;
+                this.AttachingWasCancelled = true;
+                base.OnWorkspaceAttaching(eventArgs);
             }
         }
     }

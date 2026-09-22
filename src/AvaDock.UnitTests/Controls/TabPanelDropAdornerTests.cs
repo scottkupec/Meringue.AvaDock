@@ -30,6 +30,32 @@ namespace Meringue.AvaDock.Controls.UnitTests
                 .ShouldBeFalse($"Default value for {nameof(TabPanelDropAdorner.IsHitTestVisible)} should be correct.");
         }
 
+        [AvaloniaFact]
+        public void UpdateTarget_SetsAdornedElement()
+        {
+            TabPanelDropAdorner adorner = new();
+            Border element = new() { Width = 100, Height = 100 };
+
+            element.Measure(Size.Infinity);
+            element.Arrange(new Rect(0, 0, 100, 100));
+
+            adorner.UpdateTarget(element, new Point(10, 10));
+
+            adorner.AdornedElement
+                .ShouldBe(element, $"{nameof(TabPanelDropAdorner.AdornedElement)} should be set correctly.");
+        }
+
+        [AvaloniaFact]
+        public void UpdateTarget_ThrowsOnNullAdornedElement()
+        {
+            TabPanelDropAdorner adorner = new();
+
+            Should.
+                Throw<ArgumentNullException>(() => adorner.UpdateTarget(null!, new Point(0, 0)))
+                .ParamName
+                .ShouldBe("adornedElement", $"A null {nameof(Control)} should not be valid.");
+        }
+
         [AvaloniaTheory]
         // Top left corner validation
         [InlineData(50, 50, DropZone.Center)]
@@ -70,32 +96,6 @@ namespace Meringue.AvaDock.Controls.UnitTests
 
             adorner.HoveredZone
                 .ShouldBe(expected, $"Expected zone '{expected}' for point ({x},{y})");
-        }
-
-        [AvaloniaFact]
-        public void UpdateTarget_SetsAdornedElement()
-        {
-            TabPanelDropAdorner adorner = new();
-            Border element = new() { Width = 100, Height = 100 };
-
-            element.Measure(Size.Infinity);
-            element.Arrange(new Rect(0, 0, 100, 100));
-
-            adorner.UpdateTarget(element, new Point(10, 10));
-
-            adorner.AdornedElement
-                .ShouldBe(element, $"{nameof(TabPanelDropAdorner.AdornedElement)} should be set correctly.");
-        }
-
-        [AvaloniaFact]
-        public void UpdateTarget_ThrowsOnNullAdornedElement()
-        {
-            TabPanelDropAdorner adorner = new();
-
-            Should.
-                Throw<ArgumentNullException>(() => adorner.UpdateTarget(null!, new Point(0, 0)))
-                .ParamName
-                .ShouldBe("adornedElement", $"A null {nameof(Control)} should not be valid.");
         }
     }
 }

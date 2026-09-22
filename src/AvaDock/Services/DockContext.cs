@@ -19,14 +19,14 @@ namespace Meringue.AvaDock.Services
         internal const String DragDropContextName = "AvaDock.SourceTabNode";
 
         /// <summary>
-        /// The name of the <see cref="DockItemViewModel.Tags"/> entry for tracking <see cref="DockItemViewModel"/> to <see cref="DockTabNodeViewModel"/> mapping.
-        /// </summary>
-        private const String DockControlManagerPropertyName = "AvaDock.ControlManager";
-
-        /// <summary>
         /// The name of the <see cref="DockItemViewModel.Tags"/> entry for tracking <see cref="DockItemViewModel"/> to <see cref="DockWorkspaceManager"/> mapping.
         /// </summary>
         private const String DockWorkspaceManagerPropertyName = "AvaDock.WorkspaceManager";
+
+        /// <summary>
+        /// The name of the <see cref="DockItemViewModel.Tags"/> entry for tracking <see cref="DockItemState"/> of a <see cref="DockItemViewModel"/>.
+        /// </summary>
+        private const String ItemState = "AvaDock.ItemState";
 
         /// <summary>
         /// The name of the <see cref="DockItemViewModel.Tags"/> entry for tracking <see cref="DockItemViewModel"/> to <see cref="DockTabNodeViewModel"/> mapping.
@@ -79,17 +79,17 @@ namespace Meringue.AvaDock.Services
         }
 
         /// <summary>
-        /// Gets the <see cref="DockControlManager"/> for the specified <see cref="DockItemViewModel"/>.
+        /// Gets the <see cref="ItemState"/> for the specified <see cref="DockItemViewModel"/>.
         /// </summary>
-        /// <param name="item">The <see cref="DockItemViewModel"/> for which to retrieve the <see cref="DockControlManager"/>.</param>
+        /// <param name="item">The <see cref="DockItemViewModel"/> for which to retrieve the <see cref="ItemState"/>.</param>
         /// <returns>
-        /// The <see cref="DockControlManager"/>, or <c>null</c> if no host root has been set.
+        /// The <see cref="ItemState"/>, or <c>null</c> if no state has been set.
         /// </returns>
-        public static DockControlManager? GetDockHost(DockItemViewModel item)
+        public static DockItemState? GetItemState(DockItemViewModel item)
         {
             TargetFrameworkHelper.ThrowIfArgumentNull(item);
-            return item.Tags.TryGetValue(DockContext.DockControlManagerPropertyName, out Object? value)
-                ? value as DockControlManager
+            return item.Tags.TryGetValue(DockContext.ItemState, out Object? value) && value is DockItemState state
+                ? state
                 : null;
         }
 
@@ -153,14 +153,14 @@ namespace Meringue.AvaDock.Services
         }
 
         /// <summary>
-        /// Sets the <see cref="DockControlManager"/> for the specified <see cref="DockItemViewModel"/>.
+        /// Sets the <see cref="ItemState"/> for the specified <see cref="DockItemViewModel"/>.
         /// </summary>
         /// <param name="item">The <see cref="DockItemViewModel"/> whose dock control is being set.</param>
-        /// <param name="hostRoot">The <see cref="DockControlManager"/> to associate with this tab.</param>
-        public static void SetDockHost(DockItemViewModel item, DockControlManager hostRoot)
+        /// <param name="state">The <see cref="ItemState"/> to record for this item.</param>
+        public static void SetItemState(DockItemViewModel item, DockItemState state)
         {
             TargetFrameworkHelper.ThrowIfArgumentNull(item);
-            item.Tags[DockContext.DockControlManagerPropertyName] = hostRoot;
+            item.Tags[DockContext.ItemState] = state;
         }
 
         /// <summary>

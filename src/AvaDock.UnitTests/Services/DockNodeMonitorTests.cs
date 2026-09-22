@@ -211,6 +211,23 @@ namespace Meringue.AvaDock.Services.UnitTests
         }
 
         [Fact]
+        public void Unmonitor_UnhooksAllNodes()
+        {
+            NodeTestVariables vars = new();
+
+            DockSplitNodeViewModel splitNode = DockTree.Horizontal(
+                DockTree.Tab("item-1"));
+
+            vars.Monitor.Monitor(splitNode);
+            vars.Monitor.Unmonitor(splitNode);
+
+            vars.UnhookedNodes
+                .ShouldBeEquivalentTo(
+                    splitNode.Children.Append(splitNode).ToList(),
+                    "Unmonitoring a split node should unhook the root and all child nodes.");
+        }
+
+        [Fact]
         public void Unmonitor_UnhooksAllTabItems()
         {
             ItemTestVariables vars = new();
@@ -247,23 +264,6 @@ namespace Meringue.AvaDock.Services.UnitTests
                 .ShouldContain(
                     (splitNode.Children[0] as DockTabNodeViewModel)!.Tabs[0],
                     "The item in the split node child should have been unhooked after unmonitoring the split node.");
-        }
-
-        [Fact]
-        public void Unmonitor_UnhooksAllNodes()
-        {
-            NodeTestVariables vars = new();
-
-            DockSplitNodeViewModel splitNode = DockTree.Horizontal(
-                DockTree.Tab("item-1"));
-
-            vars.Monitor.Monitor(splitNode);
-            vars.Monitor.Unmonitor(splitNode);
-
-            vars.UnhookedNodes
-                .ShouldBeEquivalentTo(
-                    splitNode.Children.Append(splitNode).ToList(),
-                    "Unmonitoring a split node should unhook the root and all child nodes.");
         }
 
         private sealed class ItemTestVariables

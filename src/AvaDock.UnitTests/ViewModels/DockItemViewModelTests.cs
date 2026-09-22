@@ -208,7 +208,7 @@ namespace Meringue.AvaDock.ViewModels.UnitTests
         }
 
         [Fact]
-        public void MinimizeCommand_ShouldRaiseMinimizeRequestedWhenDisableMinimizeIsTrue()
+        public void MinimizeCommand_ShouldRaiseMinimizeRequestedWhenDisableMinimizeIsFalse()
         {
             DockItemViewModel item = new() { DisableMinimize = false };
             DockItemMinimizeRequestedEventArgs? receivedArgs = null;

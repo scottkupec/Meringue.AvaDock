@@ -26,5 +26,11 @@ namespace Meringue.AvaDock.Layout
         /// </summary>
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "Settable to simplify (de)serialization code.")]
         public List<DockItemData>? Minimized { get; set; }
+
+        /// <summary>
+        /// Gets or sets the value of <see cref="DockWorkspaceManager.HiddenItems"/>.
+        /// </summary>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "Settable to simplify (de)serialization code.")]
+        public List<DockItemData>? Hidden { get; set; }
     }
 }

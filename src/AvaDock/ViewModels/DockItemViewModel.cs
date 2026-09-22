@@ -2,7 +2,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Windows.Input;
+using Avalonia;
 using Avalonia.Layout;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -81,6 +83,10 @@ namespace Meringue.AvaDock.ViewModels
         /// <summary>
         /// Gets the command that requests the item be closed.
         /// </summary>
+        /// <remarks>
+        /// UI-only binding surface. Use the <see cref="CloseRequested"/> event for programmatic requests.
+        /// </remarks>
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public ICommand CloseCommand => new RelayCommand(this.CloseItem, () => !this.DisableClose);
 
         /// <summary>
@@ -111,11 +117,19 @@ namespace Meringue.AvaDock.ViewModels
         /// <summary>
         /// Gets the command that requests the item be floated.
         /// </summary>
+        /// <remarks>
+        /// UI-only binding surface. Programmatic use should prefer <see cref="RequestFloat"/>.
+        /// </remarks>
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public ICommand FloatCommand => new RelayCommand(this.FloatItem);
 
         /// <summary>
         /// Gets the command that requests the item be hidden.
         /// </summary>
+        /// <remarks>
+        /// UI-only binding surface. Use the <see cref="HideRequested"/> event for programmatic requests.
+        /// </remarks>
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public ICommand HideCommand => new RelayCommand(this.HideItem, () => !this.DisableHide);
 
         /// <summary>
@@ -126,21 +140,37 @@ namespace Meringue.AvaDock.ViewModels
         /// <summary>
         /// Gets the command that requests the item be maximized.
         /// </summary>
+        /// <remarks>
+        /// UI-only binding surface. Use the <see cref="MaximizeRequested"/> event for programmatic requests.
+        /// </remarks>
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public ICommand MaximizeCommand => new RelayCommand(this.MaximizeItem, () => !this.DisableMaximize);
 
         /// <summary>
         /// Gets the command that requests the item be minimized.
         /// </summary>
+        /// <remarks>
+        /// UI-only binding surface. Use the <see cref="MinimizeRequested"/> event for programmatic requests.
+        /// </remarks>
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public ICommand MinimizeCommand => new RelayCommand(this.MinimizeItem, () => !this.DisableMinimize);
 
         /// <summary>
         /// Gets the command that requests the item be restored from the minimized state.
         /// </summary>
+        /// <remarks>
+        /// UI-only binding surface. Use the <see cref="RestoreRequested"/> event for programmatic requests.
+        /// </remarks>
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public ICommand RestoreCommand => new RelayCommand(this.RestoreItem);
 
         /// <summary>
         /// Gets the command that requests the item be shown.
         /// </summary>
+        /// <remarks>
+        /// UI-only binding surface. Use the <see cref="ShowRequested"/> event for programmatic requests.
+        /// </remarks>
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public ICommand ShowCommand => new RelayCommand(this.ShowItem);
 
         /// <summary>
@@ -170,6 +200,17 @@ namespace Meringue.AvaDock.ViewModels
         }
 
         /// <summary>
+        /// Requests that the current item be floated.
+        /// </summary>
+        /// <param name="screenLocation">The top-left position of the floated window in screen coordinates. Optional.</param>
+        /// <param name="windowSize">The size of the floating window. Optional.</param>
+        public void RequestFloat(PixelPoint? screenLocation, Size? windowSize)
+        {
+            DockItemFloatRequestedEventArgs args = new(this, screenLocation, windowSize);
+            this.FloatRequested?.Invoke(this, args);
+        }
+
+        /// <summary>
         /// Invokes the <see cref="CloseRequested"/> event if <see cref="DisableClose"/> is <c>false</c>.
         /// </summary>
         private void CloseItem()
@@ -186,7 +227,7 @@ namespace Meringue.AvaDock.ViewModels
         /// </summary>
         private void FloatItem()
         {
-            DockItemFloatRequestedEventArgs args = new(this);
+            DockItemFloatRequestedEventArgs args = new(this, null, null);
             this.FloatRequested?.Invoke(this, args);
         }
 
