@@ -400,19 +400,19 @@ namespace Meringue.AvaDock.Controls
             /// <returns><c>true</c> if the tab was successfully moved to a new index; otherwise, <c>false</c>.</returns>
             public Boolean TryReorder()
             {
-                if (this.DraggedTab is null || !this.TargetNode!.Tabs.Contains(this.DraggedTab))
+                if (this.DraggedTab is null || !this.TargetNode!.Tabs.Contains(this.DraggedTab) || !this.DropIndex.HasValue)
                 {
                     return false;
                 }
 
                 Int32 oldIndex = this.TargetNode.ObservableTabs.IndexOf(this.DraggedTab);
-                if (oldIndex != this.DropIndex)
+                if (oldIndex != this.DropIndex.Value)
                 {
-                    this.TargetNode.ObservableTabs.Move(oldIndex, this.DropIndex ?? 0);
+                    this.TargetNode.ObservableTabs.Move(oldIndex, this.DropIndex.Value);
                     return true;
                 }
 
-                return true;
+                return false;
             }
 
             /// <summary>
