@@ -287,6 +287,15 @@ namespace Meringue.AvaDock.Managers
         private DockNodeMonitor DockMonitor { get; }
 
         /// <summary>
+        /// Adds the specified <see cref="DockItemViewModel"/> to the primary workspace.
+        /// </summary>
+        /// <param name="item">The <see cref="DockItemViewModel"/> to be added.</param>
+        public void AddItem(DockItemViewModel item)
+        {
+            _ = this.PrimaryWorkspace.AddItem(item);
+        }
+
+        /// <summary>
         /// Attaches the specified <see cref="DockWorkspaceManager"/> to a new floating
         /// window and applies the given bounds.
         /// </summary>

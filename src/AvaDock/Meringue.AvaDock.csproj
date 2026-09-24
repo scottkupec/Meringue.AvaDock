@@ -4,6 +4,7 @@
     <Description>A docking system for Avalonia.</Description>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Version>0.0.4</Version>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -48,6 +49,10 @@
     <Compile Update="**\*.axaml.cs">
       <DependentUpon>$([System.IO.Path]::GetFileNameWithoutExtension('%(Filename)'))</DependentUpon>
     </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>

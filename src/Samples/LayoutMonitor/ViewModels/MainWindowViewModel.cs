@@ -190,21 +190,6 @@ namespace LayoutMonitor.ViewModels
         }
 
         /// <summary>
-        /// Removes an item to demonstrate layout changes.
-        /// </summary>
-        [RelayCommand]
-        private void RemoveItem()
-        {
-            DockWorkspaceManager workspace = this.LayoutManager.DockControl.PrimaryWorkspace;
-            if (workspace != null && workspace.Items.Count > 0)
-            {
-                DockItemViewModel firstItem = workspace.Items[0];
-                firstItem.CloseCommand.Execute(null);
-                this.StatusMessage = $"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.CurrentCulture)}] Removed item: {firstItem.Title}";
-            }
-        }
-
-        /// <summary>
         /// Save the layout.
         /// </summary>
         [RelayCommand]
