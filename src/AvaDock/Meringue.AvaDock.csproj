@@ -22,7 +22,7 @@
     <AssemblyVersion>$(Version).0</AssemblyVersion>
     <EnableAsyncStackTraces Condition="'$(Configuration)' == 'Debug'">true</EnableAsyncStackTraces>
     <LangVersion>latest</LangVersion>
-    <TargetFrameworks>netstandard2.0;net9.0</TargetFrameworks>
+    <TargetFrameworks>net10.0</TargetFrameworks>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -40,16 +40,13 @@
 
   <ItemGroup>
     <PackageReference Include="Avalonia" />
-    <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" />
     <PackageReference Include="CommunityToolkit.Mvvm" />
-    <PackageReference Include="IconPacks.Avalonia.Codicons" />
     <PackageReference Include="Nullable">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
     <PackageReference Include="System.Reactive" />
     <PackageReference Include="System.Reactive.Linq" />
-    <PackageReference Include="System.Text.Json" />
   </ItemGroup>
 
   <ItemGroup>
@@ -63,7 +60,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
     <None Include="meringue.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 

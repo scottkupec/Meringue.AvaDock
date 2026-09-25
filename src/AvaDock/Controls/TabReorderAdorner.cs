@@ -49,7 +49,7 @@ namespace Meringue.AvaDock.Controls
                 {
                     // Locate the ItemsPresenter (tab strip host)
                     ItemsPresenter? itemsPresenter = this.TargetPanel
-                        .GetTemplateChildren()
+                        .GetTemplateDescendants()
                         .OfType<ItemsPresenter>()
                         .FirstOrDefault();
 

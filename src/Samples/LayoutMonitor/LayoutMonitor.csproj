@@ -3,7 +3,7 @@
     <OutputType>WinExe</OutputType>
     <AssemblyVersion>0.0.1</AssemblyVersion>
     <LangVersion>latest</LangVersion>
-    <TargetFramework>net80</TargetFramework>    
+    <TargetFramework>net10.0</TargetFramework>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -26,8 +26,6 @@
     <PackageReference Include="Avalonia" />
     <PackageReference Include="Avalonia.Desktop" />
     <PackageReference Include="Avalonia.Themes.Fluent" />
-    <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
-    <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" />
     <PackageReference Include="CommunityToolkit.Mvvm" />
   </ItemGroup>
 

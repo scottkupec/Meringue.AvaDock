@@ -40,6 +40,12 @@ namespace Meringue.AvaDock
         private const String PreferredWorkspaceIdPropertyName = "AvaDock.PreferredWorkspaceId";
 
         /// <summary>
+        /// The <see cref="DataFormat{T}"/> for dragging a <see cref="DockItemViewModel"/> in Avalonia 12.
+        /// </summary>
+        public static readonly DataFormat<DockItemViewModel> DockItemDragFormat =
+            DataFormat.CreateInProcessFormat<DockItemViewModel>("application/x-meringuedockitem");
+
+        /// <summary>
         /// Clears the preferred <see cref="DockTabNodeViewModel"/> panel Id for the specified <see cref="DockItemViewModel"/>.
         /// </summary>
         /// <param name="item">The <see cref="DockItemViewModel"/> whose preferred panel ID is being cleared.</param>

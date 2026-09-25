@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Specialized;
 using System.Linq;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Presenters;
@@ -28,11 +29,16 @@ namespace Meringue.AvaDock.Controls
                 nameof(ShouldShowTabStrip));
 
         /// <summary>The point where the pointer was initially clicked.</summary>
-        // CONSIDER: Refactor into DragContext?
         private Point? dragStartPoint;
 
         /// <summary>Indicates for a drag operation is currently in effect.</summary>
         private Boolean isDragging;
+
+        /// <summary>The tab item where the pointer was initially pressed.</summary>
+        private TabItem? dragSourceTab;
+
+        /// <summary>The pointer pressed event args captured at drag start.</summary>
+        private PointerPressedEventArgs? dragStartEventArgs;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DockTabPanel"/> class.
@@ -80,13 +86,6 @@ namespace Meringue.AvaDock.Controls
         /// <inheritdoc/>
         protected override void ClearContainerForItemOverride(Control element)
         {
-            if (element is TabItem tab)
-            {
-                // Ensure no handler leaks
-                tab.PointerPressed -= null;
-                tab.PointerMoved -= null;
-            }
-
             base.ClearContainerForItemOverride(element);
         }
 
@@ -106,43 +105,49 @@ namespace Meringue.AvaDock.Controls
         {
             base.OnInitialized();
 
-            this.AddHandler(DragDrop.DragEnterEvent, this.OnDragEnter);
-            this.AddHandler(DragDrop.DragLeaveEvent, this.OnDragLeave);
-            this.AddHandler(DragDrop.DragOverEvent, this.OnDragOver);
-            this.AddHandler(DragDrop.DropEvent, this.OnTabDropped);
+            this.AddHandler(DragDrop.DragEnterEvent, this.OnDragEnter, handledEventsToo: true);
+            this.AddHandler(DragDrop.DragLeaveEvent, this.OnDragLeave, handledEventsToo: true);
+            this.AddHandler(DragDrop.DragOverEvent, this.OnDragOver, handledEventsToo: true);
+            this.AddHandler(DragDrop.DropEvent, this.OnTabDropped, handledEventsToo: true);
+            this.AddHandler(Avalonia.Input.InputElement.PointerMovedEvent, this.OnPanelPointerMovedAsync, handledEventsToo: true);
+            this.AddHandler(Avalonia.Input.InputElement.PointerPressedEvent, this.OnPanelPointerPressed, handledEventsToo: true);
+            this.AddHandler(Avalonia.Input.InputElement.PointerReleasedEvent, this.OnPanelPointerReleased, handledEventsToo: true);
         }
 
         /// <inheritdoc/>
         protected override void PrepareContainerForItemOverride(Control element, Object? item, Int32 index)
         {
             base.PrepareContainerForItemOverride(element, item, index);
-
-            if (element is TabItem tab && item is DockItemViewModel itemViewModel)
-            {
-                tab.PointerMoved += this.OnTabPointerMoved;
-                tab.PointerPressed += this.OnTabPointerPressed;
-            }
         }
 
         /// <summary>
         /// Initiates a drag-and-drop operation for the specified <see cref="DockItemViewModel"/> tab.
-        /// This method packages the tab into a <see cref="DataObject"/> and begins the drag operation
-        /// using Avalonia's <see cref="DragDrop.DoDragDrop"/> API.
+        /// This method packages the tab into a <see cref="DataTransfer"/> and begins the drag operation
+        /// using Avalonia's <see cref="DragDrop.DoDragDropAsync"/> API.
         /// </summary>
         /// <param name="item">The tab view model being dragged.</param>
         /// <param name="eventArgs">The pointer event that triggered the drag, used to anchor the drag context.</param>
         /// <returns><c>true</c> on success; otherwise, <c>false</c>.</returns>
-        private static Boolean TryStartDrag(DockItemViewModel item, PointerEventArgs eventArgs)
+        private static async Task<Boolean> TryStartDragAsync(DockItemViewModel item, PointerPressedEventArgs eventArgs)
         {
-            DataObject dragData = new();
-            dragData.Set(DockContext.DragDropContextName, item);
+            // Create the application specific DataTransferItem.
+            DataTransferItem itemData = new();
+            itemData.Set(DockContext.DockItemDragFormat, item);
 
-            _ = DragDrop.DoDragDrop(
+            // Build the drag payload and attach application data.
+#pragma warning disable CA2000 // Avalonia disposes the DataTransfer. See remarks on https://github.com/AvaloniaUI/Avalonia/blob/main/src/Avalonia.Base/Input/IDataTransfer.cs
+            DataTransfer dataTransfer = new();
+            dataTransfer.Add(itemData);
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+            // Start async drag operation
+            DragDropEffects result = await DragDrop.DoDragDropAsync(
                 eventArgs,
-                dragData,
-                DragDropEffects.Move);
+                dataTransfer,
+                DragDropEffects.Move).ConfigureAwait(false);
 
-            return true;
+            // Return true if a move actually occurred
+            return result.HasFlag(DragDropEffects.Move);
         }
 
         /// <summary>
@@ -157,7 +162,7 @@ namespace Meringue.AvaDock.Controls
             DockTabPanel.LastPanelOver?.OnDragLeave(sender, eventArgs);
             DockTabPanel.LastPanelOver = this;
 
-            if (eventArgs.Data.Contains(DockContext.DragDropContextName))
+            if (eventArgs.DataTransfer.Formats.Contains(DockContext.DockItemDragFormat))
             {
                 this.DragOperationContext ??= new DragContext(this, eventArgs);
                 this.DragOperationContext.ShowAdorners();
@@ -183,7 +188,7 @@ namespace Meringue.AvaDock.Controls
         /// <param name="eventArgs">The <see cref="DragEventArgs"/> for the event.</param>
         private void OnDragOver(Object? sender, DragEventArgs eventArgs)
         {
-            if (eventArgs.Data.Contains(DockContext.DragDropContextName))
+            if (eventArgs.DataTransfer.Formats.Contains(DockContext.DockItemDragFormat))
             {
                 Point pointerPosition = eventArgs.GetPosition(this);
 
@@ -231,12 +236,18 @@ namespace Meringue.AvaDock.Controls
             this.DragOperationContext = null;
         }
 
-        /// <summary>Processes <see cref="PointerPressedEventArgs"/> events when the pointer is moved.</summary>
+        /// <summary>Processes <see cref="PointerEventArgs"/> events when the pointer is moved over the panel.</summary>
         /// <param name="sender">The sender of the event args.</param>
         /// <param name="eventArgs">The arguments for the event.</param>
-        private void OnTabPointerMoved(Object? sender, PointerEventArgs eventArgs)
+        private async void OnPanelPointerMovedAsync(Object? sender, PointerEventArgs eventArgs)
         {
-            if (sender is not TabItem tabItem || tabItem.DataContext is not DockItemViewModel dockItem)
+            // Only start drag for the tab that was initially pressed
+            if (this.dragSourceTab is null || this.dragStartEventArgs is null)
+            {
+                return;
+            }
+
+            if (this.dragSourceTab.DataContext is not DockItemViewModel dockItem)
             {
                 return;
             }
@@ -249,26 +260,50 @@ namespace Meringue.AvaDock.Controls
                 // Only start drag if moved beyond a threshold
                 if (!this.isDragging && (Math.Abs(delta.X) > 4 || Math.Abs(delta.Y) > 4))
                 {
-                    this.isDragging = DockTabPanel.TryStartDrag(dockItem, eventArgs);
+                    this.isDragging = true;
+                    _ = await DockTabPanel.TryStartDragAsync(dockItem, this.dragStartEventArgs).ConfigureAwait(false);
                 }
             }
         }
 
-        /// <summary>Processes <see cref="PointerPressedEventArgs"/> events when the pointer is pressed.</summary>
+        /// <summary>Processes <see cref="PointerPressedEventArgs"/> events when the pointer is pressed on the panel.</summary>
         /// <param name="sender">The sender of the event args.</param>
         /// <param name="eventArgs">The arguments for the event.</param>
-        private void OnTabPointerPressed(Object? sender, PointerPressedEventArgs eventArgs)
+        private void OnPanelPointerPressed(Object? sender, PointerPressedEventArgs eventArgs)
         {
-            if (sender is not TabItem tab)
+            if (!eventArgs.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
             {
                 return;
             }
 
-            if (eventArgs.GetCurrentPoint(tab).Properties.IsLeftButtonPressed)
+            if (eventArgs.Source is not Visual sourceVisual)
             {
-                this.dragStartPoint = eventArgs.GetPosition(this);
-                this.isDragging = false;
+                return;
             }
+
+            TabItem? tabItem = sourceVisual.FindAncestorOfType<TabItem>();
+            if (tabItem is null || tabItem.DataContext is not DockItemViewModel)
+            {
+                return;
+            }
+
+            Point pos = eventArgs.GetPosition(this);
+            this.dragStartPoint = pos;
+            this.isDragging = false;
+            this.dragSourceTab = tabItem;
+            this.dragStartEventArgs = eventArgs;
+        }
+
+        /// <summary>Processes <see cref="PointerReleasedEventArgs"/> events when the pointer is released.</summary>
+        /// <param name="sender">The sender of the event args.</param>
+        /// <param name="eventArgs">The arguments for the event.</param>
+        private void OnPanelPointerReleased(Object? sender, PointerReleasedEventArgs eventArgs)
+        {
+            // Reset drag state on release
+            this.dragStartPoint = null;
+            this.isDragging = false;
+            this.dragSourceTab = null;
+            this.dragStartEventArgs = null;
         }
 
         /// <summary>
@@ -307,8 +342,7 @@ namespace Meringue.AvaDock.Controls
             {
                 this.Owner = owner;
 
-                this.DraggedTab = eventArgs.Data.Get(DockContext.DragDropContextName) as DockItemViewModel;
-
+                this.DraggedTab = eventArgs.DataTransfer.TryGetValue(DockContext.DockItemDragFormat);
                 this.DropIndex = this.HitTestTabIndex(eventArgs.GetPosition(owner));
                 this.TargetNode = DragContext.GetTargetNode(eventArgs);
             }

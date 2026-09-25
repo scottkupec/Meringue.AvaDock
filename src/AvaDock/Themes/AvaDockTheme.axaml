@@ -11,12 +11,14 @@
 
       <ResourceDictionary.ThemeDictionaries>
         <ResourceDictionary x:Key="Light">
-          <Color x:Key="AvaDockBackgroundColor">White</Color>
           <Color x:Key="AvaDockAccentColor">SlateGray</Color>
+          <Color x:Key="AvaDockBackgroundColor">White</Color>
+          <Color x:Key="AvaDockChromeColor">White</Color>
         </ResourceDictionary>
         <ResourceDictionary x:Key="Dark">
-          <Color x:Key="AvaDockBackgroundColor">Black</Color>
           <Color x:Key="AvaDockAccentColor">SlateGray</Color>
+          <Color x:Key="AvaDockBackgroundColor">Black</Color>
+          <Color x:Key="AvaDockChromeColor">White</Color>
         </ResourceDictionary>
       </ResourceDictionary.ThemeDictionaries>
     </ResourceDictionary>
@@ -36,5 +38,4 @@
   <StyleInclude Source="/Themes/DockWorkspace.axaml" />
   <StyleInclude Source="/Themes/ItemTitleBar.axaml" />
   <StyleInclude Source="/Themes/MinimizedItemsBar.axaml" />
-  <StyleInclude Source="avares://IconPacks.Avalonia.Codicons/Codicons.axaml" />
 </Styles>

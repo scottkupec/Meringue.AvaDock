@@ -46,12 +46,17 @@ namespace Meringue.AvaDock.Controls.UnitTests
             Window window = new() { Content = container };
             window.Show();
 
-            DataObject dragData = new();
-            dragData.Set(DockContext.DragDropContextName, draggedItem);
+            DataTransferItem itemData = new();
+            itemData.Set(DockContext.DockItemDragFormat, draggedItem);
+
+#pragma warning disable CA2000 // Avalonia disposes the DataTransfer. See remarks on https://github.com/AvaloniaUI/Avalonia/blob/main/src/Avalonia.Base/Input/IDataTransfer.cs
+            DataTransfer dataTransfer = new();
+            dataTransfer.Add(itemData);
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
             DragEventArgs args = new(
                 DragDrop.DragEnterEvent,
-                dragData,
+                dataTransfer,
                 panel,
                 new Point(10, 10),
                 KeyModifiers.None);
@@ -75,12 +80,17 @@ namespace Meringue.AvaDock.Controls.UnitTests
             Window window = new() { Content = container };
             window.Show();
 
-            DataObject dragData = new();
-            dragData.Set(DockContext.DragDropContextName, draggedItem);
+            DataTransferItem itemData = new();
+            itemData.Set(DockContext.DockItemDragFormat, draggedItem);
+
+#pragma warning disable CA2000 // Avalonia disposes the DataTransfer. See remarks on https://github.com/AvaloniaUI/Avalonia/blob/main/src/Avalonia.Base/Input/IDataTransfer.cs
+            DataTransfer dataTransfer = new();
+            dataTransfer.Add(itemData);
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
             DragEventArgs args = new(
                 DragDrop.DragOverEvent,
-                dragData,
+                dataTransfer,
                 panel,
                 new Point(5, 5), // assume this hits tab header
                 KeyModifiers.None);
@@ -116,13 +126,18 @@ namespace Meringue.AvaDock.Controls.UnitTests
             Window window = new() { Content = container };
             window.Show();
 
-            DataObject dragData = new();
             DockItemViewModel draggedItem = new();
-            dragData.Set(DockContext.DragDropContextName, draggedItem);
+            DataTransferItem itemData = new();
+            itemData.Set(DockContext.DockItemDragFormat, draggedItem);
+
+#pragma warning disable CA2000 // Avalonia disposes the DataTransfer. See remarks on https://github.com/AvaloniaUI/Avalonia/blob/main/src/Avalonia.Base/Input/IDataTransfer.cs
+            DataTransfer dataTransfer = new();
+            dataTransfer.Add(itemData);
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
             DragEventArgs args = new(
                 DragDrop.DropEvent,
-                dragData,
+                dataTransfer,
                 panel,
                 new Point(10, 10),
                 KeyModifiers.None);

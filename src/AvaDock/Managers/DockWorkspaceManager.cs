@@ -1035,12 +1035,11 @@ namespace Meringue.AvaDock.Managers
                 }
 
                 Boolean result;
-                //// DockTabNodeViewModel sourceTabNode = this.Owner.FindParentTabNode(this.Item)!;
                 DockTabNodeViewModel sourceTabNode = this.FindParentTabNode(this.Item)!;
 
-                if (this.Placement == MovePlacement.On && sourceTabNode == this.TargetNode && sourceTabNode.Tabs.Count == 1)
+                if (sourceTabNode == this.TargetNode && sourceTabNode.Tabs.Count == 1)
                 {
-                    result = true; // No-op move
+                    result = true; // No-op: dropping onto same tab node
                 }
                 else
                 {

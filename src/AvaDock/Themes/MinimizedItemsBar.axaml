@@ -1,6 +1,5 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:controls="using:Meringue.AvaDock.Controls"
-        xmlns:icons="clr-namespace:IconPacks.Avalonia.Codicons;assembly=IconPacks.Avalonia.Codicons"
         xmlns:viewModels="using:Meringue.AvaDock.ViewModels"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
@@ -35,12 +34,10 @@
                         <StackPanel HorizontalAlignment="Center"
                                     Orientation="Horizontal"
                                     Spacing="2">
-                          <icons:PackIconCodicons Height="{DynamicResource AvaDockFontSize}"
-                                                  HorizontalAlignment="Center"
-                                                  Kind="ChromeRestore"
-                                                  Margin="4,0,4,0"
-                                                  VerticalAlignment="Center"
-                                                  Width="{DynamicResource AvaDockFontSize}"/>
+                          <!-- Restore icon -->
+                          <Path Data="M4 8 H14 V18 H4 Z M6 6 H16 V16 H6 Z"
+                                Stroke="{DynamicResource AvaDockChromeColor}"
+                                StrokeThickness="1"/>
                           <TextBlock FontSize="{DynamicResource AvaDockFontSize}"
                                      Text="{Binding Title}"
                                      TextTrimming="CharacterEllipsis"
