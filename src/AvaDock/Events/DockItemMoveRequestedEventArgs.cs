@@ -1,5 +1,6 @@
-﻿// Copyright (C) Scott Kupec. All rights reserved.
+// Copyright (C) Scott Kupec. All rights reserved.
 
+using System;
 using System.ComponentModel;
 using Avalonia.Layout;
 using Meringue.AvaDock.Managers;
@@ -22,18 +23,21 @@ namespace Meringue.AvaDock.Events
         /// <param name="toNode">The <see cref="DockTabNodeViewModel"/> that the item is being moved to.</param>
         /// <param name="placement">How the item should be placed relative to the target node.</param>
         /// <param name="orientation">The orientation required for the placing the <see cref="DockItemViewModel"/>.</param>
+        /// <param name="insertionIndex">The index at which the item should be inserted into the target node, if applicable.</param>
         public DockItemMoveRequestedEventArgs(
             DockItemViewModel item,
             DockTabNodeViewModel? fromNode,
             DockTabNodeViewModel toNode,
             MovePlacement placement,
-            Orientation? orientation = null)
+            Orientation? orientation = null,
+            Int32? insertionIndex = null)
             : base(item)
         {
             this.FromNode = fromNode;
             this.ToNode = toNode;
             this.Placement = placement;
             this.RequiredOrientation = orientation;
+            this.InsertionIndex = insertionIndex;
         }
 
         /// <summary>
@@ -56,5 +60,10 @@ namespace Meringue.AvaDock.Events
         /// Gets the destination <see cref="DockTabNodeViewModel"/> that the item is being moved to.
         /// </summary>
         public DockTabNodeViewModel ToNode { get; }
+
+        /// <summary>
+        /// Gets the index at which the item should be inserted into the target node, if applicable.
+        /// </summary>
+        public Int32? InsertionIndex { get; }
     }
 }

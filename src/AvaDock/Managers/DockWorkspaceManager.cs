@@ -670,7 +670,8 @@ namespace Meringue.AvaDock.Managers
                     item,
                     targetTabNode,
                     placement,
-                    requiredOrientation);
+                    requiredOrientation,
+                    eventArgs.InsertionIndex);
 
                 Boolean result = operation.Execute();
                 DockWorkspaceManager.EnsureWorkspaceHasTabNode(this);
@@ -960,18 +961,21 @@ namespace Meringue.AvaDock.Managers
             /// <param name="targetNode">The target node to which the <see cref="DockItemViewModel"/> is being moved.</param>
             /// <param name="placement">How the item should be placed relative to the target node.</param>
             /// <param name="orientation">The orientation required for the placing the <see cref="DockItemViewModel"/>.</param>
+            /// <param name="insertionIndex">The index at which the item should be inserted into the target node, if applicable.</param>
             public MoveOperation(
                 DockWorkspaceManager owner,
                 DockItemViewModel item,
                 DockTabNodeViewModel targetNode,
                 MovePlacement placement,
-                Orientation? orientation)
+                Orientation? orientation,
+                Int32? insertionIndex = null)
             {
                 this.Item = item;
                 this.Owner = owner;
                 this.Placement = placement;
                 this.RequiredOrientation = orientation;
                 this.TargetNode = targetNode;
+                this.InsertionIndex = insertionIndex;
             }
 
             /// <summary>
@@ -999,6 +1003,11 @@ namespace Meringue.AvaDock.Managers
             /// Gets the <see cref="DockItemViewModel"/> being moved.
             /// </summary>
             private DockItemViewModel Item { get; }
+
+            /// <summary>
+            /// Gets the index at which the item should be inserted into the target node, if applicable.
+            /// </summary>
+            private Int32? InsertionIndex { get; }
 
             /// <summary>
             /// Executes the move operation.
@@ -1068,17 +1077,26 @@ namespace Meringue.AvaDock.Managers
 
                 System.Diagnostics.Debug.Assert(operation.Placement == MovePlacement.On, "Invalid code path.");
 
-                ////DockWorkspaceManager sourceWorkspace = operation.Owner.GetWorkspace(sourceTabNode)!;
-                ////DockWorkspaceManager? destinationWorkspace = operation.Owner.GetWorkspace(operation.TargetNode);
-
-                DockWorkspaceManager? sourceWorkspace = DockContext.GetWorkspace(sourceTabNode); //// operation.Owner.GetWorkspace(sourceTabNode)!;
-                DockWorkspaceManager? destinationWorkspace = DockContext.GetWorkspace(operation.TargetNode); //// operation.Owner.GetWorkspace(operation.TargetNode);
+                DockWorkspaceManager? sourceWorkspace = DockContext.GetWorkspace(sourceTabNode);
+                DockWorkspaceManager? destinationWorkspace = DockContext.GetWorkspace(operation.TargetNode);
 
                 if (operation.TargetNode is DockTabNodeViewModel targetTabNode && sourceWorkspace is not null)
                 {
-                    if (sourceWorkspace.RemoveItem(operation.Item))
+                    Boolean success = sourceTabNode?.Tabs.Count == 1
+                        ? sourceTabNode.RemoveTab(operation.Item)
+                        : sourceWorkspace.RemoveItem(operation.Item);
+
+                    if (success)
                     {
-                        targetTabNode.AddTab(operation.Item);
+                        if (operation.InsertionIndex.HasValue)
+                        {
+                            targetTabNode.ObservableTabs.Insert(operation.InsertionIndex.Value, operation.Item);
+                        }
+                        else
+                        {
+                            targetTabNode.AddTab(operation.Item);
+                        }
+
                         result = true;
                         sourceWorkspace.CommitChanges();
 
@@ -1115,7 +1133,11 @@ namespace Meringue.AvaDock.Managers
                 {
                     Int32 targetIndex = parentSplit.IndexOf(operation.TargetNode);
 
-                    if (targetIndex >= 0 && sourceWorkspace.RemoveItem(operation.Item))
+                    Boolean success = sourceTabNode?.Tabs.Count == 1
+                        ? sourceTabNode.RemoveTab(operation.Item)
+                        : sourceWorkspace.RemoveItem(operation.Item);
+
+                    if (targetIndex >= 0 && success)
                     {
                         // Must recalculate targetIndex because the RemoveItem() call may have changed the
                         // targetNode's location.

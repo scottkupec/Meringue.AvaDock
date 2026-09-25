@@ -323,7 +323,7 @@ namespace Meringue.AvaDock.Controls
             /// <summary>
             /// Gets the index of the tab under the pointer, if applicable.
             /// </summary>
-            public Int32? DropIndex { get; }
+            public Int32? DropIndex { get; private set; }
 
             /// <summary>
             /// Gets the target tab node where the dragged tab may be dropped.
@@ -357,11 +357,19 @@ namespace Meringue.AvaDock.Controls
             /// </summary>
             public void DropPanel()
             {
+                DropZone? zone = this.DropAdorner?.IsVisible == true ? this.DropAdorner.HoveredZone : null;
+                Int32? insertionIndex = null;
+                if (this.DropIndex.HasValue && this.TargetNode != null && this.DraggedTab != null && !this.TargetNode.Tabs.Contains(this.DraggedTab))
+                {
+                    insertionIndex = this.DropIndex.Value;
+                }
+
                 this.DraggedTab?.RequestMove(
                     (this.Owner.DataContext as DockTabNodeViewModel)!,
                     this.TargetNode!,
-                    DragContext.GetMovePlacement(this.DropAdorner?.HoveredZone),
-                    DragContext.GetRequiredOrientation(this.DropAdorner?.HoveredZone));
+                    DragContext.GetMovePlacement(zone),
+                    DragContext.GetRequiredOrientation(zone),
+                    insertionIndex);
             }
 
             /// <summary>
@@ -400,9 +408,21 @@ namespace Meringue.AvaDock.Controls
             /// <returns><c>true</c> if the tab was successfully moved to a new index; otherwise, <c>false</c>.</returns>
             public Boolean TryReorder()
             {
-                if (this.DraggedTab is null || !this.TargetNode!.Tabs.Contains(this.DraggedTab) || !this.DropIndex.HasValue)
+                if (this.DraggedTab is null || this.TargetNode is null || !this.DropIndex.HasValue)
                 {
                     return false;
+                }
+
+                if (!this.TargetNode.Tabs.Contains(this.DraggedTab))
+                {
+                    this.DraggedTab.RequestMove(
+                        (this.Owner.DataContext as DockTabNodeViewModel)!,
+                        this.TargetNode,
+                        MovePlacement.On,
+                        null,
+                        this.DropIndex.Value);
+
+                    return true;
                 }
 
                 Int32 oldIndex = this.TargetNode.ObservableTabs.IndexOf(this.DraggedTab);
@@ -426,9 +446,12 @@ namespace Meringue.AvaDock.Controls
                 if (itemsPresenter != null && itemsPresenter.Bounds.Contains(pointerPosition))
                 {
                     this.DropAdorner?.SetVisible(false);
+                    this.DropAdorner?.ResetZone();
                     this.ReorderAdorner?.SetVisible(true);
 
                     Int32? hoverIndex = this.HitTestTabIndex(pointerPosition);
+                    this.DropIndex = hoverIndex;
+
                     if (hoverIndex is not null)
                     {
                         this.ReorderAdorner?.UpdateTarget(this.Owner, hoverIndex.Value);
@@ -442,6 +465,7 @@ namespace Meringue.AvaDock.Controls
                 {
                     this.DropAdorner?.SetVisible(true);
                     this.ReorderAdorner?.SetVisible(false);
+                    this.DropIndex = null;
 
                     Point localPosition = this.DropAdorner != null
                         ? pointerPosition

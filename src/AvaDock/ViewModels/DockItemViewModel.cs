@@ -188,14 +188,16 @@ namespace Meringue.AvaDock.ViewModels
         /// The <see cref="Orientation"/> to be used when placing the node if <paramref name="placement"/> is <see cref="MovePlacement.Before"/> or
         /// <see cref="MovePlacement.After"/>. Optional and ignored for <see cref="MovePlacement.On"/>.
         /// </param>
-        public void RequestMove(DockTabNodeViewModel sourceNode, DockTabNodeViewModel targetNode, MovePlacement placement, Orientation? requiredOrientation)
+        /// <param name="insertionIndex">The index at which the item should be inserted within the target node, if applicable.</param>
+        public void RequestMove(DockTabNodeViewModel sourceNode, DockTabNodeViewModel targetNode, MovePlacement placement, Orientation? requiredOrientation, Int32? insertionIndex = null)
         {
             DockItemMoveRequestedEventArgs moveEvent = new(
                 this,
                 sourceNode,
                 targetNode,
                 placement,
-                requiredOrientation);
+                requiredOrientation,
+                insertionIndex);
             this.MoveRequested?.Invoke(this, moveEvent);
         }
 

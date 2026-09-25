@@ -1,4 +1,4 @@
-﻿// Copyright (C) Scott Kupec. All rights reserved.
+// Copyright (C) Scott Kupec. All rights reserved.
 
 using System;
 using System.Collections.Generic;
@@ -69,13 +69,13 @@ namespace Meringue.AvaDock.Controls
             }
         }
 
+        /// <summary>Resets the current <see cref="DropZone"/> to <see cref="DropZone.None"/>.</summary>
+        public void ResetZone() => this.DropTarget.Reset();
+
         /// <summary>Sets the value of <see cref="Visual.IsVisible"/> for the current instance.</summary>
         /// <param name="isVisible">The new value for the <see cref="Visual.IsVisible"/>.</param>
         /// <remarks>Added as a null-colaesce friendly setter.</remarks>
-        public void SetVisible(Boolean isVisible)
-        {
-            this.IsVisible = isVisible;
-        }
+        public void SetVisible(Boolean isVisible) => this.IsVisible = isVisible;
 
         /// <summary>
         /// Updates the <see cref="Control"/> being adorned.
@@ -135,6 +135,12 @@ namespace Meringue.AvaDock.Controls
 
             /// <summary>Gets pointer position thresholds for possible <see cref="DropZone"/>s.</summary>
             private Dictionary<DropZone, Double> ZoneThresholds { get; } = [];
+
+            /// <summary>Resets the current zone to <see cref="DropZone.None"/>.</summary>
+            public void Reset()
+            {
+                this.CurrentZone = DropZone.None;
+            }
 
             /// <summary>Updates the containing bounds for the drop zones.</summary>
             /// <param name="bounds">The new containering bounds.</param>
