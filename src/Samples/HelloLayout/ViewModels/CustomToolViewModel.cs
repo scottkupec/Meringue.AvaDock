@@ -12,7 +12,7 @@ namespace HelloLayout.ViewModels
         /// </summary>
         public CustomToolViewModel()
         {
-            // Just to demonstrate the correct class is being constructed.
+            // Debug output just to demonstrate the correct class is being constructed.
             System.Diagnostics.Debug.WriteLine($"Constructing {typeof(CustomToolViewModel)}.");
         }
     }

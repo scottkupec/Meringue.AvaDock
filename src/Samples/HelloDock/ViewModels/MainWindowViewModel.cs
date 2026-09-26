@@ -20,15 +20,11 @@ namespace HelloDock.ViewModels
             this.DockManager = BuildHostRoot();
         }
 
-        /// <summary>Gets the thing.</summary>
+        /// <summary>Gets the <see cref="DockControlManager"/> managing the dock control instance.</summary>
         public DockControlManager DockManager { get; }
 
-        /// <summary>Build a DockControlManager.</summary>.
+        /// <summary>Build a <see cref="DockControlManager"/> for the application.</summary>.
         /// <returns>The new <see cref="DockControlManager"/>.</returns>
-        /// <remarks>
-        /// Builds our initial control layout in memory so we don't need to
-        /// issue re-order commands at startup.
-        /// </remarks>
         private static DockControlManager BuildHostRoot()
         {
             // Create the intial split panel which will serve as the root of the

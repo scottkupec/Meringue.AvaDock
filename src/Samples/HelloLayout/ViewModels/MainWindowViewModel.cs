@@ -14,7 +14,8 @@ namespace HelloLayout.ViewModels
     public partial class MainWindowViewModel : ObservableObject
     {
         /// <summary>
-        /// Gets or sets the <see cref="DockItemViewModel"/> currently selected in the combo box.
+        /// Gets or sets the <see cref="DockItemViewModel"/> currently selected in the combo box for showing
+        /// previously hidden items.
         /// </summary>
         [ObservableProperty]
         private DockItemViewModel? selectedItem;
@@ -31,11 +32,11 @@ namespace HelloLayout.ViewModels
             this.LayoutManager = BuildLayoutRoot();
         }
 
-        /// <summary>Gets the thing.</summary>
+        /// <summary>Gets the <see cref="DockLayoutManager"/> managing the dock control instance.</summary>
         public DockLayoutManager<CustomToolViewModel> LayoutManager { get; }
 
-        /// <summary>Build a DockLayoutRootViewModel.</summary>.
-        /// <returns>The thing built.</returns>
+        /// <summary>Builds a <see cref="DockLayoutManager{T}"/> for the application.</summary>.
+        /// <returns>The new <see cref="DockLayoutManager{T}"/>.</returns>
         private static DockLayoutManager<CustomToolViewModel> BuildLayoutRoot()
         {
             // Create the layout manager with 3 top level splits.

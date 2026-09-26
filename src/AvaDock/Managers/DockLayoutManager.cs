@@ -241,78 +241,7 @@ namespace Meringue.AvaDock.Managers
                 throw new ArgumentException("Item ID cannot be null or whitespace.", nameof(id));
             }
 
-            if (this.DockControl.FindItem(id) is not T item)
-            {
-                DockNodeViewModel? targetNode = this.DockControl.PrimaryWorkspace.DockTree;
-
-                if (!String.IsNullOrEmpty(defaultParentId))
-                {
-#pragma warning disable CS8604 // Possible null reference argument. Null validation on IsNullOrWhiteSpace is not being recognized by the compiler.
-                    targetNode = this.DockControl.FindNode(defaultParentId);
-#pragma warning restore CS8604 // Possible null reference argument.
-                }
-
-                if (targetNode is null)
-                {
-                    if (this.InsertPolicy == DockInsertPolicy.Error)
-                    {
-                        throw new ArgumentOutOfRangeException(nameof(defaultParentId), "Parent could not be found");
-                    }
-
-                    if (this.InsertPolicy == DockInsertPolicy.CreateFloating)
-                    {
-                        DockTabNodeViewModel tab = new();
-                        DockSplitNodeViewModel split = new(Orientation.Horizontal);
-                        split.AddChild(tab);
-                        DockWorkspaceManager manager = new(split);
-
-                        IWindow? window = this.DockControl.AttachSecondaryWorkspace(
-                            manager,
-                            null,
-                            new Size(300, 200));
-                        window?.Show();
-
-                        targetNode = tab;
-                    }
-                    else
-                    {
-                        targetNode = this.DockControl.PrimaryWorkspace.DockTree;
-                    }
-                }
-
-                item = new T()
-                {
-                    Id = id,
-                    Title = title ?? String.Empty,
-                    Context = context,
-                };
-
-                if (targetNode is DockTabNodeViewModel tabNode)
-                {
-                    tabNode.AddTab(item);
-                }
-                else if (targetNode is DockSplitNodeViewModel splitNode)
-                {
-                    DockTabNodeViewModel newTabNode = new();
-                    newTabNode.AddTab(item);
-                    newTabNode.Selected = item;
-
-                    if (this.InsertPolicy == DockInsertPolicy.CreateFirst)
-                    {
-                        splitNode.InsertAt(0, newTabNode);
-                    }
-                    else
-                    {
-                        splitNode.AddChild(newTabNode);
-                    }
-                }
-                else
-                {
-                    // Unexpected node type — fallback behavior
-                    throw new InvalidOperationException($"Unsupported parent node type: {targetNode.GetType().Name}");
-                }
-            }
-            else
+            if (this.DockControl.FindItem(id) is T item)
             {
                 if (title is not null)
                 {
@@ -320,12 +249,50 @@ namespace Meringue.AvaDock.Managers
                 }
 
                 item.Context = context;
+                return item;
             }
 
-            DockWorkspaceManager? workspaceUpdated = DockContext.GetWorkspace(item);
-            workspaceUpdated?.CommitChanges();
+            T newItem = new()
+            {
+                Id = id,
+                Title = title ?? String.Empty,
+                Context = context,
+            };
 
-            return item;
+#pragma warning disable CS8604 // Possible null reference argument.
+            if (!String.IsNullOrEmpty(defaultParentId))
+            {
+                DockContext.SetPreferredTabPanelId(newItem, defaultParentId);
+            }
+
+            DockWorkspaceManager workspace = this.DockControl.PrimaryWorkspace;
+
+            if (this.InsertPolicy == DockInsertPolicy.CreateFloating && !String.IsNullOrEmpty(defaultParentId) && this.DockControl.FindNode(defaultParentId) is null)
+            {
+                DockTabNodeViewModel tab = new();
+                DockSplitNodeViewModel split = new(Orientation.Horizontal);
+                split.AddChild(tab);
+                DockWorkspaceManager manager = new(split);
+                IWindow? window = this.DockControl.AttachSecondaryWorkspace(manager, null, new Size(300, 200));
+                window?.Show();
+                _ = manager.AddItem(newItem);
+                manager.CommitChanges();
+                return newItem;
+            }
+
+            if (this.InsertPolicy == DockInsertPolicy.Error && !String.IsNullOrEmpty(defaultParentId) && this.DockControl.FindNode(defaultParentId) is null)
+            {
+                throw new ArgumentOutOfRangeException(nameof(defaultParentId), "Parent could not be found");
+            }
+
+            Boolean added = workspace.AddItem(newItem);
+            if (!added && this.InsertPolicy == DockInsertPolicy.Error)
+            {
+                throw new ArgumentOutOfRangeException(nameof(defaultParentId), "Parent could not be found");
+            }
+#pragma warning restore CS8604 // Possible null reference argument.
+
+            return newItem;
         }
 
         /// <inheritdoc/>
