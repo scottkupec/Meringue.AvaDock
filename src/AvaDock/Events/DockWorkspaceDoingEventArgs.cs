@@ -6,7 +6,7 @@ using Meringue.AvaDock.Managers;
 namespace Meringue.AvaDock.Events
 {
     /// <summary>
-    /// Base class for cancellable events related to <see cref="DockWorkspaceManager"/> state changes.
+    /// Base class for cancellable events related to <see cref="DockWorkspaceManager"/> changes.
     /// </summary>
     [EditorBrowsable(EditorBrowsableState.Advanced)]
     public class DockWorkspaceDoingEventArgs : CancelEventArgs

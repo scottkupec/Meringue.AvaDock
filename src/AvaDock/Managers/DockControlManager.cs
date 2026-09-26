@@ -1,4 +1,4 @@
-﻿// Copyright (C) Scott Kupec. All rights reserved.
+// Copyright (C) Scott Kupec. All rights reserved.
 
 using System;
 using System.Collections.Generic;
@@ -12,6 +12,7 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Meringue.AvaDock.Controls;
 using Meringue.AvaDock.Events;
+using Meringue.AvaDock.Layout;
 using Meringue.AvaDock.Services;
 using Meringue.AvaDock.ViewModels;
 
@@ -34,6 +35,45 @@ namespace Meringue.AvaDock.Managers
         /// <param name="rootNode">The root <see cref="DockNodeViewModel"/> for the dock control tree.</param>
         public DockControlManager(DockWorkspaceManager rootNode)
         {
+            this.DockMonitor = new(this.HookItem, this.UnhookItem);
+
+            this.PrimaryWorkspace = rootNode;
+            this.PrimaryWorkspace.HiddenItemsChanged += this.ForwardHiddenItemsChanged;
+            this.PrimaryWorkspace.ItemsChanged += this.ForwardItemsChanged;
+            this.PrimaryWorkspace.MinimizedItemsChanged += this.ForwardMinimizedItemsChanged;
+            this.PrimaryWorkspace.ItemClosed += this.ForwardItemClosed;
+            this.PrimaryWorkspace.ItemClosing += this.ForwardItemClosing;
+            this.PrimaryWorkspace.ItemHidden += this.ForwardItemHidden;
+            this.PrimaryWorkspace.ItemHiding += this.ForwardItemHiding;
+            this.PrimaryWorkspace.ItemMinimized += this.ForwardItemMinimized;
+            this.PrimaryWorkspace.ItemMinimizing += this.ForwardItemMinimizing;
+            this.PrimaryWorkspace.ItemMoved += this.ForwardItemMoved;
+            this.PrimaryWorkspace.ItemMoving += this.ForwardItemMoving;
+            this.PrimaryWorkspace.ItemRestored += this.ForwardItemRestored;
+            this.PrimaryWorkspace.ItemRestoring += this.ForwardItemRestoring;
+            this.PrimaryWorkspace.ItemShowing += this.ForwardItemShowing;
+            this.PrimaryWorkspace.ItemShown += this.ForwardItemShown;
+
+            this.DockMonitor.Monitor(this.PrimaryWorkspace.DockTree);
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DockControlManager"/> class from a <see cref="DockLayout"/>.
+        /// </summary>
+        /// <param name="layout">The dock layout to deserialize.</param>
+        public DockControlManager(DockLayout layout)
+        {
+#if NET6_0_OR_GREATER
+            ArgumentNullException.ThrowIfNull(layout);
+#else
+            if (layout == null)
+            {
+                throw new ArgumentNullException(nameof(layout));
+            }
+#endif
+            DockControlManager temporaryManager = DockSerializationConverter.BuildViewModel<DockItemViewModel>(layout.Data);
+            DockWorkspaceManager rootNode = temporaryManager.PrimaryWorkspace;
+
             this.DockMonitor = new(this.HookItem, this.UnhookItem);
 
             this.PrimaryWorkspace = rootNode;
@@ -142,14 +182,14 @@ namespace Meringue.AvaDock.Managers
         public event EventHandler<DockWorkspaceDetachingEventArgs>? WorkspaceDetaching;
 
         /// <summary>
-        /// Occurs when items are added to or removed from the items collection
+        /// Occurs when items are added to or removed from the hidden items collection
         /// across all managed <see cref="DockWorkspaceManager"/> instances.
         /// </summary>
         public event NotifyCollectionChangedEventHandler? HiddenItemsChanged
         {
             add
             {
-                this.itemsChanged += value;
+                this.hiddenItemsChanged += value;
                 // When adding a subscriber, also subscribe to all current workspaces
                 foreach (DockWorkspaceManager workspace in this.SecondaryWorkspaces)
                 {
@@ -159,9 +199,9 @@ namespace Meringue.AvaDock.Managers
 
             remove
             {
-                this.itemsChanged -= value;
+                this.hiddenItemsChanged -= value;
                 // When removing a subscriber, unsubscribe from all workspaces if no subscribers left
-                if (this.itemsChanged is null)
+                if (this.hiddenItemsChanged is null)
                 {
                     foreach (DockWorkspaceManager workspace in this.SecondaryWorkspaces)
                     {
@@ -282,7 +322,7 @@ namespace Meringue.AvaDock.Managers
         internal WindowManager WindowManager { get; set; } = new(new AvaloniaWindowFactory());
 
         /// <summary>
-        /// Gets the <see cref="DockNodeMonitor"/> used to monitor for changes in <see cref="DockTree"/>s.
+        /// Gets the <see cref="DockNodeMonitor"/> used to monitor for changes in <see cref="DockTreePanel"/>s.
         /// </summary>
         private DockNodeMonitor DockMonitor { get; }
 
@@ -290,9 +330,26 @@ namespace Meringue.AvaDock.Managers
         /// Adds the specified <see cref="DockItemViewModel"/> to the primary workspace.
         /// </summary>
         /// <param name="item">The <see cref="DockItemViewModel"/> to be added.</param>
-        public void AddItem(DockItemViewModel item)
+        /// <returns>The added <see cref="DockItemViewModel"/> if successful; otherwise <c>null</c>.</returns>
+        public DockItemViewModel? AddItem(DockItemViewModel item) => this.PrimaryWorkspace.AddItem(item) ? item : null;
+
+        /// <summary>
+        /// Adds the specified <see cref="DockItemViewModel"/> to the primary workspace with an optional preferred tab panel.
+        /// </summary>
+        /// <param name="item">The <see cref="DockItemViewModel"/> to be added.</param>
+        /// <param name="preferredTabPanelId">Optional id of the preferred tab panel for the item.</param>
+        /// <returns>The added <see cref="DockItemViewModel"/> if successful; otherwise <c>null</c>.</returns>
+        public DockItemViewModel? AddItem(DockItemViewModel item, String? preferredTabPanelId = null)
         {
-            _ = this.PrimaryWorkspace.AddItem(item);
+            TargetFrameworkHelper.ThrowIfArgumentNull(item);
+
+            if (preferredTabPanelId is not null)
+            {
+                DockContext.SetPreferredTabPanelId(item, preferredTabPanelId);
+            }
+
+            Boolean added = this.PrimaryWorkspace.AddItem(item);
+            return added ? item : null;
         }
 
         /// <summary>
@@ -426,13 +483,13 @@ namespace Meringue.AvaDock.Managers
         /// <returns>The <see cref="DockItemViewModel"/> found or <c>null</c> if no such <see cref="DockItemViewModel"/> exists.</returns>
         public DockNodeViewModel? FindNode(String nodeId)
         {
-            DockNodeViewModel? existingNode = this.PrimaryWorkspace.DockTree.FindNode(nodeId);
+            DockNodeViewModel? existingNode = this.PrimaryWorkspace.DockTree.FindDescendentNode(nodeId);
 
             if (existingNode is null)
             {
                 foreach (DockWorkspaceManager workspace in this.SecondaryWorkspaces)
                 {
-                    existingNode = workspace.DockTree.FindNode(nodeId);
+                    existingNode = workspace.DockTree.FindDescendentNode(nodeId);
 
                     if (existingNode is not null)
                     {
@@ -442,6 +499,35 @@ namespace Meringue.AvaDock.Managers
             }
 
             return existingNode;
+        }
+
+        /// <summary>
+        /// Removes the specified <see cref="DockItemViewModel"/> from the dock control.
+        /// </summary>
+        /// <param name="itemId">The id of the <see cref="DockItemViewModel"/> to remove.</param>
+        /// <returns><c>true</c> if the item was removed; otherwise <c>false</c>.</returns>
+        public Boolean RemoveItem(String itemId)
+        {
+            DockItemViewModel? item = this.FindItem(itemId);
+            if (item is null)
+            {
+                return false;
+            }
+
+            if (this.PrimaryWorkspace.RemoveItem(item))
+            {
+                return true;
+            }
+
+            foreach (DockWorkspaceManager workspace in this.SecondaryWorkspaces)
+            {
+                if (workspace.RemoveItem(item))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -703,7 +789,7 @@ namespace Meringue.AvaDock.Managers
         /// <returns>The root found, if any.</returns>
         private DockTabNodeViewModel? FindParentTabNode(DockItemViewModel item)
         {
-            DockTabNodeViewModel? parent = this.PrimaryWorkspace.DockTree.FindOwningTabNode(item.Id);
+            DockTabNodeViewModel? parent = this.PrimaryWorkspace.DockTree.FindAncestorTabNode(item.Id);
 
             if (parent is not null)
             {
@@ -713,7 +799,7 @@ namespace Meringue.AvaDock.Managers
             {
                 foreach (DockWorkspaceManager floatingwindow in this.SecondaryWorkspaces)
                 {
-                    parent = floatingwindow.DockTree.FindOwningTabNode(item.Id);
+                    parent = floatingwindow.DockTree.FindAncestorTabNode(item.Id);
                     if (parent is not null)
                     {
                         return parent;
@@ -729,21 +815,33 @@ namespace Meringue.AvaDock.Managers
         /// </summary>
         /// <param name="sender">The workspace whose items changed.</param>
         /// <param name="eventArgs">Information about the change.</param>
-        private void ForwardHiddenItemsChanged(Object? sender, NotifyCollectionChangedEventArgs eventArgs) => this.hiddenItemsChanged?.Invoke(sender, eventArgs);
+        private void ForwardHiddenItemsChanged(Object? sender, NotifyCollectionChangedEventArgs eventArgs)
+        {
+            this.OnPropertyChanged(nameof(this.HiddenItems));
+            this.hiddenItemsChanged?.Invoke(sender, eventArgs);
+        }
 
         /// <summary>
         /// Handles items changes in individual workspaces and forwards to the aggregate event.
         /// </summary>
         /// <param name="sender">The workspace whose items changed.</param>
         /// <param name="eventArgs">Information about the change.</param>
-        private void ForwardItemsChanged(Object? sender, NotifyCollectionChangedEventArgs eventArgs) => this.itemsChanged?.Invoke(sender, eventArgs);
+        private void ForwardItemsChanged(Object? sender, NotifyCollectionChangedEventArgs eventArgs)
+        {
+            this.OnPropertyChanged(nameof(this.Items));
+            this.itemsChanged?.Invoke(sender, eventArgs);
+        }
 
         /// <summary>
         /// Handles minimized items changes in individual workspaces and forwards to the aggregate event.
         /// </summary>
         /// <param name="sender">The workspace whose minimized items changed.</param>
         /// <param name="eventArgs">Information about the change.</param>
-        private void ForwardMinimizedItemsChanged(Object? sender, NotifyCollectionChangedEventArgs eventArgs) => this.minimizedItemsChanged?.Invoke(sender, eventArgs);
+        private void ForwardMinimizedItemsChanged(Object? sender, NotifyCollectionChangedEventArgs eventArgs)
+        {
+            this.OnPropertyChanged(nameof(this.MinimizedItems));
+            this.minimizedItemsChanged?.Invoke(sender, eventArgs);
+        }
 
         /// <summary>
         /// Forwards <see cref="DockItemClosedEventArgs"/> events from all workspaces to event subscribers.

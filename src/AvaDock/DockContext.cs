@@ -6,11 +6,12 @@ using Meringue.AvaDock.Controls;
 using Meringue.AvaDock.Managers;
 using Meringue.AvaDock.ViewModels;
 
-namespace Meringue.AvaDock.Services
+namespace Meringue.AvaDock
 {
     /// <summary>
     /// Context class for use with the docking controls.
     /// </summary>
+    /// CONSIDER: This should possibly be public. Developers may need to inspect current item state, in particular, for decision making.
     internal class DockContext
     {
         /// <summary>

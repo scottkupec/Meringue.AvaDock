@@ -3,14 +3,12 @@
 using System;
 using System.ComponentModel;
 using Avalonia.Layout;
-using Meringue.AvaDock.Managers;
 using Meringue.AvaDock.ViewModels;
 
 namespace Meringue.AvaDock.Events
 {
     /// <summary>
-    /// Provides data for the <see cref="DockItemViewModel.MoveRequested"/> event which is raised when a
-    /// <see cref="DockItemViewModel"/> wants to be moved.
+    /// Provides data for the <see cref="DockItemViewModel.MoveRequested"/> event.
     /// </summary>
     [EditorBrowsable(EditorBrowsableState.Advanced)]
     public class DockItemMoveRequestedEventArgs : DockItemRequestEventArgs
@@ -29,8 +27,8 @@ namespace Meringue.AvaDock.Events
             DockTabNodeViewModel? fromNode,
             DockTabNodeViewModel toNode,
             MovePlacement placement,
-            Orientation? orientation = null,
-            Int32? insertionIndex = null)
+            Orientation? orientation,
+            Int32? insertionIndex)
             : base(item)
         {
             this.FromNode = fromNode;

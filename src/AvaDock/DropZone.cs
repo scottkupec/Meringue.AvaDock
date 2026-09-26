@@ -2,7 +2,7 @@
 
 using Meringue.AvaDock.Controls;
 
-namespace Meringue.AvaDock.Managers
+namespace Meringue.AvaDock
 {
     /// <summary>
     /// Defines the zones where a item can be dropped when dragging

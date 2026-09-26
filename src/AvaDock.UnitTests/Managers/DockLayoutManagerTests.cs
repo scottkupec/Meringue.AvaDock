@@ -5,8 +5,6 @@ using System.Linq;
 using Avalonia.Headless.XUnit;
 using Avalonia.Layout;
 using Meringue.AvaDock.Layout;
-using Meringue.AvaDock.Services;
-using Meringue.AvaDock.UnitTests;
 using Meringue.AvaDock.ViewModels;
 using Shouldly;
 
@@ -18,21 +16,14 @@ namespace Meringue.AvaDock.Managers.UnitTests
         [AvaloniaFact]
         public void ApplyLayout_ReturnsFalseWhenLayoutIsNull()
         {
-            // Arrange
             DockLayoutManager manager = new();
-
-            // Act
             Boolean applied = manager.ApplyLayout(null!);
-
-            // Assert
-            applied
-                .ShouldBeFalse("ApplyLayout should return false when layout is null.");
+            applied.ShouldBeFalse("ApplyLayout should return false when layout is null.");
         }
 
         [AvaloniaFact]
         public void ApplyLayout_ShouldMergeHiddenAndMinimizedTabsCorrectly()
         {
-            // Arrange: runtime layout with one hidden item
             DockItemViewModel runtimeHidden = new()
             {
                 Id = "hidden123",
@@ -40,7 +31,6 @@ namespace Meringue.AvaDock.Managers.UnitTests
                 Context = "HiddenContext",
             };
 
-            // Arrange: serialized layout with one minimized item and one hidden item (same ID as runtime)
             DockItemData minimizedItemData = new()
             {
                 Id = "min123",
@@ -60,21 +50,19 @@ namespace Meringue.AvaDock.Managers.UnitTests
                     Orientation = Orientation.Horizontal,
                 },
                 Minimized = [minimizedItemData],
+                Hidden = [hiddenItemData],
             };
 
             DockControlData layout = new()
             {
                 PrimaryWorkspace = workspaceData,
-                Hidden = [hiddenItemData],
             };
 
             DockLayoutManager manager = new();
             manager.DockControl.AddHiddenItem(runtimeHidden);
 
-            // Act
             Boolean applied = manager.ApplyLayout(layout);
 
-            // Assert
             applied
                 .ShouldBeTrue("ApplyLayout should succeed with valid layout containing hidden and minimized items.");
 
@@ -97,7 +85,7 @@ namespace Meringue.AvaDock.Managers.UnitTests
             restoredMinimized.Title
                 .ShouldBe("Minimized Item", "Title should match serialized layout.");
 
-            DockTabNodeViewModel? owningTab = manager.DockControl.PrimaryWorkspace.DockTree.FindOwningTabNode("min123");
+            DockTabNodeViewModel? owningTab = manager.DockControl.PrimaryWorkspace.DockTree.FindAncestorTabNode("min123");
 
             owningTab
                 .ShouldBeNull("Minimized item should not be part of any tab node.");
@@ -106,7 +94,6 @@ namespace Meringue.AvaDock.Managers.UnitTests
         [AvaloniaFact]
         public void ApplyLayout_ShouldMergeHiddenItemsCorrectly()
         {
-            // Arrange: runtime layout with one hidden item
             DockItemViewModel hiddenItem = new()
             {
                 Id = "hidden123",
@@ -117,30 +104,27 @@ namespace Meringue.AvaDock.Managers.UnitTests
             DockLayoutManager manager = new();
             manager.DockControl.AddHiddenItem(hiddenItem);
 
-            // Arrange: serialized layout with same hidden item (no context)
             DockControlData layout = new()
             {
-                Hidden =
-                [
-                    new DockItemData
-                    {
-                        Id = "hidden123",
-                        Title = "Serialized Hidden",
-                    },
-                ],
                 PrimaryWorkspace = new DockWorkspaceData
                 {
                     DockTree = new DockSplitNodeData
                     {
                         Orientation = Orientation.Horizontal,
                     },
+                    Hidden =
+                    [
+                        new DockItemData
+                        {
+                            Id = "hidden123",
+                            Title = "Serialized Hidden",
+                        },
+                    ],
                 },
             };
 
-            // Act
             Boolean applied = manager.ApplyLayout(layout);
 
-            // Assert
             applied
                 .ShouldBeTrue("ApplyLayout should succeed with valid layout containing hidden items.");
 
@@ -159,7 +143,6 @@ namespace Meringue.AvaDock.Managers.UnitTests
         [AvaloniaFact]
         public void ApplyLayout_ShouldMergeMinimizedItemFromRuntimeAndSerializedLayout()
         {
-            // Arrange: runtime layout with one minimized item
             DockItemViewModel runtimeMinimized = new()
             {
                 Id = "minBoth",
@@ -174,7 +157,6 @@ namespace Meringue.AvaDock.Managers.UnitTests
             DockLayoutManager manager = new();
             manager.DockControl = new DockControlManager(runtimeWorkspace);
 
-            // Arrange: serialized layout with same item ID
             DockItemData minimizedItemData = new()
             {
                 Id = "minBoth",
@@ -195,10 +177,8 @@ namespace Meringue.AvaDock.Managers.UnitTests
                 PrimaryWorkspace = workspaceData,
             };
 
-            // Act
             Boolean applied = manager.ApplyLayout(layout);
 
-            // Assert
             applied
                 .ShouldBeTrue("ApplyLayout should succeed with minimized item in both runtime and serialized layout.");
 
@@ -213,7 +193,7 @@ namespace Meringue.AvaDock.Managers.UnitTests
             merged.Title
                 .ShouldBe("Serialized Minimized", "Title should be updated from serialized layout.");
 
-            DockTabNodeViewModel? owningTab = manager.DockControl.PrimaryWorkspace.DockTree.FindOwningTabNode("minBoth");
+            DockTabNodeViewModel? owningTab = manager.DockControl.PrimaryWorkspace.DockTree.FindAncestorTabNode("minBoth");
 
             owningTab
                 .ShouldBeNull("Minimized item should not be part of any tab node.");
@@ -272,7 +252,7 @@ namespace Meringue.AvaDock.Managers.UnitTests
             inv
                 .ShouldNotBeNull();
 
-            manager.DockControl.PrimaryWorkspace.DockTree.FindOwningTabNode("inv").ShouldBeNull();
+            manager.DockControl.PrimaryWorkspace.DockTree.FindAncestorTabNode("inv").ShouldBeNull();
 
             manager.DockControl.PrimaryWorkspace.DockTree.Children
                 .Count(c => c is DockTabNodeViewModel)
@@ -282,7 +262,6 @@ namespace Meringue.AvaDock.Managers.UnitTests
         [AvaloniaFact]
         public void ApplyLayout_ShouldPreserveContextWhenItemIdsMatch()
         {
-            // Arrange: runtime layout with one item
             DockItemViewModel runtimeItem = new()
             {
                 Id = "abc123",
@@ -316,7 +295,6 @@ namespace Meringue.AvaDock.Managers.UnitTests
                     },
                 });
 
-            // Arrange: serialized layout with same item ID but no context
             DockControlData layout = new()
             {
                 PrimaryWorkspace = new DockWorkspaceData
@@ -325,10 +303,8 @@ namespace Meringue.AvaDock.Managers.UnitTests
                 },
             };
 
-            // Act
             Boolean applied = manager.ApplyLayout(layout);
 
-            // Assert
             applied
                 .ShouldBeTrue("ApplyLayout should return true for valid layout.");
 
@@ -347,7 +323,6 @@ namespace Meringue.AvaDock.Managers.UnitTests
         [AvaloniaFact]
         public void ApplyLayout_ShouldPreserveRuntimeOnlyHiddenItem()
         {
-            // Arrange: runtime layout with one hidden item
             DockItemViewModel runtimeHidden = new()
             {
                 Id = "hiddenOnly",
@@ -359,7 +334,6 @@ namespace Meringue.AvaDock.Managers.UnitTests
             DockContext.SetItemState(runtimeHidden, DockItemState.Hidden);
             manager.DockControl.AddHiddenItem(runtimeHidden);
 
-            // Arrange: serialized layout with no hidden items
             DockControlData layout = new()
             {
                 PrimaryWorkspace = new DockWorkspaceData
@@ -371,10 +345,8 @@ namespace Meringue.AvaDock.Managers.UnitTests
                 },
             };
 
-            // Act
             Boolean applied = manager.ApplyLayout(layout);
 
-            // Assert
             applied
                 .ShouldBeTrue("ApplyLayout should succeed with runtime-only hidden item.");
 
@@ -393,7 +365,6 @@ namespace Meringue.AvaDock.Managers.UnitTests
         [AvaloniaFact]
         public void ApplyLayout_ShouldRestoreMinimizedItemsCorrectly()
         {
-            // Arrange: serialized layout with one minimized item
             DockItemData minimizedItemData = new()
             {
                 Id = "min123",
@@ -416,10 +387,8 @@ namespace Meringue.AvaDock.Managers.UnitTests
 
             DockLayoutManager manager = new();
 
-            // Act
             Boolean applied = manager.ApplyLayout(layout);
 
-            // Assert
             applied
                 .ShouldBeTrue("ApplyLayout should succeed with valid layout containing minimized items.");
 
@@ -431,7 +400,7 @@ namespace Meringue.AvaDock.Managers.UnitTests
             restored.Title
                 .ShouldBe("Minimized Item", "Title should match serialized layout.");
 
-            DockTabNodeViewModel? owningTab = manager.DockControl.PrimaryWorkspace.DockTree.FindOwningTabNode("min123");
+            DockTabNodeViewModel? owningTab = manager.DockControl.PrimaryWorkspace.DockTree.FindAncestorTabNode("min123");
 
             owningTab
                 .ShouldBeNull("Minimized item should not be part of any tab node.");
@@ -440,7 +409,6 @@ namespace Meringue.AvaDock.Managers.UnitTests
         [AvaloniaFact]
         public void ApplyLayout_ShouldRestoreSerializedOnlyHiddenItem()
         {
-            // Arrange: serialized layout with one hidden item
             DockItemData hiddenItemData = new()
             {
                 Id = "hiddenSerialized",
@@ -449,22 +417,20 @@ namespace Meringue.AvaDock.Managers.UnitTests
 
             DockControlData layout = new()
             {
-                Hidden = [hiddenItemData],
                 PrimaryWorkspace = new DockWorkspaceData
                 {
                     DockTree = new DockSplitNodeData
                     {
                         Orientation = Orientation.Horizontal,
                     },
+                    Hidden = [hiddenItemData],
                 },
             };
 
             DockLayoutManager manager = new();
 
-            // Act
             Boolean applied = manager.ApplyLayout(layout);
 
-            // Assert
             applied
                 .ShouldBeTrue("ApplyLayout should succeed with serialized-only hidden item.");
 
@@ -480,13 +446,16 @@ namespace Meringue.AvaDock.Managers.UnitTests
         [AvaloniaFact]
         public void CreateOrUpdateItem_CreatesNewItemWithDefaultParent()
         {
-            // Arrange
             DockLayoutManager manager = new();
 
-            // Act
-            DockItemViewModel? created = manager.CreateOrUpdateItem("newId", "New Title", "new context", null);
+            DockItemViewModel? created = manager.DockControl.AddItem(
+                new DockItemViewModel()
+                {
+                    Id = "newId",
+                    Title = "New Title",
+                    Context = "new context",
+                });
 
-            // Assert
             created
                 .ShouldNotBeNull("Item should be created.");
 
@@ -505,104 +474,16 @@ namespace Meringue.AvaDock.Managers.UnitTests
         }
 
         [AvaloniaFact]
-        public void CreateOrUpdateItem_ThrowsWhenIdIsNullOrWhiteSpace()
-        {
-            // Arrange
-            DockLayoutManager manager = new();
-
-            // Act / Assert
-            String message1 = Should.Throw<ArgumentException>(() => manager.CreateOrUpdateItem(null!, "title", new Object(), null))
-                .Message;
-            message1.Contains("Item ID cannot be null or whitespace", StringComparison.Ordinal)
-                .ShouldBeTrue("Exception message should indicate invalid id.");
-
-            String message2 = Should.Throw<ArgumentException>(() => manager.CreateOrUpdateItem("   ", "title", new Object(), null))
-                .Message;
-            message2.Contains("Item ID cannot be null or whitespace", StringComparison.Ordinal)
-                .ShouldBeTrue("Exception message should indicate invalid id.");
-        }
-
-        [AvaloniaFact]
-        public void CreateOrUpdateItem_ThrowsWhenParentNotFoundAndPolicyIsError()
-        {
-            // Arrange
-            DockLayoutManager manager = new();
-            manager.InsertPolicy = DockInsertPolicy.Error;
-
-            // Act / Assert
-            String message = Should.Throw<ArgumentOutOfRangeException>(() => manager.CreateOrUpdateItem("id", "title", new Object(), "non-existent-parent"))
-                .Message;
-
-            message.Contains("Parent could not be found", StringComparison.Ordinal)
-                .ShouldBeTrue("Exception should indicate missing parent.");
-        }
-
-        [AvaloniaFact]
-        public void CreateOrUpdateItem_UpdatesExistingItem()
-        {
-            // Arrange
-            DockLayoutManager manager = new();
-            DockItemViewModel existing = manager.CreateOrUpdateItem("id1", "Old Title", "old context", null)!;
-
-            // Act
-            DockItemViewModel? updated = manager.CreateOrUpdateItem("id1", "New Title", "new context", null);
-
-            // Assert
-            updated.ShouldNotBeNull("CreateOrUpdateItem should return an item.");
-            updated!
-                .ShouldBe(existing, "CreateOrUpdateItem should return the existing item instance.");
-
-            updated!.Title
-                .ShouldBe("New Title", "Title should be updated.");
-
-            updated!.Context
-                .ShouldBe("new context", "Context should be updated.");
-        }
-
-        [AvaloniaFact]
-        public void CreateOrUpdateItem_UsesInsertPolicyCreateFirst()
-        {
-            // Arrange
-            DockLayoutManager manager = new();
-            manager.InsertPolicy = DockInsertPolicy.CreateFirst;
-            manager.CreateOrUpdateItem("first", "First", "ctx", null);
-            manager.CreateOrUpdateItem("second", "Second", "ctx", null);
-
-            // Act
-            manager.CreateOrUpdateItem("third", "Third", "ctx", null);
-
-            // Assert
-            DockSplitNodeViewModel? root = manager.DockControl.PrimaryWorkspace.DockTree;
-            root.ShouldNotBeNull("Root should be a split node.");
-
-            // Find the tab node that contains the "third" item
-            DockNodeViewModel? thirdTabNode = null;
-            foreach (DockNodeViewModel child in root.Children)
-            {
-                if (child is DockTabNodeViewModel tab && tab.Tabs.Any(t => t.Id == "third"))
-                {
-                    thirdTabNode = tab;
-                    break;
-                }
-            }
-
-            thirdTabNode.ShouldNotBeNull("A tab node containing the third item should exist.");
-            thirdTabNode.ShouldBe(root.Children[0], "CreateFirst should insert at index 0.");
-        }
-
-        [AvaloniaFact]
         public void FloatItem_RoundTripPreservesItemViaSerialization()
         {
-            // Arrange
             DockSplitNodeViewModel primaryTree = DockTree.Horizontal(DockTree.Tab("item1"));
             DockWorkspaceManager primary = new(primaryTree);
             DockLayoutManager layoutManager = new();
             layoutManager.DockControl = new DockControlManager(primary);
 
-            DockItemViewModel item = primaryTree.FindItem<DockItemViewModel>("item1")!;
+            DockItemViewModel item = primaryTree.FindDescendentItem<DockItemViewModel>("item1")!;
             item.Title = "Original";
 
-            // Act: save layout
             using System.IO.MemoryStream stream = new();
             layoutManager.SaveLayout(stream);
             stream.Position = 0;
@@ -611,7 +492,6 @@ namespace Meringue.AvaDock.Managers.UnitTests
             DockLayoutManager loader = new();
             loader.LoadLayout(stream);
 
-            // Assert
             DockItemViewModel? loaded = loader.DockControl.FindItem("item1");
             loaded.ShouldNotBeNull("Item should survive round-trip.");
             loaded.Title.ShouldBe("Original", "Item title should be preserved.");
@@ -620,21 +500,26 @@ namespace Meringue.AvaDock.Managers.UnitTests
         [AvaloniaFact]
         public void SaveLayout_WritesToFileAndCanBeLoaded()
         {
-            // Arrange
             DockLayoutManager manager = new();
-            manager.CreateOrUpdateItem("item2", "Item 2", new Object(), null);
+
+            DockItemViewModel? created = manager.DockControl.AddItem(
+                new DockItemViewModel()
+                {
+                    Id = "item1",
+                    Title = "Item 1",
+                    Context = "new context",
+                });
+
             String tempFile = System.IO.Path.GetTempFileName();
 
             try
             {
-                // Act
                 manager.SaveLayout(tempFile);
                 DockLayoutManager loader = new();
                 Boolean applied = loader.LoadLayout(tempFile);
 
-                // Assert
                 applied.ShouldBeTrue("Layout should be loaded from file.");
-                loader.DockControl.FindItem("item2").ShouldNotBeNull("Item should persist after file save/load round-trip.");
+                loader.DockControl.FindItem(created!.Id).ShouldNotBeNull("Item should persist after file save/load round-trip.");
             }
             finally
             {
@@ -648,19 +533,22 @@ namespace Meringue.AvaDock.Managers.UnitTests
         [AvaloniaFact]
         public void SaveLayout_WritesToStreamAndCanBeLoaded()
         {
-            // Arrange
             DockLayoutManager manager = new();
-            manager.CreateOrUpdateItem("item1", "Item 1", new Object(), null);
+            DockItemViewModel? created = manager.DockControl.AddItem(
+                new DockItemViewModel()
+                {
+                    Id = "item1",
+                    Title = "Item 1",
+                    Context = "new context",
+                });
 
-            // Act
             using System.IO.MemoryStream stream = new();
             manager.SaveLayout(stream);
             stream.Position = 0;
             Boolean applied = manager.ApplyLayout(manager.Serializer.Load(stream));
 
-            // Assert
             applied.ShouldBeTrue("Layout should be applied from saved stream.");
-            manager.DockControl.FindItem("item1").ShouldNotBeNull("Item should persist after save/load round-trip.");
+            manager.DockControl.FindItem(created!.Id).ShouldNotBeNull("Item should persist after save/load round-trip.");
         }
 
         private static Int32 CountTabNodes(DockNodeViewModel node)

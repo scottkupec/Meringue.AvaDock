@@ -55,7 +55,7 @@ namespace Meringue.AvaDock.Controls
         {
             foreach (DockNodeViewModel child in children)
             {
-                yield return new DockTree { DataContext = child };
+                yield return new DockTreePanel { DataContext = child };
             }
         }
 

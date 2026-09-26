@@ -11,6 +11,9 @@ namespace Meringue.AvaDock.Layout
     /// <summary>
     /// Represents the serializable state of an <see cref="IWindow"/> hosting a <see cref="DockWorkspaceManager"/>.
     /// </summary>
+    // CONSIDER: Merge this as optional properties on DockWorkspaceData instead of having this contain the workspace.
+    //           Since we only use windows when handling secondary workspaces, that would make declarative layout
+    //           creation better.
     public sealed class DockWindowData
     {
         /// <summary>

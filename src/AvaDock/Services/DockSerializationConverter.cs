@@ -67,16 +67,6 @@ namespace Meringue.AvaDock.Services
                 DockWorkspaceManager workspace = BuildWorkspace<T>(controlData.PrimaryWorkspace);
                 DockControlManager control = new(workspace);
 
-                if (controlData.Hidden is not null)
-                {
-                    foreach (DockItemData itemData in controlData.Hidden)
-                    {
-                        T item = BuildItem<T>(itemData);
-                        DockContext.SetItemState(item, DockItemState.Hidden);
-                        _ = workspace.AddItem(item);
-                    }
-                }
-
                 if (controlData.SecondaryWorkspaces is not null)
                 {
                     foreach (DockWindowData windowData in controlData.SecondaryWorkspaces)
@@ -126,15 +116,10 @@ namespace Meringue.AvaDock.Services
                     Title = itemData.Title ?? placeholderText,
                 };
 
-                // CONSIDER: These two require special knowledge about the implementation
+                // CONSIDER: This requires special knowledge about the implementation
                 //           details.  Can we make it more generic?  Do we just serialize
                 //           all item.Tags?  What about tags that can't serialize?
 #pragma warning disable CS8604 // Possible null reference argument. Null validation on IsNullOrWhiteSpace is not being recognized by the compiler.
-                if (!String.IsNullOrWhiteSpace(itemData.Workspace))
-                {
-                    DockContext.SetPreferredWorkspaceId(item, itemData.Workspace);
-                }
-
                 if (!String.IsNullOrWhiteSpace(itemData.Panel))
                 {
                     DockContext.SetPreferredTabPanelId(item, itemData.Panel);
@@ -340,16 +325,9 @@ namespace Meringue.AvaDock.Services
                     Title = item.Title,
                 };
 
-                // CONSIDER: These two require special knowledge about the implementation
+                // CONSIDER: This requires special knowledge about the implementation
                 //           details.  Can we make it more generic?  Do we just serialize
                 //           all item.Tags?  What about tags that can't serialize?
-                String? restoreToWorkspace = DockContext.GetPreferredWorkspaceId(item);
-
-                if (restoreToWorkspace is not null)
-                {
-                    layout.Workspace = restoreToWorkspace;
-                }
-
                 String? restoreToPanel = DockContext.GetPreferredTabPanelId(item);
 
                 if (restoreToPanel is not null)

@@ -44,12 +44,6 @@ namespace Meringue.AvaDock.ViewModels
             this.ObservableTabs.Add(item);
         }
 
-        /// <summary>Removes all <see cref="DockItemViewModel"/> assigned at tabs.</summary>
-        public void ClearTabs()
-        {
-            this.ObservableTabs.Clear();
-        }
-
         /// <summary>Removes a <see cref="DockItemViewModel"/> that is currently a tab.</summary>
         /// <param name="item">The <see cref="DockItemViewModel"/> to be removed.</param>
         /// <returns><c>true</c> on success; otherwise, <c>false</c>.</returns>

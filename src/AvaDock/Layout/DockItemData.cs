@@ -52,10 +52,5 @@ namespace Meringue.AvaDock.Layout
         /// Gets or sets a <see cref="DockItemViewModel.Tags"/> entry used by <see cref="DockWorkspaceManager"/>.
         /// </summary>
         public String? Panel { get; set; }
-
-        /// <summary>
-        /// Gets or sets a <see cref="DockItemViewModel.Tags"/> entry used by <see cref="DockControlManager"/>.
-        /// </summary>
-        public String? Workspace { get; set; }
     }
 }

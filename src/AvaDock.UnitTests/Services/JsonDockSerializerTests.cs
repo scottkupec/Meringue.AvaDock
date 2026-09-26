@@ -5,7 +5,6 @@ using System.IO;
 using System.Text;
 using System.Text.Json;
 using Meringue.AvaDock.Layout;
-using Meringue.AvaDock.UnitTests;
 using Shouldly;
 using Xunit;
 
@@ -44,7 +43,8 @@ namespace Meringue.AvaDock.Services.UnitTests
             DockTabNodeData tabNodeData = DockLayout.Tab("tab1", itemData);
             DockSplitNodeData splitData = DockLayout.Horizontal(tabNodeData);
             DockWorkspaceData workspaceData = DockLayout.Workspace(splitData);
-            DockControlData controlData = DockLayout.Layout(primary: workspaceData);
+            DockLayout layout = DockLayout.Layout(primary: workspaceData);
+            DockControlData controlData = layout.Data;
 
             JsonDockSerializer serializer = new();
 

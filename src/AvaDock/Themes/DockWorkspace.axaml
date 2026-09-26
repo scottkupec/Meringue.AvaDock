@@ -15,9 +15,9 @@
                                       HorizontalAlignment="Left"
                                       IsVisible="{TemplateBinding ShouldShowMinimizedItems}"
                                       VerticalAlignment="Stretch" />
-          <controls:DockTree x:DataType="managers:DockWorkspaceManager"
-                             Content="{Binding DockTree}"
-                             Grid.Column="1" />
+          <controls:DockTreePanel x:DataType="managers:DockWorkspaceManager"
+                                  Content="{Binding DockTree}"
+                                  Grid.Column="1" />
 
           <!-- Overlay: Hovered Content -->
           <ContentControl x:DataType="managers:DockWorkspaceManager"

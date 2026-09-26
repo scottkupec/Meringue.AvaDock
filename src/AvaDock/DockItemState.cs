@@ -1,6 +1,8 @@
 ﻿// Copyright (C) Scott Kupec. All rights reserved.
 
-namespace Meringue.AvaDock.ViewModels
+using Meringue.AvaDock.ViewModels;
+
+namespace Meringue.AvaDock
 {
     /// <summary>
     /// Stores the display state of the control associated with a <see cref="DockItemViewModel"/>.
@@ -20,6 +22,7 @@ namespace Meringue.AvaDock.ViewModels
         /// <summary>
         /// The <see cref="DockItemViewModel"/> is currently maximized.
         /// </summary>
+        /// <remarks>Not currently implemented.</remarks>
         Maximized = 2,
 
         /// <summary>

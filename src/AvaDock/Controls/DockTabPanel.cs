@@ -11,8 +11,6 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.VisualTree;
-using Meringue.AvaDock.Managers;
-using Meringue.AvaDock.Services;
 using Meringue.AvaDock.ViewModels;
 
 namespace Meringue.AvaDock.Controls
@@ -517,11 +515,11 @@ namespace Meringue.AvaDock.Controls
             /// <summary>
             /// Attempts to locate the target <see cref="DockTabNodeViewModel"/> from the drag event's visual source.
             /// </summary>
-            /// <param name="e">The drag event arguments.</param>
+            /// <param name="eventArgs">The drag event arguments.</param>
             /// <returns>The target node if found; otherwise, <c>null</c>.</returns>
-            private static DockTabNodeViewModel? GetTargetNode(DragEventArgs e)
+            private static DockTabNodeViewModel? GetTargetNode(DragEventArgs eventArgs)
             {
-                return (e.Source as Visual)?
+                return (eventArgs.Source as Visual)?
                     .GetVisualAncestors()
                     .OfType<Control>()
                     .Select(c => c.DataContext)

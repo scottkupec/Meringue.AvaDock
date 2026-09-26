@@ -1,14 +1,14 @@
 ﻿// Copyright (C) Scott Kupec. All rights reserved.
 
-using Meringue.AvaDock.Managers;
+using System.ComponentModel;
 using Meringue.AvaDock.ViewModels;
 
 namespace Meringue.AvaDock.Events
 {
     /// <summary>
-    /// Provides data for the <see cref="DockControlManager.ItemShowing"/> event which is raised when a
-    /// <see cref="DockItemViewModel"/> is being shown.
+    /// Raised when a <see cref="DockItemViewModel"/> is being shown.
     /// </summary>
+    [EditorBrowsable(EditorBrowsableState.Advanced)]
     public class DockItemShowingEventArgs : DockItemDoingEventArgs
     {
         /// <summary>

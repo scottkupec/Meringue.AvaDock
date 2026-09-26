@@ -3,7 +3,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Avalonia.Layout;
-using Meringue.AvaDock.UnitTests;
 using Meringue.AvaDock.ViewModels;
 using Shouldly;
 using Xunit;
@@ -108,7 +107,7 @@ namespace Meringue.AvaDock.Services.UnitTests
         {
             ItemTestVariables vars = new();
 
-            DockTabNodeViewModel tabNode = DockTree.Tab();
+            DockTabNodeViewModel tabNode = DockTree.Tab("anytab");
             vars.Monitor.Monitor(tabNode);
 
             DockItemViewModel newTab = new();

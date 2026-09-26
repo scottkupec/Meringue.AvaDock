@@ -1,14 +1,14 @@
 ﻿// Copyright (C) Scott Kupec. All rights reserved.
 
-using Meringue.AvaDock.Managers;
+using System.ComponentModel;
 using Meringue.AvaDock.ViewModels;
 
 namespace Meringue.AvaDock.Events
 {
     /// <summary>
-    /// Provides data for the <see cref="DockControlManager.ItemRestoring"/> event which is raised when a
-    /// <see cref="DockItemViewModel"/> is being restored.
+    /// Raised when a <see cref="DockItemViewModel"/> is being restored.
     /// </summary>
+    [EditorBrowsable(EditorBrowsableState.Advanced)]
     public class DockItemRestoringEventArgs : DockItemDoingEventArgs
     {
         /// <summary>

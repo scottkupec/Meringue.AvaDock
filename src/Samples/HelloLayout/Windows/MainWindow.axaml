@@ -13,7 +13,7 @@
                 SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
                 Width="200"
                 Margin="4,0"
-                ToolTip.Tip="Select a closed window to reopen">
+                ToolTip.Tip="Select a hidden window to show">
         <ComboBox.ItemTemplate>
           <DataTemplate x:DataType="dockViewModels:DockItemViewModel">
             <TextBlock Text="{Binding Title}" />

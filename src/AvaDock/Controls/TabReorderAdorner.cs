@@ -33,26 +33,6 @@ namespace Meringue.AvaDock.Controls
         /// <summary>Gets or sets the target tab strip being adorned.</summary>
         private DockTabPanel? TargetPanel { get; set; }
 
-        /// <summary>Sets the value of <see cref="Visual.IsVisible"/> for the current instance.</summary>
-        /// <param name="isVisible">The new value for the <see cref="Visual.IsVisible"/>.</param>
-        /// <remarks>Added as a null-colaesce friendly setter.</remarks>
-        public void SetVisible(Boolean isVisible)
-        {
-            this.IsVisible = isVisible;
-        }
-
-        /// <summary>
-        /// Updates which tab panel and index we are highlighting.
-        /// </summary>
-        /// <param name="panel">The target tab panel.</param>
-        /// <param name="index">The index to show the insert line at.</param>
-        public void UpdateTarget(DockTabPanel panel, Int32 index)
-        {
-            this.TargetPanel = panel;
-            this.HoverIndex = index;
-            this.InvalidateVisual();
-        }
-
         /// <inheritdoc/>
         public override void Render(DrawingContext context)
         {
@@ -93,6 +73,26 @@ namespace Meringue.AvaDock.Controls
                     }
                 }
             }
+        }
+
+        /// <summary>Sets the value of <see cref="Visual.IsVisible"/> for the current instance.</summary>
+        /// <param name="isVisible">The new value for the <see cref="Visual.IsVisible"/>.</param>
+        /// <remarks>Added as a null-colaesce friendly setter.</remarks>
+        public void SetVisible(Boolean isVisible)
+        {
+            this.IsVisible = isVisible;
+        }
+
+        /// <summary>
+        /// Updates which tab panel and index we are highlighting.
+        /// </summary>
+        /// <param name="panel">The target tab panel.</param>
+        /// <param name="index">The index to show the insert line at.</param>
+        public void UpdateTarget(DockTabPanel panel, Int32 index)
+        {
+            this.TargetPanel = panel;
+            this.HoverIndex = index;
+            this.InvalidateVisual();
         }
 
         /// <summary>Gets <see cref="Pen"/> to use for drawing the highlight.</summary>

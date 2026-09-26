@@ -21,7 +21,7 @@ namespace LayoutMonitor.ViewModels
         /// Gets or sets the status message showing layout changes.
         /// </summary>
         [ObservableProperty]
-        private String statusMessage = $"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.CurrentCulture)}] Layout monitoring initialized";
+        private String statusMessage = $"[{MainWindowViewModel.Now}] Layout monitoring initialized";
 
         /// <summary>Initializes a new instance of the <see cref="MainWindowViewModel"/> class.</summary>
         public MainWindowViewModel()
@@ -38,6 +38,11 @@ namespace LayoutMonitor.ViewModels
         public DockLayoutManager<CustomToolViewModel> LayoutManager { get; }
 
         /// <summary>
+        /// Gets "Now" as a string because I was tired of copying the full format around.
+        /// </summary>
+        private static String Now => DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.CurrentCulture);
+
+        /// <summary>
         /// Builds the initial layout.
         /// </summary>
         /// <returns>The layout manager.</returns>
@@ -47,19 +52,159 @@ namespace LayoutMonitor.ViewModels
             DockLayoutManager<CustomToolViewModel> layout = new("left", "center", "right");
 
             // Add an item to the left panel
-            _ = layout.CreateOrUpdateItem("1", "Left Item", new TextBlock { Text = "Left" }, "left");
+            _ = layout.DockControl.AddItem(
+                new DockItemViewModel()
+                {
+                    Id = "1",
+                    Title = "Left Item",
+                    Context = new TextBlock { Text = "Left" },
+                },
+                preferredTabPanelId: "left");
 
-            // Add an item to the center panel and prevent it from being hidden or closed.
-            DockItemViewModel? cantCloseTool = layout.CreateOrUpdateItem("2", "Center Item", new TextBlock { Text = "Center" }, "center");
+            DockItemViewModel? cantCloseTool = layout.DockControl.AddItem(
+                new DockItemViewModel()
+                {
+                    Id = "2",
+                    Title = "Center Item",
+                    Context = new TextBlock { Text = "Center" },
+                },
+                preferredTabPanelId: "center");
+
             cantCloseTool!.DisableClose = true;
             cantCloseTool!.DisableHide = true;
-            cantCloseTool.Title = "Center Tool";
 
             // Add two items to the right tab panel and stack them
-            _ = layout.CreateOrUpdateItem("3", "Right Item 1", new TextBlock { Text = "Right 1" }, "right");
-            _ = layout.CreateOrUpdateItem("4", "Right Item 2", new TextBlock { Text = "Right 2" }, "right");
+            _ = layout.DockControl.AddItem(
+                new DockItemViewModel()
+                {
+                    Id = "3",
+                    Title = "Right Item 1",
+                    Context = new TextBlock { Text = "Right 1" },
+                },
+                preferredTabPanelId: "right");
+
+            _ = layout.DockControl.AddItem(
+                new DockItemViewModel()
+                {
+                    Id = "4",
+                    Title = "Right Item 2",
+                    Context = new TextBlock { Text = "Right 2" },
+                },
+                preferredTabPanelId: "right");
 
             return layout;
+        }
+
+        /// <summary>
+        /// Adds a new item to demonstrate layout changes.
+        /// </summary>
+        [RelayCommand]
+        private void AddItem()
+        {
+            DockItemViewModel? newItem = this.LayoutManager.DockControl.AddItem(
+                new CustomToolViewModel()
+                {
+                    Id = $"item_{DateTime.Now.Ticks}",
+                    Title = "New Item",
+                    Context = new TextBlock { Text = $"Added item at {MainWindowViewModel.Now}" },
+                },
+                preferredTabPanelId: "right");
+
+            this.StatusMessage = $"[{MainWindowViewModel.Now}] Added new item: {newItem?.Title}";
+        }
+
+        /// <summary>
+        /// Load the saved layout.
+        /// </summary>
+        [RelayCommand]
+        private void LoadLayout()
+        {
+            _ = this.LayoutManager.LoadLayout("layout.json");
+            this.StatusMessage = $"[{MainWindowViewModel.Now}] Layout loaded";
+        }
+
+        /// <summary>
+        /// Handles items collection changes in the workspace.
+        /// </summary>
+        /// <param name="sender">The sender of the event.</param>
+        /// <param name="eventArgs">The <see cref="NotifyCollectionChangedEventArgs"/> for the event.</param>
+        private void OnItemsChanged(Object? sender, NotifyCollectionChangedEventArgs eventArgs)
+        {
+            String action = eventArgs.Action switch
+            {
+                NotifyCollectionChangedAction.Add => "Added",
+                NotifyCollectionChangedAction.Remove => "Removed",
+                NotifyCollectionChangedAction.Replace => "Replaced",
+                NotifyCollectionChangedAction.Move => "Moved",
+                NotifyCollectionChangedAction.Reset => "Reset",
+                _ => "Unknown",
+            };
+
+            this.StatusMessage = $"[{MainWindowViewModel.Now}] Items collection changed: {action} {eventArgs.NewItems?.Count ?? eventArgs.OldItems?.Count} item(s)";
+        }
+
+        /// <summary>
+        /// Handles minimized items collection changes.
+        /// </summary>
+        /// <param name="sender">The sender of the event.</param>
+        /// <param name="eventArgs">The <see cref="NotifyCollectionChangedEventArgs"/> for the event.</param>
+        private void OnMinimizedItemsChanged(Object? sender, NotifyCollectionChangedEventArgs eventArgs)
+        {
+            String action = eventArgs.Action switch
+            {
+                NotifyCollectionChangedAction.Add => "Added",
+                NotifyCollectionChangedAction.Remove => "Removed",
+                NotifyCollectionChangedAction.Replace => "Replaced",
+                NotifyCollectionChangedAction.Move => "Moved",
+                NotifyCollectionChangedAction.Reset => "Reset",
+                _ => "Unknown",
+            };
+
+            this.StatusMessage = $"[{MainWindowViewModel.Now}] Minimized items collection changed: {action} {eventArgs.NewItems?.Count ?? eventArgs.OldItems?.Count} item(s)";
+        }
+
+        /// <summary>
+        /// Handles workspace attachment events.
+        /// </summary>
+        /// <param name="sender">The sender of the event.</param>
+        /// <param name="eventArgs">The <see cref="DockWorkspaceAttachedEventArgs"/> for the event.</param>
+        private void OnWorkspaceAttached(Object? sender, DockWorkspaceAttachedEventArgs eventArgs)
+        {
+            this.StatusMessage = $"[{MainWindowViewModel.Now}] Workspace attached: {eventArgs.Workspace.Id}";
+        }
+
+        /// <summary>
+        /// Handles workspace detachment events.
+        /// </summary>
+        /// <param name="sender">The sender of the event.</param>
+        /// <param name="eventArgs">The <see cref="DockWorkspaceDetachedEventArgs"/> for the event.</param>
+        private void OnWorkspaceDetached(Object? sender, DockWorkspaceDetachedEventArgs eventArgs)
+        {
+            this.StatusMessage = $"[{MainWindowViewModel.Now}] Workspace detached: {eventArgs.Workspace.Id}";
+        }
+
+        /// <summary>
+        /// Handles property changes on the workspace.
+        /// </summary>
+        /// <param name="sender">The sender of the event.</param>
+        /// <param name="eventArgs">The <see cref="PropertyChangedEventArgs"/> for the event.</param>
+        private void OnWorkspacePropertyChanged(Object? sender, PropertyChangedEventArgs eventArgs)
+        {
+            if (eventArgs.PropertyName == nameof(DockWorkspaceManager.DockTree))
+            {
+                this.StatusMessage = $"[{MainWindowViewModel.Now}] Dock tree structure changed";
+                // Here you could also re-subscribe to events on the new dock tree if needed
+            }
+        }
+
+        /// <summary>
+        /// Save the layout.
+        /// </summary>
+        [RelayCommand]
+        private void SaveLayout()
+        {
+            this.LayoutManager.SaveLayout("layout.json");
+            this.StatusMessage = $"[{MainWindowViewModel.Now}] Layout saved";
         }
 
         /// <summary>
@@ -83,120 +228,11 @@ namespace LayoutMonitor.ViewModels
                 }
             }
 
-            this.StatusMessage = $"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.CurrentCulture)}] Monitoring layout changes...";
+            this.StatusMessage = $"[{MainWindowViewModel.Now}] Monitoring layout changes...";
 
             // Subscribe to workspace attachment and detachment events
             this.LayoutManager.DockControl.WorkspaceAttached += this.OnWorkspaceAttached;
             this.LayoutManager.DockControl.WorkspaceDetached += this.OnWorkspaceDetached;
-        }
-
-        /// <summary>
-        /// Handles items collection changes in the workspace.
-        /// </summary>
-        /// <param name="sender">The sender of the event.</param>
-        /// <param name="eventArgs">The <see cref="NotifyCollectionChangedEventArgs"/> for the event.</param>
-        private void OnItemsChanged(Object? sender, NotifyCollectionChangedEventArgs eventArgs)
-        {
-            String action = eventArgs.Action switch
-            {
-                NotifyCollectionChangedAction.Add => "Added",
-                NotifyCollectionChangedAction.Remove => "Removed",
-                NotifyCollectionChangedAction.Replace => "Replaced",
-                NotifyCollectionChangedAction.Move => "Moved",
-                NotifyCollectionChangedAction.Reset => "Reset",
-                _ => "Unknown",
-            };
-
-            this.StatusMessage = $"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.CurrentCulture)}] Items collection changed: {action} {eventArgs.NewItems?.Count ?? eventArgs.OldItems?.Count} item(s)";
-        }
-
-        /// <summary>
-        /// Handles minimized items collection changes.
-        /// </summary>
-        /// <param name="sender">The sender of the event.</param>
-        /// <param name="eventArgs">The <see cref="NotifyCollectionChangedEventArgs"/> for the event.</param>
-        private void OnMinimizedItemsChanged(Object? sender, NotifyCollectionChangedEventArgs eventArgs)
-        {
-            String action = eventArgs.Action switch
-            {
-                NotifyCollectionChangedAction.Add => "Added",
-                NotifyCollectionChangedAction.Remove => "Removed",
-                NotifyCollectionChangedAction.Replace => "Replaced",
-                NotifyCollectionChangedAction.Move => "Moved",
-                NotifyCollectionChangedAction.Reset => "Reset",
-                _ => "Unknown",
-            };
-
-            this.StatusMessage = $"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.CurrentCulture)}] Minimized items collection changed: {action} {eventArgs.NewItems?.Count ?? eventArgs.OldItems?.Count} item(s)";
-        }
-
-        /// <summary>
-        /// Handles workspace attachment events.
-        /// </summary>
-        /// <param name="sender">The sender of the event.</param>
-        /// <param name="eventArgs">The <see cref="DockWorkspaceAttachedEventArgs"/> for the event.</param>
-        private void OnWorkspaceAttached(Object? sender, DockWorkspaceAttachedEventArgs eventArgs)
-        {
-            this.StatusMessage = $"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.CurrentCulture)}] Workspace attached: {eventArgs.Workspace.Id}";
-        }
-
-        /// <summary>
-        /// Handles workspace detachment events.
-        /// </summary>
-        /// <param name="sender">The sender of the event.</param>
-        /// <param name="eventArgs">The <see cref="DockWorkspaceDetachedEventArgs"/> for the event.</param>
-        private void OnWorkspaceDetached(Object? sender, DockWorkspaceDetachedEventArgs eventArgs)
-        {
-            this.StatusMessage = $"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.CurrentCulture)}] Workspace detached: {eventArgs.Workspace.Id}";
-        }
-
-        /// <summary>
-        /// Handles property changes on the workspace.
-        /// </summary>
-        /// <param name="sender">The sender of the event.</param>
-        /// <param name="eventArgs">The <see cref="PropertyChangedEventArgs"/> for the event.</param>
-        private void OnWorkspacePropertyChanged(Object? sender, PropertyChangedEventArgs eventArgs)
-        {
-            if (eventArgs.PropertyName == nameof(DockWorkspaceManager.DockTree))
-            {
-                this.StatusMessage = $"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.CurrentCulture)}] Dock tree structure changed";
-                // Here you could also re-subscribe to events on the new dock tree if needed
-            }
-        }
-
-        /// <summary>
-        /// Adds a new item to demonstrate layout changes.
-        /// </summary>
-        [RelayCommand]
-        private void AddItem()
-        {
-            CustomToolViewModel? newItem = this.LayoutManager.CreateOrUpdateItem(
-                $"item_{DateTime.Now.Ticks}",
-                "New Item",
-                new TextBlock { Text = "Newly added item" },
-                "right");
-
-            this.StatusMessage = $"Added new item: {newItem?.Title}";
-        }
-
-        /// <summary>
-        /// Load the saved layout.
-        /// </summary>
-        [RelayCommand]
-        private void LoadLayout()
-        {
-            _ = this.LayoutManager.LoadLayout("layout.json");
-            this.StatusMessage = $"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.CurrentCulture)}] Layout loaded";
-        }
-
-        /// <summary>
-        /// Save the layout.
-        /// </summary>
-        [RelayCommand]
-        private void SaveLayout()
-        {
-            this.LayoutManager.SaveLayout("layout.json");
-            this.StatusMessage = $"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.CurrentCulture)}] Layout saved";
         }
     }
 }

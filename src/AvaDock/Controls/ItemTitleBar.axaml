@@ -12,8 +12,8 @@
 
     <Grid VerticalAlignment="Center">
       <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="*" /> <!-- Title takes remaining space -->
-        <ColumnDefinition Width="Auto" /> <!-- Buttons -->
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="Auto" />
         <ColumnDefinition Width="Auto" />
         <ColumnDefinition Width="Auto" />
       </Grid.ColumnDefinitions>

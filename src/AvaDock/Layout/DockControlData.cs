@@ -39,11 +39,6 @@ namespace Meringue.AvaDock.Layout
         public Int32 Patch { get; set; } = 0;
 
         /// <summary>
-        /// Gets or sets the value of <see cref="DockControlManager.HiddenItems"/>.
-        /// </summary>
-        public List<DockItemData>? Hidden { get; set; }
-
-        /// <summary>
         /// Gets or sets the value of <see cref="DockControlManager.PrimaryWorkspace"/>.
         /// </summary>
         public DockWorkspaceData? PrimaryWorkspace { get; set; }

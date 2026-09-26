@@ -23,7 +23,7 @@ namespace Meringue.AvaDock.Events
         }
 
         /// <summary>
-        /// Gets the item that is associated with the event.
+        /// Gets the <see cref="DockItemViewModel"/> that is associated with the event.
         /// </summary>
         public DockItemViewModel Item { get; }
     }

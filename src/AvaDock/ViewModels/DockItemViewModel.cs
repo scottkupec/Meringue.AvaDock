@@ -10,7 +10,6 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Meringue.AvaDock.Controls;
 using Meringue.AvaDock.Events;
-using Meringue.AvaDock.Managers;
 
 namespace Meringue.AvaDock.ViewModels
 {
@@ -179,6 +178,18 @@ namespace Meringue.AvaDock.ViewModels
         public Dictionary<Object, Object> Tags { get; } = [];
 
         /// <summary>
+        /// Requests that the current item be floated.
+        /// </summary>
+        /// <param name="screenLocation">The top-left position of the floated window in screen coordinates. Optional.</param>
+        /// <param name="windowSize">The size of the floating window. Optional.</param>
+        [EditorBrowsable(EditorBrowsableState.Never)] // Intended for UI use only.
+        public void RequestFloat(PixelPoint? screenLocation, Size? windowSize)
+        {
+            DockItemFloatRequestedEventArgs args = new(this, screenLocation, windowSize);
+            this.FloatRequested?.Invoke(this, args);
+        }
+
+        /// <summary>
         /// Requests a move to be performed on the current instance.
         /// </summary>
         /// <param name="sourceNode">The <see cref="DockTabNodeViewModel"/> that the item is being moved from.</param>
@@ -188,7 +199,8 @@ namespace Meringue.AvaDock.ViewModels
         /// The <see cref="Orientation"/> to be used when placing the node if <paramref name="placement"/> is <see cref="MovePlacement.Before"/> or
         /// <see cref="MovePlacement.After"/>. Optional and ignored for <see cref="MovePlacement.On"/>.
         /// </param>
-        /// <param name="insertionIndex">The index at which the item should be inserted within the target node, if applicable.</param>
+        /// <param name="insertionIndex">The zero-based index at which the item should be inserted within the target node, if applicable.</param>
+        [EditorBrowsable(EditorBrowsableState.Never)] // Intended for UI use only.
         public void RequestMove(DockTabNodeViewModel sourceNode, DockTabNodeViewModel targetNode, MovePlacement placement, Orientation? requiredOrientation, Int32? insertionIndex = null)
         {
             DockItemMoveRequestedEventArgs moveEvent = new(
@@ -199,17 +211,6 @@ namespace Meringue.AvaDock.ViewModels
                 requiredOrientation,
                 insertionIndex);
             this.MoveRequested?.Invoke(this, moveEvent);
-        }
-
-        /// <summary>
-        /// Requests that the current item be floated.
-        /// </summary>
-        /// <param name="screenLocation">The top-left position of the floated window in screen coordinates. Optional.</param>
-        /// <param name="windowSize">The size of the floating window. Optional.</param>
-        public void RequestFloat(PixelPoint? screenLocation, Size? windowSize)
-        {
-            DockItemFloatRequestedEventArgs args = new(this, screenLocation, windowSize);
-            this.FloatRequested?.Invoke(this, args);
         }
 
         /// <summary>

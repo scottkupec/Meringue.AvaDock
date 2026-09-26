@@ -81,10 +81,6 @@ namespace Meringue.AvaDock.ViewModels
         /// <summary>
         /// Gets the <see cref="Avalonia.Layout.Orientation"/> used when multiple children are present.
         /// </summary>
-        /// <remarks>
-        /// The orientation is the reverse of the splitter direction. Horizontal orientation
-        /// uses vertical splitters and veritical orientation uses horizontal splitters.
-        /// </remarks>
         [EditorBrowsable(EditorBrowsableState.Never)] // Sync'ed with the control for serialization. Not intended for direct use.
         public Orientation Orientation
         {
@@ -122,9 +118,8 @@ namespace Meringue.AvaDock.ViewModels
         /// </summary>
         /// <remarks>
         /// This method sets <see cref="NeedsRebuilt"/> to <c>true</c>, which is observed by the control and triggers a visual update.
-        /// It should be called by layout managers or mutation orchestrators after completing a series of insertions, removals, or
-        /// replacements to ensure the UI reflects the updated logical structure. It avoids premature or repeated layout rebuilds during
-        /// intermediate mutation steps.
+        /// It should be called after completing a series of insertions, removals, or replacements to ensure the UI reflects the updated
+        /// logical structure. It avoids premature or repeated layout rebuilds during intermediate mutation steps.
         /// </remarks>
         public void CommitChanges()
         {

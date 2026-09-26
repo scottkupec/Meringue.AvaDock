@@ -36,4 +36,11 @@
       <DependentUpon>$([System.IO.Path]::GetFileNameWithoutExtension('%(Filename)'))</DependentUpon>
     </Compile>
   </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="layout.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>

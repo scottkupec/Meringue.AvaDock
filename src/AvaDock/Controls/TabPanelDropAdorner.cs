@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
-using Meringue.AvaDock.Managers;
 
 namespace Meringue.AvaDock.Controls
 {

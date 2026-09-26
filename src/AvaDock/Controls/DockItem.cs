@@ -6,7 +6,6 @@ using Avalonia.Controls;
 using Avalonia.Controls.Metadata;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
-using Meringue.AvaDock.Services;
 using Meringue.AvaDock.ViewModels;
 
 namespace Meringue.AvaDock.Controls

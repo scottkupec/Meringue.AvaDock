@@ -1,13 +1,14 @@
 // Copyright (C) Scott Kupec. All rights reserved.
 
+using System.ComponentModel;
 using Meringue.AvaDock.Managers;
 
 namespace Meringue.AvaDock.Events
 {
     /// <summary>
-    /// Provides data for the <see cref="DockControlManager.WorkspaceAttached"/> event which is raised after a
-    /// <see cref="DockWorkspaceManager"/> is attached.
+    /// Raised when a <see cref="DockWorkspaceManager"/> is attached.
     /// </summary>
+    [EditorBrowsable(EditorBrowsableState.Advanced)]
     public class DockWorkspaceAttachedEventArgs : DockWorkspaceDoneEventArgs
     {
         /// <summary>

@@ -8,7 +8,6 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Threading;
 using Meringue.AvaDock.Managers;
-using Meringue.AvaDock.Services;
 using Meringue.AvaDock.ViewModels;
 
 namespace Meringue.AvaDock.Controls

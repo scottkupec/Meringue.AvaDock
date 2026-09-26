@@ -9,13 +9,11 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Threading;
-using Meringue.AvaDock.Controls;
 using Meringue.AvaDock.Managers;
-using Meringue.AvaDock.Services;
 using Meringue.AvaDock.ViewModels;
 using Shouldly;
 
-namespace Meringue.AvaDock.Tests.Controls
+namespace Meringue.AvaDock.Controls.UnitTests
 {
     [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public class HoverBehaviorTests

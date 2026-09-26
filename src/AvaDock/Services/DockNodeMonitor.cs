@@ -15,7 +15,7 @@ namespace Meringue.AvaDock.Services
     /// consumers do not need to duplicate the boilerplate monitoring logic.
     /// </para>
     /// </summary>
-    public sealed class DockNodeMonitor
+    internal sealed class DockNodeMonitor
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="DockNodeMonitor"/> class for monitoring item changes.

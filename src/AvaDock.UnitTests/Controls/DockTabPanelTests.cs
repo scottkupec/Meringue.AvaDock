@@ -8,7 +8,6 @@ using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.VisualTree;
-using Meringue.AvaDock.Services;
 using Meringue.AvaDock.ViewModels;
 using Shouldly;
 

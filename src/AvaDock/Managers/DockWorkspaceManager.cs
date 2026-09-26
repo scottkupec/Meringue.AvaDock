@@ -247,7 +247,7 @@ namespace Meringue.AvaDock.Managers
 
                 if (preferredTabNode is not null)
                 {
-                    tabNode = this.DockTree.FindNode(preferredTabNode) as DockTabNodeViewModel;
+                    tabNode = this.DockTree.FindDescendentNode(preferredTabNode) as DockTabNodeViewModel;
                 }
 
                 // Fallback to the first available tab node.
@@ -308,7 +308,7 @@ namespace Meringue.AvaDock.Managers
                 return null;
             }
 
-            DockItemViewModel? existingItem = this.DockTree.FindItem<DockItemViewModel>(itemId);
+            DockItemViewModel? existingItem = this.DockTree.FindDescendentItem<DockItemViewModel>(itemId);
             existingItem ??= this.MinimizedItems.FirstOrDefault(item => item.Id == itemId);
             existingItem ??= this.HiddenItems.FirstOrDefault(item => item.Id == itemId);
             return existingItem;
@@ -326,7 +326,7 @@ namespace Meringue.AvaDock.Managers
 
             if (!this.minimizedItems.Contains(item))
             {
-                DockTabNodeViewModel? tabNode = this.DockTree.FindOwningTabNode(item.Id);
+                DockTabNodeViewModel? tabNode = this.DockTree.FindAncestorTabNode(item.Id);
 
                 if (tabNode is not null)
                 {
@@ -334,7 +334,7 @@ namespace Meringue.AvaDock.Managers
 
                     if (tabNode.Tabs.Count == 1)
                     {
-                        DockSplitNodeViewModel? split = this.DockTree.GetContainingSplit(tabNode);
+                        DockSplitNodeViewModel? split = this.DockTree.FindAncestorSplitNode(tabNode);
                         System.Diagnostics.Debug.Assert(split is not null, "Unable to find containing split node.");
                         split?.RemoveChild(tabNode);
                         success = true;
@@ -393,13 +393,13 @@ namespace Meringue.AvaDock.Managers
             }
             else
             {
-                DockTabNodeViewModel? tabNode = this.DockTree.FindOwningTabNode(item.Id);
+                DockTabNodeViewModel? tabNode = this.DockTree.FindAncestorTabNode(item.Id);
 
                 if (tabNode is not null)
                 {
                     if (tabNode.Tabs.Count == 1)
                     {
-                        DockSplitNodeViewModel? split = this.DockTree.GetContainingSplit(tabNode);
+                        DockSplitNodeViewModel? split = this.DockTree.FindAncestorSplitNode(tabNode);
                         System.Diagnostics.Debug.Assert(split is not null, "Unable to find containing split node.");
                         split?.RemoveChild(tabNode);
                         success = true;
@@ -562,13 +562,14 @@ namespace Meringue.AvaDock.Managers
                 }
                 else
                 {
-                    DockTabNodeViewModel? tabNode = this.DockTree.FindOwningTabNode(item.Id);
+                    DockTabNodeViewModel? tabNode = this.DockTree.FindAncestorTabNode(item.Id);
                     System.Diagnostics.Debug.Assert(tabNode is not null, "Couldn't find item being closed.");
 
                     if (tabNode is not null)
                     {
                         _ = tabNode.RemoveTab(item);
                         this.CommitChanges();
+                        DockWorkspaceManager.EnsureWorkspaceHasTabNode(this);
                     }
                 }
 
@@ -626,7 +627,7 @@ namespace Meringue.AvaDock.Managers
             DockItemViewModel item = eventArgs.Item;
             System.Diagnostics.Debug.Assert(!this.MinimizedItems.Contains(item), "Item should not already be minimized when minimizing it.");
 
-            DockTabNodeViewModel? owningTab = this.DockTree.FindOwningTabNode(item.Id);
+            DockTabNodeViewModel? owningTab = this.DockTree.FindAncestorTabNode(item.Id);
 
             if (owningTab is not null)
             {
@@ -653,7 +654,7 @@ namespace Meringue.AvaDock.Managers
         {
             DockItemViewModel item = eventArgs.Item;
             DockTabNodeViewModel targetTabNode = eventArgs.ToNode;
-            DockTabNodeViewModel? sourceTabNode = eventArgs.FromNode ?? this.DockTree.FindOwningTabNode(item.Id);
+            DockTabNodeViewModel? sourceTabNode = eventArgs.FromNode ?? this.DockTree.FindAncestorTabNode(item.Id);
             MovePlacement placement = eventArgs.Placement;
             Orientation? requiredOrientation = eventArgs.RequiredOrientation;
 
@@ -661,7 +662,13 @@ namespace Meringue.AvaDock.Managers
             TargetFrameworkHelper.ThrowIfArgumentNull(targetTabNode);
             TargetFrameworkHelper.ThrowIfArgumentNull(sourceTabNode);
 
-            DockItemMovingEventArgs movingEventArgs = new(item, sourceTabNode, targetTabNode, placement, requiredOrientation);
+            DockItemMovingEventArgs movingEventArgs = new(
+                item,
+                sourceTabNode,
+                targetTabNode,
+                placement,
+                requiredOrientation,
+                eventArgs.InsertionIndex);
 
             if (!movingEventArgs.Cancel)
             {
@@ -678,7 +685,14 @@ namespace Meringue.AvaDock.Managers
 
                 if (result)
                 {
-                    this.OnItemMoved(new DockItemMovedEventArgs(item, sourceTabNode, targetTabNode, placement, requiredOrientation));
+                    this.OnItemMoved(
+                        new DockItemMovedEventArgs(
+                            item,
+                            sourceTabNode,
+                            targetTabNode,
+                            placement,
+                            requiredOrientation,
+                            eventArgs.InsertionIndex));
                 }
             }
         }
@@ -1127,7 +1141,7 @@ namespace Meringue.AvaDock.Managers
                 DockWorkspaceManager? sourceWorkspace = DockContext.GetWorkspace(sourceTabNode); //// operation.Owner.GetWorkspace(sourceTabNode)!;
                 DockWorkspaceManager? destinationWorkspace = DockContext.GetWorkspace(operation.TargetNode); //// operation.Owner.GetWorkspace(operation.TargetNode);
                 DockSplitNodeViewModel wrappedSplit = MoveOperation.CreateSplit(operation);
-                DockSplitNodeViewModel? parentSplit = destinationWorkspace?.DockTree.GetContainingSplit(operation.TargetNode);
+                DockSplitNodeViewModel? parentSplit = destinationWorkspace?.DockTree.FindAncestorSplitNode(operation.TargetNode);
 
                 if (parentSplit is not null && sourceWorkspace is not null && destinationWorkspace is not null)
                 {
@@ -1144,7 +1158,7 @@ namespace Meringue.AvaDock.Managers
                         targetIndex = parentSplit.IndexOf(operation.TargetNode);
                         parentSplit.ReplaceChildAt(targetIndex, wrappedSplit);
 
-                        DockSplitNodeViewModel? grandparentSplit = destinationWorkspace?.DockTree.GetContainingSplit(parentSplit);
+                        DockSplitNodeViewModel? grandparentSplit = destinationWorkspace?.DockTree.FindAncestorSplitNode(parentSplit);
                         if (grandparentSplit is not null)
                         {
                             Int32 parentIndex = grandparentSplit.IndexOf(parentSplit);
@@ -1168,7 +1182,7 @@ namespace Meringue.AvaDock.Managers
 
                         if (sourceWorkspace != destinationWorkspace)
                         {
-                            // Needed specifically for dropping to the default panel in the PrimaryWorkspace when the
+                            // Needed especially for dropping to the default panel in the PrimaryWorkspace when the
                             // panel is currently empty.
                             destinationWorkspace?.CommitChanges();
                         }
@@ -1186,7 +1200,7 @@ namespace Meringue.AvaDock.Managers
             private static Boolean IsOperationValid(MoveOperation operation)
             {
                 DockWorkspaceManager? destinationWorkspace = DockContext.GetWorkspace(operation.TargetNode); //// operation.Owner.GetWorkspace(operation.TargetNode);
-                DockTabNodeViewModel? sourceTabNode = operation.Owner.DockTree.FindOwningTabNode(operation.Item.Id);
+                DockTabNodeViewModel? sourceTabNode = operation.Owner.DockTree.FindAncestorTabNode(operation.Item.Id);
 
                 if (sourceTabNode is null || destinationWorkspace is null)
                 {
@@ -1202,7 +1216,7 @@ namespace Meringue.AvaDock.Managers
             /// <returns>The root found, if any.</returns>
             private DockTabNodeViewModel? FindParentTabNode(DockItemViewModel item)
             {
-                DockTabNodeViewModel? parent = this.Owner.DockTree.FindOwningTabNode(item.Id);
+                DockTabNodeViewModel? parent = this.Owner.DockTree.FindAncestorTabNode(item.Id);
                 return parent;
             }
         }

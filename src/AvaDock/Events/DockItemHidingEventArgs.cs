@@ -1,14 +1,14 @@
 ﻿// Copyright (C) Scott Kupec. All rights reserved.
 
-using Meringue.AvaDock.Managers;
+using System.ComponentModel;
 using Meringue.AvaDock.ViewModels;
 
 namespace Meringue.AvaDock.Events
 {
     /// <summary>
-    /// Provides data for the <see cref="DockControlManager.ItemHiding"/> event which is raised when a
-    /// <see cref="DockItemViewModel"/> is being hidden.
+    /// Raised when a <see cref="DockItemViewModel"/> is being hidden.
     /// </summary>
+    [EditorBrowsable(EditorBrowsableState.Advanced)]
     public class DockItemHidingEventArgs : DockItemDoingEventArgs
     {
         /// <summary>

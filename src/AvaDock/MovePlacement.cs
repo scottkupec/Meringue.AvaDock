@@ -2,7 +2,7 @@
 
 using System.ComponentModel;
 
-namespace Meringue.AvaDock.Managers
+namespace Meringue.AvaDock
 {
     /// <summary>
     /// Defines how a move operation should place the moved item in relation to the existing item.

@@ -44,21 +44,21 @@ namespace Meringue.AvaDock.Controls.UnitTests
             window.Content = controlManager.PrimaryWorkspace;
             window.Show();
 
-            controlManager.PrimaryWorkspace.DockTree.FindItem<DockItemViewModel>(item.Id)
+            controlManager.PrimaryWorkspace.DockTree.FindDescendentItem<DockItemViewModel>(item.Id)
                 .ShouldNotBeNull($"Sanity: '{nameof(item)}' should initially be in {nameof(DockControlManager.PrimaryWorkspace)}.");
 
             controlManager.FloatItem(item, null, null);
             Dispatcher.UIThread.RunJobs();
 
             // Assert
-            controlManager.PrimaryWorkspace.DockTree.FindItem<DockItemViewModel>(item.Id)
+            controlManager.PrimaryWorkspace.DockTree.FindDescendentItem<DockItemViewModel>(item.Id)
                 .ShouldBeNull($"'{nameof(item)}' should be removed from {nameof(DockControlManager.PrimaryWorkspace)}.");
 
             controlManager.SecondaryWorkspaces.Count()
                 .ShouldBe(1, $"A {nameof(controlManager.SecondaryWorkspaces)} should have been created.");
 
             controlManager.SecondaryWorkspaces
-                .Any(workspace => workspace.DockTree.FindItem<DockItemViewModel>(item.Id) == item)
+                .Any(workspace => workspace.DockTree.FindDescendentItem<DockItemViewModel>(item.Id) == item)
                 .ShouldBeTrue($"'{nameof(item)}' should be added to one of the {nameof(DockControlManager.SecondaryWorkspaces)}.");
         }
 

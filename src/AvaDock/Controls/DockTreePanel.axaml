@@ -1,4 +1,4 @@
-<UserControl x:Class="Meringue.AvaDock.Controls.DockTree"
+<UserControl x:Class="Meringue.AvaDock.Controls.DockTreePanel"
              x:DataType="viewModels:DockNodeViewModel"
              xmlns="https://github.com/avaloniaui"
              xmlns:controls="clr-namespace:Meringue.AvaDock.Controls"

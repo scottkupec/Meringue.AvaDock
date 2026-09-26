@@ -6,7 +6,7 @@
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   x:Class="LayoutMonitor.Windows.MainWindow"
   x:DataType="viewModels:MainWindowViewModel"
-  Title="Layout Monitor">
+  Title="Layout Monitor Sample">
 
   <DockPanel>
     <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="8">

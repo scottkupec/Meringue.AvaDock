@@ -3,7 +3,6 @@
 using Avalonia.Headless.XUnit;
 using Meringue.AvaDock.Layout;
 using Meringue.AvaDock.Managers;
-using Meringue.AvaDock.UnitTests;
 using Meringue.AvaDock.ViewModels;
 using Shouldly;
 
@@ -15,7 +14,6 @@ namespace Meringue.AvaDock.Services.UnitTests
         [AvaloniaFact]
         public void Layout_ShouldRoundTrip()
         {
-            // Arrange
             DockItemViewModel visibleItem = new() { Title = "Visible Tab" };
             DockItemViewModel minimizedItem = new() { Title = "Minimized Tab" };
             DockItemViewModel hiddenItem = new() { Title = "Hidden Tab" };
@@ -31,14 +29,10 @@ namespace Meringue.AvaDock.Services.UnitTests
             minimizedItem.MinimizeCommand.Execute(null);
             hiddenItem.HideCommand.Execute(null);
 
-            workspace.Items
-                .ShouldContain(visibleItem, "Sanity: Visible item should be in workspace before serialization.");
-            workspace.MinimizedItems
-                .ShouldContain(minimizedItem, "Sanity: Minimized item should be in workspace before serialization.");
-            control.HiddenItems
-                .ShouldContain(hiddenItem, "Sanity: Hidden item should be in control before serialization.");
+            workspace.Items.ShouldContain(visibleItem, "Sanity: Visible item should be in workspace before serialization.");
+            workspace.MinimizedItems.ShouldContain(minimizedItem, "Sanity: Minimized item should be in workspace before serialization.");
+            control.HiddenItems.ShouldContain(hiddenItem, "Sanity: Hidden item should be in control before serialization.");
 
-            // Act
             DockControlData serialized = DockSerializationConverter.BuildLayout<DockItemViewModel>(control);
             DockControlManager deserializedControl = DockSerializationConverter.BuildViewModel<DockItemViewModel>(serialized);
 
@@ -54,21 +48,21 @@ namespace Meringue.AvaDock.Services.UnitTests
             restoredVisible.ShouldNotBeNull("Visible item should be restored in workspace.");
             restoredVisible.Title.ShouldBe(visibleItem.Title, "Visible item title should be preserved.");
             deserializedControl.PrimaryWorkspace.Items.ShouldContain(restoredVisible, "Visible item should be in primary workspace items.");
-            deserializedControl.PrimaryWorkspace.DockTree.FindOwningTabNode(visibleItem.Id).ShouldNotBeNull("Visible item should be owned by a tab node.");
+            deserializedControl.PrimaryWorkspace.DockTree.FindAncestorTabNode(visibleItem.Id).ShouldNotBeNull("Visible item should be owned by a tab node.");
 
             // Assert – minimized item restored
             DockItemViewModel? restoredMinimized = deserializedControl.FindItem(minimizedItem.Id);
             restoredMinimized.ShouldNotBeNull("Minimized item should be restored in workspace.");
             restoredMinimized.Title.ShouldBe(minimizedItem.Title, "Minimized item title should be preserved.");
             deserializedControl.PrimaryWorkspace.MinimizedItems.ShouldContain(restoredMinimized, "Minimized item should be in MinimizedItems collection.");
-            deserializedControl.PrimaryWorkspace.DockTree.FindOwningTabNode(minimizedItem.Id).ShouldBeNull("A minimized item should not be restored to a tab.");
+            deserializedControl.PrimaryWorkspace.DockTree.FindAncestorTabNode(minimizedItem.Id).ShouldBeNull("A minimized item should not be restored to a tab.");
 
             // Assert – hidden item restored
             DockItemViewModel? restoredHidden = deserializedControl.FindItem(hiddenItem.Id);
             restoredHidden.ShouldNotBeNull("Hidden item should be restored in control.");
             restoredHidden.Title.ShouldBe(hiddenItem.Title, "Hidden item title should be preserved.");
             deserializedControl.HiddenItems.ShouldContain(restoredHidden, "Hidden item should be in HiddenItems collection.");
-            deserializedControl.PrimaryWorkspace.DockTree.FindOwningTabNode(hiddenItem.Id).ShouldBeNull("A hidden item should not be restored to a tab.");
+            deserializedControl.PrimaryWorkspace.DockTree.FindAncestorTabNode(hiddenItem.Id).ShouldBeNull("A hidden item should not be restored to a tab.");
         }
     }
 }

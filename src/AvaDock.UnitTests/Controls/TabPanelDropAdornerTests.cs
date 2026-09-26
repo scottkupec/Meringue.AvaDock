@@ -5,7 +5,6 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Layout;
-using Meringue.AvaDock.Managers;
 using Shouldly;
 using Xunit;
 

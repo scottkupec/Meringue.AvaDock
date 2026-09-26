@@ -3,7 +3,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Meringue.AvaDock.UnitTests;
 using Shouldly;
 using Xunit;
 
@@ -56,8 +55,8 @@ namespace Meringue.AvaDock.ViewModels.UnitTests
         public void GetChildAt_ThrowsForInvalidIndex(Int32 index)
         {
             DockSplitNodeViewModel split = DockTree.Horizontal(
-                DockTree.Tab(),
-                DockTree.Tab());
+                DockTree.Tab("anytab1"),
+                DockTree.Tab("anytab2"));
 
             Should.Throw<ArgumentOutOfRangeException>(
                 () => split.GetChildAt(index),
@@ -180,7 +179,7 @@ namespace Meringue.AvaDock.ViewModels.UnitTests
         [Fact]
         public void RemoveEmptyPanels_RemovesEmptyTabNode()
         {
-            DockSplitNodeViewModel split = DockTree.Horizontal(DockTree.Tab());
+            DockSplitNodeViewModel split = DockTree.Horizontal(DockTree.Tab(itemIds: []));
 
             split.Children
                 .ShouldNotBeEmpty($"Sanity: The {nameof(DockSplitNodeViewModel)} being tested must contain children.");
@@ -198,7 +197,7 @@ namespace Meringue.AvaDock.ViewModels.UnitTests
                 DockTree.Vertical(),
                 DockTree.Vertical(
                     DockTree.Horizontal(
-                        DockTree.Tab())));
+                        DockTree.Tab(itemIds: []))));
 
             split.Children
                 .ShouldNotBeEmpty($"Sanity: The {nameof(DockSplitNodeViewModel)} being tested must contain children.");

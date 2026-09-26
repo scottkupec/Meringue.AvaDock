@@ -1,14 +1,14 @@
 ﻿// Copyright (C) Scott Kupec. All rights reserved.
 
-using Meringue.AvaDock.Managers;
+using System.ComponentModel;
 using Meringue.AvaDock.ViewModels;
 
 namespace Meringue.AvaDock.Events
 {
     /// <summary>
-    /// Provides data for the <see cref="DockControlManager.ItemMinimized"/> event which is raised after a
-    /// <see cref="DockItemViewModel"/> is minimized.
+    /// Raised when a <see cref="DockItemViewModel"/> is minimized.
     /// </summary>
+    [EditorBrowsable(EditorBrowsableState.Advanced)]
     public class DockItemMinimizedEventArgs : DockItemDoneEventArgs
     {
         /// <summary>

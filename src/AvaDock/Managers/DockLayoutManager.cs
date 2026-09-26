@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Avalonia;
 using Avalonia.Layout;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Meringue.AvaDock.Controls;
@@ -219,80 +218,6 @@ namespace Meringue.AvaDock.Managers
             rootBeingBuilt.ShowAllWindows();
 
             return true;
-        }
-
-        /// <summary>
-        /// Adds or updates a <see cref="DockItemViewModel"/> in the layout.
-        /// </summary>
-        /// <param name="id">The id of the <see cref="DockItemViewModel"/> to be updated.</param>
-        /// <param name="title">If not null, the header (title) to set on the created or updated <see cref="DockItemViewModel"/>.</param>
-        /// <param name="context">The context to set on the created or updated <see cref="DockItemViewModel"/>.</param>
-        /// <param name="defaultParentId">
-        /// The optional name of the parent node to use if the <see cref="DockItemViewModel"/> needs to be created.
-        /// If no node with the given name exists or if the parameter is null, the behavior of the API is defined by
-        /// the <see cref="DockLayoutManagerBase.InsertPolicy"/> property.
-        /// </param>
-        /// <returns>The <see cref="DockItemViewModel"/> created or updated.</returns>
-        // TODO: Task 180 to refactor this to DockControlManager
-        public T? CreateOrUpdateItem(String id, String? title, Object context, String? defaultParentId = null)
-        {
-            if (String.IsNullOrWhiteSpace(id))
-            {
-                throw new ArgumentException("Item ID cannot be null or whitespace.", nameof(id));
-            }
-
-            if (this.DockControl.FindItem(id) is T item)
-            {
-                if (title is not null)
-                {
-                    item.Title = title;
-                }
-
-                item.Context = context;
-                return item;
-            }
-
-            T newItem = new()
-            {
-                Id = id,
-                Title = title ?? String.Empty,
-                Context = context,
-            };
-
-#pragma warning disable CS8604 // Possible null reference argument.
-            if (!String.IsNullOrEmpty(defaultParentId))
-            {
-                DockContext.SetPreferredTabPanelId(newItem, defaultParentId);
-            }
-
-            DockWorkspaceManager workspace = this.DockControl.PrimaryWorkspace;
-
-            if (this.InsertPolicy == DockInsertPolicy.CreateFloating && !String.IsNullOrEmpty(defaultParentId) && this.DockControl.FindNode(defaultParentId) is null)
-            {
-                DockTabNodeViewModel tab = new();
-                DockSplitNodeViewModel split = new(Orientation.Horizontal);
-                split.AddChild(tab);
-                DockWorkspaceManager manager = new(split);
-                IWindow? window = this.DockControl.AttachSecondaryWorkspace(manager, null, new Size(300, 200));
-                window?.Show();
-                _ = manager.AddItem(newItem);
-                manager.CommitChanges();
-                return newItem;
-            }
-
-            if (this.InsertPolicy == DockInsertPolicy.Error && !String.IsNullOrEmpty(defaultParentId) && this.DockControl.FindNode(defaultParentId) is null)
-            {
-                throw new ArgumentOutOfRangeException(nameof(defaultParentId), "Parent could not be found");
-            }
-
-            Boolean added = workspace.AddItem(newItem);
-            if (!added && this.InsertPolicy == DockInsertPolicy.Error)
-            {
-                throw new ArgumentOutOfRangeException(nameof(defaultParentId), "Parent could not be found");
-            }
-#pragma warning restore CS8604 // Possible null reference argument.
-
-            return newItem;
         }
 
         /// <inheritdoc/>

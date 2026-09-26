@@ -1,13 +1,14 @@
 // Copyright (C) Scott Kupec. All rights reserved.
 
+using System.ComponentModel;
 using Meringue.AvaDock.Managers;
 
 namespace Meringue.AvaDock.Events
 {
     /// <summary>
-    /// Provides data for the <see cref="DockControlManager.WorkspaceDetached"/> event which is raised after a
-    /// <see cref="DockWorkspaceManager"/> is detached.
+    /// Raised when a <see cref="DockWorkspaceManager"/> is detached.
     /// </summary>
+    [EditorBrowsable(EditorBrowsableState.Advanced)]
     public class DockWorkspaceDetachedEventArgs : DockWorkspaceDoneEventArgs
     {
         /// <summary>

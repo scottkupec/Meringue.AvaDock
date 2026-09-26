@@ -6,7 +6,7 @@ using Meringue.AvaDock.ViewModels;
 namespace Meringue.AvaDock.Events
 {
     /// <summary>
-    /// Place holder for permissive handling of <see cref="DockItemViewModel.MaximizeRequested"/>.
+    /// Raised when a <see cref="DockItemViewModel"/> is being maximized.
     /// </summary>
     /// <remarks>Future looking event. Not yet implemented.</remarks>
     [EditorBrowsable(EditorBrowsableState.Never)]
@@ -15,7 +15,7 @@ namespace Meringue.AvaDock.Events
         /// <summary>
         /// Initializes a new instance of the <see cref="DockItemMaximizingEventArgs"/> class.
         /// </summary>
-        /// <param name="item">The <see cref="DockItemViewModel"/> that is requesting to be maximized.</param>
+        /// <param name="item">The <see cref="DockItemViewModel"/> that is being maximized.</param>
         public DockItemMaximizingEventArgs(DockItemViewModel item)
             : base(item)
         {
