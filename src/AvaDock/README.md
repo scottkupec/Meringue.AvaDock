@@ -1,6 +1,6 @@
 # Meringue.AvaDock
 
-Meringue.AvaDock is a reusable C# and Avalonia 11 control that implements a modern window docking
+Meringue.AvaDock is a reusable C# and Avalonia 11 control that implements a simple window docking
 system. It utilizes an event-driven MVVM architecture and includes a comprehensive serialization
 layer along with a built-in JSON serializer.
 
@@ -53,15 +53,17 @@ layer along with a built-in JSON serializer.
     ```
 
 See the `Samples` projects for usage examples:
-- `HelloDock` - A very basic `DockControl` setup with 4 items.
-- `HelloLayout`
+- `HelloDock` - A basic `DockControl` setup with 4 items.
+- `HelloLayout` - Uses serialized JSON to construct a `DockControl`.
+- `LayoutMonitor` - A layout sample that monitors changes to the layout.
 
 ## Development Status
 
 Work in progress. The API is evolving. Current focus areas:
 - Improve API surface
 - Improve layout reflow when moving docked windows
-- Final code review before 1.0.0 release
+- Add drag-to-float instead of just a "Float" drop down.
+- Better support when restoring contexts on deserialization.
 
 ## License
 

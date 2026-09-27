@@ -1,10 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Authors>Scott Kupec</Authors>
-    <Description>A docking system for Avalonia.</Description>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageId>Meringue.AvaDock</PackageId>  
     <Version>0.0.4</Version>
+
+    <Authors>Scott Kupec</Authors>
+    <Copyright>Copyright © 2026 Scott Kupec</Copyright>    
+    <Description>A docking system for Avalonia.</Description>
+
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>    
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <PackageIcon>meringue.png</PackageIcon>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/scottkupec/Meringue.AvaDock</PackageProjectUrl>        
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>avalonia;ui;docking;layout;panels</PackageTags>
+    <RepositoryUrl>$(PackageProjectUrl)</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -53,6 +64,7 @@
 
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="meringue.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>
