@@ -4,6 +4,7 @@
     <AssemblyVersion>0.0.1</AssemblyVersion>
     <LangVersion>latest</LangVersion>
     <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <PropertyGroup>

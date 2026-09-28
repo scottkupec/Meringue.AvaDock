@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <PackageId>Meringue.AvaDock</PackageId>  
-    <Version>0.0.4</Version>
+    <Version>0.1.0</Version>
 
     <Authors>Scott Kupec</Authors>
     <Copyright>Copyright © 2026 Scott Kupec</Copyright>    

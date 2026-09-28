@@ -36,9 +36,7 @@
     <BuildEnvironmentCommonTargets>$(BuildEnvironmentRoot)\BuildEnvironment.targets</BuildEnvironmentCommonTargets>
     <!-- Detect if this is a test project so we can alter some specific behaviors as a result. -->
     <IsTestProject Condition="'$(IsTestProject)'=='' and ('$(TestProjectType)'!='' or $(MSBuildProjectName.Contains('Tests')))">true</IsTestProject>
-    <!-- IsPackable seems to be something many SDKs like to play with and has caused significant wasted time in debugging why
-         the build is clean but there is no nupkg generated.  Error by default. -->
-    <WarnOnPackingNonPackableProject Condition="'$(WarnOnPackingNonPackableProject)' == ''">true</WarnOnPackingNonPackableProject>
+    <IsPackable Condition="'$(IsTestProject)'=='' and ('$(TestProjectType)'!='' or $(MSBuildProjectName.Contains('Tests')))">false</IsPackable>    
   </PropertyGroup>
 
   <ItemGroup Condition="'$(IsTestProject)'!='true'">
