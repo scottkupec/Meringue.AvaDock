@@ -30,7 +30,7 @@ layer along with a built-in JSON serializer.
       </Application.Styles>
     </Application>
     ```
-1. Use `DockControl` as the root of your docking interface.
+1. Use a `DockControl` instance as the root of your docking interface.
     ```xml
     <Window xmlns="https://github.com/avaloniaui"
             xmlns:dock="clr-namespace:Meringue.AvaDock.Controls;assembly=Meringue.AvaDock"
@@ -44,11 +44,11 @@ layer along with a built-in JSON serializer.
     ```
 1. Add a DockManager in the code behind to manage the control:
     ```csharp
-        public DockControlManager DockControl { get; }
+        public DockControlManager DockManager { get; }
     ```
 1. Populate the `DockControl` with your items
     ```csharp
-        this.DockControl.AddItem(
+        this.DockManager.AddItem(
             new DockItemViewModel()
             {
                 Title = "First item",
