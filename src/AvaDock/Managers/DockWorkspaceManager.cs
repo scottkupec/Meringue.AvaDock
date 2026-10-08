@@ -45,6 +45,12 @@ namespace Meringue.AvaDock.Managers
         private DockItemViewModel? hoveredItem;
 
         /// <summary>
+        /// Gets or sets the currently active <see cref="DockItemViewModel"/> in this workspace.
+        /// </summary>
+        [ObservableProperty]
+        private DockItemViewModel? activeItem;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="DockWorkspaceManager"/> class.
         /// </summary>
         /// <param name="rootNode">The root <see cref="DockSplitNodeViewModel"/> for the dock control tree.</param>
@@ -88,6 +94,16 @@ namespace Meringue.AvaDock.Managers
             add => this.items.CollectionChanged += value;
             remove => this.items.CollectionChanged -= value;
         }
+
+        /// <summary>
+        /// Occurs when a <see cref="DockItemViewModel"/> has been made active.
+        /// </summary>
+        public event EventHandler<DockItemActivatedEventArgs>? ItemActivated;
+
+        /// <summary>
+        /// Occurs when a <see cref="DockItemViewModel"/> is being made active
+        /// </summary>
+        public event EventHandler<DockItemActivatingEventArgs>? ItemActivating;
 
         /// <summary>
         /// Occurs when a <see cref="DockItemViewModel"/> has been closed.
@@ -449,6 +465,18 @@ namespace Meringue.AvaDock.Managers
         }
 
         /// <summary>
+        /// Raises the <see cref="ItemActivated"/> event when an item is made active.
+        /// </summary>
+        /// <param name="eventArgs">The <see cref="DockItemActivatedEventArgs"/> for the event.</param>
+        protected virtual void OnItemActivated(DockItemActivatedEventArgs eventArgs) => this.ItemActivated?.Invoke(this, eventArgs);
+
+        /// <summary>
+        /// Raises the <see cref="ItemActivating"/> event when item is in the process of being made active.
+        /// </summary>
+        /// <param name="eventArgs">The <see cref="DockItemActivatingEventArgs"/> for the event.</param>
+        protected virtual void OnItemActivating(DockItemActivatingEventArgs eventArgs) => this.ItemActivating?.Invoke(this, eventArgs);
+
+        /// <summary>
         /// Raises the <see cref="ItemClosed"/> event when an item is closed.
         /// </summary>
         /// <param name="eventArgs">The <see cref="DockItemClosedEventArgs"/> for the event.</param>
@@ -536,6 +564,32 @@ namespace Meringue.AvaDock.Managers
             {
                 splitNode.AddChild(new DockTabNodeViewModel() { Id = $"default:{Guid.NewGuid()}" });
                 workspace.CommitChanges(collapseTree: false);
+            }
+        }
+
+        /// <summary>
+        /// Handles a request from a <see cref="DockItemViewModel"/> to be activated in the UI.
+        /// </summary>
+        /// <param name="sender">The <see cref="Object"/> that requested to be activated.</param>
+        /// <param name="eventArgs">The event arguments containing additional information about the activate request.</param>
+        private void HandleItemActivateRequested(Object? sender, DockItemActivateRequestedEventArgs eventArgs)
+        {
+            DockItemViewModel item = eventArgs.Item;
+
+            if (this.Items.Contains(item))
+            {
+                DockItemActivatingEventArgs activatingEventArgs = new(item);
+                this.OnItemActivating(activatingEventArgs);
+
+                if (!activatingEventArgs.Cancel)
+                {
+                    this.ActiveItem = item;
+                    this.OnItemActivated(new DockItemActivatedEventArgs(item));
+                }
+            }
+            else
+            {
+                System.Diagnostics.Debug.Assert(this.Items.Contains(item), "Can't activate an item that isn't present");
             }
         }
 
@@ -776,9 +830,14 @@ namespace Meringue.AvaDock.Managers
         /// <param name="node">The <see cref="DockNodeViewModel"/> to process.</param>
         private void HookNode(DockNodeViewModel node)
         {
-            if (node is DockTabNodeViewModel)
+            if (node is DockTabNodeViewModel tabNode)
             {
                 DockContext.SetWorkspace(node, this);
+                tabNode.PropertyChanged += this.OnTabNodePropertyChanged;
+                if (this.ActiveItem == null && tabNode.Selected != null)
+                {
+                    this.ActiveItem = tabNode.Selected;
+                }
             }
         }
 
@@ -793,6 +852,7 @@ namespace Meringue.AvaDock.Managers
             DockContext.SetWorkspace(item, this);
             item.CloseRequested += this.HandleItemCloseRequested;
             item.HideRequested += this.HandleItemHideRequested;
+            item.MakeActiveRequested += this.HandleItemActivateRequested;
             item.MinimizeRequested += this.HandleItemMinimizeRequested;
             item.MoveRequested += this.HandleItemMoveRequested;
             item.RestoreRequested += this.HandleItemRestoreRequested;
@@ -923,9 +983,10 @@ namespace Meringue.AvaDock.Managers
         /// <param name="node">The <see cref="DockNodeViewModel"/> to process.</param>
         private void UnhookNode(DockNodeViewModel node)
         {
-            if (node is DockTabNodeViewModel)
+            if (node is DockTabNodeViewModel tabNode)
             {
                 DockContext.ClearWorkspace(node);
+                tabNode.PropertyChanged -= this.OnTabNodePropertyChanged;
             }
         }
 
@@ -938,10 +999,31 @@ namespace Meringue.AvaDock.Managers
         {
             item.CloseRequested -= this.HandleItemCloseRequested;
             item.HideRequested -= this.HandleItemHideRequested;
+            item.MakeActiveRequested -= this.HandleItemActivateRequested;
             item.MinimizeRequested -= this.HandleItemMinimizeRequested;
             item.MoveRequested -= this.HandleItemMoveRequested;
             item.RestoreRequested -= this.HandleItemRestoreRequested;
             item.ShowRequested -= this.HandleItemShowRequested;
+        }
+
+        /// <summary>
+        /// Handles property changes on <see cref="DockTabNodeViewModel"/> instances to track active items.
+        /// </summary>
+        /// <param name="sender">The <see cref="DockTabNodeViewModel"/> that raised the event.</param>
+        /// <param name="eventArgs">The <see cref="PropertyChangedEventArgs"/> for the event.</param>
+        private void OnTabNodePropertyChanged(Object? sender, PropertyChangedEventArgs eventArgs)
+        {
+            if (eventArgs.PropertyName == nameof(DockTabNodeViewModel.Selected) && sender is DockTabNodeViewModel tabNode)
+            {
+                this.ActiveItem = tabNode.Selected;
+            }
+        }
+
+        /// <inheritdoc/>
+        partial void OnActiveItemChanged(DockItemViewModel? oldValue, DockItemViewModel? newValue)
+        {
+            oldValue?.Active = false;
+            newValue?.Active = true;
         }
 
         /// <inheritdoc/>

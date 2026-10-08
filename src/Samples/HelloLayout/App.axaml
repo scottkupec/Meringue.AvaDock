@@ -22,6 +22,22 @@
     <Style Selector="dockContols|DockTabPanel">
       <Setter Property="TabStripPlacement" Value="Left" />
     </Style>
+
+    <!--
+      Add a yellow border to the active item.
+    -->
+    <Style Selector="dockContols|DockItem[IsActive=true] /template/ Border#PART_Border">
+      <Setter Property="BorderBrush" Value="Yellow" />
+    </Style>
+
+    <!--
+      If the control is both active and focused, the focus adorned is drawn over the
+      active item border.  I didn't like that so we disable it for our sample.
+    -->
+    <Style Selector="dockContols|DockItem:focus-visible">
+      <Setter Property="FocusAdorner" Value="{x:Null}" />
+    </Style>
+
   </Application.Styles>
 
   <!--

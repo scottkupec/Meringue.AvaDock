@@ -40,6 +40,12 @@ namespace Meringue.AvaDock.ViewModels
         private String title = "[Untitled]";
 
         /// <summary>
+        /// Gets or sets a value indicating whether the item is currently active.
+        /// </summary>
+        [ObservableProperty]
+        private Boolean active;
+
+        /// <summary>
         /// Occurs when a request is made to close this item.
         /// </summary>
         public event EventHandler<DockItemCloseRequestedEventArgs>? CloseRequested;
@@ -53,6 +59,11 @@ namespace Meringue.AvaDock.ViewModels
         /// Occurs when a request is made to hide this item.
         /// </summary>
         public event EventHandler<DockItemHideRequestedEventArgs>? HideRequested;
+
+        /// <summary>
+        /// Occurs when a request is made to make this item the active item.
+        /// </summary>
+        public event EventHandler<DockItemActivateRequestedEventArgs>? MakeActiveRequested;
 
         /// <summary>
         /// Occurs when a request is made to maximize this item.
@@ -135,6 +146,15 @@ namespace Meringue.AvaDock.ViewModels
         /// Gets or sets the id of the item.
         /// </summary>
         public String Id { get; set; } = Guid.NewGuid().ToString("N");
+
+        /// <summary>
+        /// Gets the command that requests the item be makde the active item.
+        /// </summary>
+        /// <remarks>
+        /// UI-only binding surface. Use the <see cref="MakeActiveRequested"/> event for programmatic requests.
+        /// </remarks>
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public ICommand MakeActiveCommand => new RelayCommand(this.MakeActive);
 
         /// <summary>
         /// Gets the command that requests the item be maximized.
@@ -244,6 +264,15 @@ namespace Meringue.AvaDock.ViewModels
                 DockItemHideRequestedEventArgs args = new(this);
                 this.HideRequested?.Invoke(this, args);
             }
+        }
+
+        /// <summary>
+        /// Invokes the <see cref="MakeActiveRequested"/> event.
+        /// </summary>
+        private void MakeActive()
+        {
+            DockItemActivateRequestedEventArgs args = new(this);
+            this.MakeActiveRequested?.Invoke(this, args);
         }
 
         /// <summary>

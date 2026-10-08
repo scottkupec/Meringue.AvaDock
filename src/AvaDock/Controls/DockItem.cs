@@ -5,7 +5,9 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Metadata;
 using Avalonia.Controls.Primitives;
+using Avalonia.Data;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Meringue.AvaDock.ViewModels;
 
 namespace Meringue.AvaDock.Controls
@@ -18,6 +20,10 @@ namespace Meringue.AvaDock.Controls
     [TemplatePart(Name = "PART_TitleBar", Type = typeof(Border))]
     public partial class DockItem : ContentControl
     {
+        /// <summary>Defines the <see cref="IsActive"/> property for binding.</summary>
+        public static readonly StyledProperty<Boolean> IsActiveProperty =
+            AvaloniaProperty.Register<DockItem, Boolean>(nameof(IsActive));
+
         /// <summary>Defines the <see cref="Title"/> property for binding.</summary>
         public static readonly StyledProperty<String> TitleProperty =
             AvaloniaProperty.Register<DockItem, String>(nameof(Title));
@@ -30,6 +36,15 @@ namespace Meringue.AvaDock.Controls
 
         /// <summary>The pointer pressed event args captured at drag start.</summary>
         private PointerPressedEventArgs? dragStartEventArgs;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether or not the item is active.
+        /// </summary>
+        public Boolean IsActive
+        {
+            get => this.GetValue(IsActiveProperty);
+            set => this.SetValue(IsActiveProperty, value);
+        }
 
         /// <summary>
         /// Gets or sets the title for the item.
@@ -47,9 +62,53 @@ namespace Meringue.AvaDock.Controls
 
             if (e?.NameScope.Find<Border>("PART_TitleBar") is { } titleBar)
             {
+                titleBar.PointerMoved += this.OnTitleBarPointerMovedAsync;
                 titleBar.PointerPressed += this.OnTitleBarPointerPressed;
-                titleBar.PointerMoved += this.OnTitleBarPointerMoved;
                 titleBar.PointerReleased += this.OnTitleBarPointerReleased;
+            }
+
+            this.AddHandler(InputElement.PointerPressedEvent, this.OnDockItemPointerPressed, handledEventsToo: true);
+            this.AddHandler(InputElement.GotFocusEvent, this.OnDockItemGotFocus, RoutingStrategies.Bubble, handledEventsToo: true);
+        }
+
+        /// <inheritdoc/>
+        protected override void OnDataContextChanged(EventArgs e)
+        {
+            base.OnDataContextChanged(e);
+
+            if (this.DataContext is DockItemViewModel)
+            {
+                // Bind IsActive to DataContext.Active. Binding tracks DataContext changes automatically,
+                // so we don't need to unbind manually.
+                _ = this.Bind(
+                    DockItem.IsActiveProperty,
+                    new Binding(nameof(DockItemViewModel.Active)));
+            }
+        }
+
+        /// <summary>
+        /// Handles the item getting focus.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="eventArgs">The event args.</param>
+        private void OnDockItemGotFocus(Object? sender, RoutedEventArgs eventArgs)
+        {
+            if (this.DataContext is DockItemViewModel item)
+            {
+                item.MakeActiveCommand.Execute(null);
+            }
+        }
+
+        /// <summary>
+        /// Handles pointer pressed events to activate the item.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="eventArgs">The event args.</param>
+        private void OnDockItemPointerPressed(Object? sender, PointerPressedEventArgs eventArgs)
+        {
+            if (this.DataContext is DockItemViewModel item)
+            {
+                item.MakeActiveCommand?.Execute(null);
             }
         }
 
@@ -64,6 +123,7 @@ namespace Meringue.AvaDock.Controls
                 && eventArgs.Pointer.Type == PointerType.Mouse
                 && eventArgs.GetCurrentPoint(null).Properties.IsLeftButtonPressed)
             {
+                item.MakeActiveCommand?.Execute(null);
                 this.dragStartPoint = eventArgs.GetPosition(this);
                 this.isDragging = false;
                 this.dragStartEventArgs = eventArgs;
@@ -73,7 +133,7 @@ namespace Meringue.AvaDock.Controls
         /// <summary>Processes <see cref="PointerEventArgs"/> events when the pointer is moved over the title bar.</summary>
         /// <param name="sender">The sender of the event args.</param>
         /// <param name="eventArgs">The arguments for the event.</param>
-        private async void OnTitleBarPointerMoved(Object? sender, PointerEventArgs eventArgs)
+        private async void OnTitleBarPointerMovedAsync(Object? sender, PointerEventArgs eventArgs)
         {
             if (this.DataContext is not DockItemViewModel item
                 || this.dragStartPoint is null
