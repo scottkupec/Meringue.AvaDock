@@ -5,6 +5,7 @@ using System.Linq;
 using Avalonia;
 using Avalonia.Headless.XUnit;
 using Avalonia.Layout;
+using Meringue.AvaDock.Events;
 using Meringue.AvaDock.ViewModels;
 using Shouldly;
 using Xunit;
@@ -14,6 +15,57 @@ namespace Meringue.AvaDock.Managers.UnitTests
     [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public class DockWorkspaceManagerTests
     {
+        [Fact]
+        public void ActiveItem_SetClearsPreviousItemActiveFlag()
+        {
+            DockItemViewModel item1 = new() { Title = "Item1" };
+            DockItemViewModel item2 = new() { Title = "Item2" };
+            DockTabNodeViewModel tabNode = new();
+            tabNode.AddTab(item1);
+            tabNode.AddTab(item2);
+
+            DockWorkspaceManager manager = new(DockTree.Horizontal(tabNode));
+            manager.ActiveItem = item1;
+
+            manager.ActiveItem = item2;
+
+            item1.Active.ShouldBeFalse("Previous active item should have Active flag cleared.");
+            item2.Active.ShouldBeTrue("New active item should have Active flag set.");
+        }
+
+        [Fact]
+        public void ActiveItem_SetToNullClearsActiveFlag()
+        {
+            DockItemViewModel item = new() { Title = "Item" };
+            DockTabNodeViewModel tabNode = new();
+            tabNode.AddTab(item);
+
+            DockWorkspaceManager manager = new(DockTree.Horizontal(tabNode));
+            manager.ActiveItem = item;
+
+            manager.ActiveItem = null;
+
+            item.Active.ShouldBeFalse("Active flag should be cleared when ActiveItem is set to null.");
+            manager.ActiveItem.ShouldBeNull("ActiveItem should be null.");
+        }
+
+        [Fact]
+        public void ActiveItem_SetUpdatesItemActiveFlag()
+        {
+            DockItemViewModel item1 = new() { Title = "Item1" };
+            DockItemViewModel item2 = new() { Title = "Item2" };
+            DockTabNodeViewModel tabNode = new();
+            tabNode.AddTab(item1);
+            tabNode.AddTab(item2);
+
+            DockWorkspaceManager manager = new(DockTree.Horizontal(tabNode));
+
+            manager.ActiveItem = item1;
+
+            item1.Active.ShouldBeTrue("Active item should have Active flag set.");
+            item2.Active.ShouldBeFalse("Inactive item should not have Active flag set.");
+        }
+
         [Fact]
         public void AddItem_ShouldInsertItemUsingPreferredPanelId()
         {
@@ -299,6 +351,67 @@ namespace Meringue.AvaDock.Managers.UnitTests
             workspace.Items.ShouldContain(item, "Item should remain in workspace when minimizing is cancelled.");
             workspace.MinimizedItems.ShouldNotContain(item, "Item should not be moved to minimized items when minimizing is cancelled.");
             minimizedRaised.ShouldBeFalse("ItemMinimized should not be raised when minimizing is cancelled.");
+        }
+
+        [Fact]
+        public void MakeActiveRequested_CancelPreventsActivation()
+        {
+            DockItemViewModel item = new() { Title = "Item" };
+            DockTabNodeViewModel tabNode = new();
+            tabNode.AddTab(item);
+            DockWorkspaceManager manager = new(DockTree.Horizontal(tabNode));
+
+            manager.ItemActivating += (_, e) => e.Cancel = true;
+
+            item.MakeActiveCommand.Execute(null);
+
+            manager.ActiveItem.ShouldBeNull("ActiveItem should remain null when activation is cancelled.");
+            item.Active.ShouldBeFalse("Item Active flag should remain false when activation is cancelled.");
+        }
+
+        [Fact]
+        public void MakeActiveRequested_IgnoresItemNotInWorkspace()
+        {
+            DockItemViewModel itemInWorkspace = new() { Title = "In" };
+            DockItemViewModel itemOutside = new() { Title = "Out" };
+            DockTabNodeViewModel tabNode = new();
+            tabNode.AddTab(itemInWorkspace);
+            DockWorkspaceManager manager = new(DockTree.Horizontal(tabNode));
+
+            Boolean activatingRaised = false;
+            manager.ItemActivating += (_, _) => activatingRaised = true;
+
+            // Simulate request for item not in workspace
+            itemOutside.MakeActiveCommand.Execute(null);
+
+            activatingRaised.ShouldBeFalse("ItemActivating should not be raised for item not in workspace.");
+            manager.ActiveItem.ShouldBeNull("ActiveItem should remain null.");
+        }
+
+        [Fact]
+        public void MakeActiveRequested_RaisesItemActivatingAndItemActivated()
+        {
+            DockItemViewModel item = new() { Title = "Item" };
+            DockTabNodeViewModel tabNode = new();
+            tabNode.AddTab(item);
+            DockWorkspaceManager manager = new(DockTree.Horizontal(tabNode));
+
+            DockItemActivatingEventArgs? activatingArgs = null;
+            DockItemActivatedEventArgs? activatedArgs = null;
+            manager.ItemActivating += (_, e) => activatingArgs = e;
+            manager.ItemActivated += (_, e) => activatedArgs = e;
+
+            item.MakeActiveCommand.Execute(null);
+
+            activatingArgs.ShouldNotBeNull("ItemActivating should be raised.");
+            activatingArgs.Item.ShouldBe(item, "ItemActivating args should reference the activated item.");
+            activatingArgs.Cancel.ShouldBeFalse("ItemActivating should not be cancelled by default.");
+
+            activatedArgs.ShouldNotBeNull("ItemActivated should be raised.");
+            activatedArgs.Item.ShouldBe(item, "ItemActivated args should reference the activated item.");
+
+            manager.ActiveItem.ShouldBe(item, "Manager ActiveItem should be set after activation request.");
+            item.Active.ShouldBeTrue("Item Active flag should be true after activation.");
         }
 
         [Fact]
