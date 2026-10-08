@@ -654,8 +654,6 @@ namespace Meringue.AvaDock.Managers
 
                     if (!hidingEventArgs.Cancel)
                     {
-                        DockContext.SetPreferredWorkspaceId(item, this.Id);
-
                         if (this.RemoveItem(item))
                         {
                             DockContext.SetItemState(item, DockItemState.Hidden);
@@ -804,7 +802,6 @@ namespace Meringue.AvaDock.Managers
                         System.Diagnostics.Debug.Assert(added, "Failed to add item to workspace during show request.");
 
                         this.OnPropertyChanged(nameof(this.HiddenItems));
-                        DockContext.ClearPreferredWorkspaceId(item);
                         this.CommitChanges();
                         DockContext.SetItemState(item, DockItemState.Normal);
                         this.OnItemShown(new DockItemShownEventArgs(item));

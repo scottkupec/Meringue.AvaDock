@@ -35,11 +35,6 @@ namespace Meringue.AvaDock
         private const String PreferredTabPanelIdPropertyName = "AvaDock.PreferredTabPanelId";
 
         /// <summary>
-        /// The name of the <see cref="DockItemViewModel.Tags"/> entry for tracking <see cref="DockItemViewModel"/> to <see cref="DockWorkspaceManager"/> mapping.
-        /// </summary>
-        private const String PreferredWorkspaceIdPropertyName = "AvaDock.PreferredWorkspaceId";
-
-        /// <summary>
         /// The <see cref="DataFormat{T}"/> for dragging a <see cref="DockItemViewModel"/> in Avalonia 12.
         /// </summary>
         public static readonly DataFormat<DockItemViewModel> DockItemDragFormat =
@@ -53,16 +48,6 @@ namespace Meringue.AvaDock
         {
             ArgumentNullException.ThrowIfNull(item);
             _ = item.Tags.Remove(DockContext.PreferredTabPanelIdPropertyName);
-        }
-
-        /// <summary>
-        /// Clears the preferred <see cref="DockTabNodeViewModel"/> panel Id for the specified <see cref="DockItemViewModel"/>.
-        /// </summary>
-        /// <param name="item">The <see cref="DockItemViewModel"/> whose preferred workspace ID is being cleared.</param>
-        public static void ClearPreferredWorkspaceId(DockItemViewModel item)
-        {
-            ArgumentNullException.ThrowIfNull(item);
-            _ = item.Tags.Remove(DockContext.PreferredWorkspaceIdPropertyName);
         }
 
         /// <summary>
@@ -116,20 +101,6 @@ namespace Meringue.AvaDock
         }
 
         /// <summary>
-        /// Gets the preferred <see cref="DockWorkspaceManager"/> Id for the specified <see cref="DockItemViewModel"/>.
-        /// </summary>
-        /// <param name="item">The <see cref="DockItemViewModel"/> whose preferred workspace ID is being retrieved.</param>
-        /// <returns>
-        /// The Id of the preferred <see cref="DockWorkspaceManager"/>, or <c>null</c> if no preference has been set.
-        /// </returns>
-        public static String? GetPreferredWorkspaceId(DockItemViewModel item)
-        {
-            ArgumentNullException.ThrowIfNull(item);
-
-            return item.Tags.TryGetValue(DockContext.PreferredWorkspaceIdPropertyName, out Object? value) ? value as String : null;
-        }
-
-        /// <summary>
         /// Gets the <see cref="DockWorkspaceManager"/> for the specified <see cref="DockItemViewModel"/>.
         /// </summary>
         /// <param name="item">The <see cref="DockItemViewModel"/> for which to retrieve the <see cref="DockWorkspaceManager"/>.</param>
@@ -180,18 +151,6 @@ namespace Meringue.AvaDock
         {
             ArgumentNullException.ThrowIfNull(item);
             item.Tags[DockContext.PreferredTabPanelIdPropertyName] = tabPanelId;
-        }
-
-        /// <summary>
-        /// Sets the preferred <see cref="DockWorkspaceManager"/> Id for the specified <see cref="DockItemViewModel"/>.
-        /// This value can be used later to restore or move the tab back to its intended workspace.
-        /// </summary>
-        /// <param name="item">The <see cref="DockItemViewModel"/> whose preferred workspace ID is being set.</param>
-        /// <param name="workspaceId">The Id of the preferred <see cref="DockWorkspaceManager"/> to associate with this tab.</param>
-        public static void SetPreferredWorkspaceId(DockItemViewModel item, String workspaceId)
-        {
-            ArgumentNullException.ThrowIfNull(item);
-            item.Tags[DockContext.PreferredWorkspaceIdPropertyName] = workspaceId;
         }
 
         /// <summary>

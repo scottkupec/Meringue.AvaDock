@@ -26,20 +26,6 @@ namespace Meringue.AvaDock.Services.UnitTests
         }
 
         [Fact]
-        public void ClearPreferredWorkspaceId_RemovesTag()
-        {
-            DockItemViewModel item = new();
-            DockContext.SetPreferredWorkspaceId(item, "tab-panel");
-
-            DockContext.ClearPreferredWorkspaceId(item);
-
-            String? returnedId = DockContext.GetPreferredWorkspaceId(item);
-
-            returnedId
-                .ShouldBeNull($"{nameof(DockContext.GetPreferredWorkspaceId)} should return null after {nameof(DockContext.ClearPreferredWorkspaceId)} is called.");
-        }
-
-        [Fact]
         public void ClearWorkspace_RemovesTag()
         {
             DockItemViewModel item = new();
@@ -62,16 +48,6 @@ namespace Meringue.AvaDock.Services.UnitTests
 
             result
                 .ShouldBeNull($"{nameof(DockContext.GetPreferredTabPanelId)} should return null when no value is set.");
-        }
-
-        [Fact]
-        public void GetPreferredWorkspaceId_ReturnsNullWhenNotSet()
-        {
-            DockItemViewModel item = new();
-            String? result = DockContext.GetPreferredWorkspaceId(item);
-
-            result
-                .ShouldBeNull($"{nameof(DockContext.GetPreferredWorkspaceId)} should return null when no value is set.");
         }
 
         [Fact]
@@ -98,22 +74,6 @@ namespace Meringue.AvaDock.Services.UnitTests
 
             storedId
                 .ShouldBe(expectedId, $"Tag value should match value used with {nameof(DockContext.SetPreferredTabPanelId)}.");
-        }
-
-        [Fact]
-        public void SetPreferredWorkspaceId_CanBeRetrieved()
-        {
-            DockItemViewModel item = new();
-            String expectedId = "WorkspaceABC";
-
-            DockContext.SetPreferredWorkspaceId(item, expectedId);
-            String? storedId = DockContext.GetPreferredWorkspaceId(item);
-
-            storedId
-                .ShouldNotBeNull($"An ID stored with {nameof(DockContext.GetPreferredWorkspaceId)} should be retrievable.");
-
-            storedId
-                .ShouldBe(expectedId, $"Tag value should match value used with {nameof(DockContext.SetPreferredWorkspaceId)}.");
         }
 
         [Fact]
