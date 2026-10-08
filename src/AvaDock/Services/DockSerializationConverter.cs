@@ -56,8 +56,8 @@ namespace Meringue.AvaDock.Services
             public static DockControlManager Deserialize<T>(DockControlData controlData)
                 where T : DockItemViewModel, new()
             {
-                TargetFrameworkHelper.ThrowIfArgumentNull(controlData);
-                TargetFrameworkHelper.ThrowIfArgumentNull(controlData.PrimaryWorkspace);
+                ArgumentNullException.ThrowIfNull(controlData);
+                ArgumentNullException.ThrowIfNull(controlData.PrimaryWorkspace);
 
                 if (controlData.Major != 1)
                 {
@@ -139,7 +139,7 @@ namespace Meringue.AvaDock.Services
             private static DockNodeViewModel BuildNode<T>(DockNodeData nodeData)
                 where T : DockItemViewModel, new()
             {
-                TargetFrameworkHelper.ThrowIfArgumentNull(nodeData);
+                ArgumentNullException.ThrowIfNull(nodeData);
                 DockNodeViewModel constructedBuildModel;
 
                 if (nodeData is DockSplitNodeData splitNodeData)
@@ -167,7 +167,7 @@ namespace Meringue.AvaDock.Services
             private static DockSplitNodeViewModel BuildSplitNode<T>(DockSplitNodeData nodeData)
                 where T : DockItemViewModel, new()
             {
-                TargetFrameworkHelper.ThrowIfArgumentNull(nodeData);
+                ArgumentNullException.ThrowIfNull(nodeData);
 
                 DockSplitNodeViewModel split = new(nodeData.Orientation)
                 {
@@ -291,7 +291,7 @@ namespace Meringue.AvaDock.Services
             public static DockControlData Serialize<T>(DockControlManager control)
                 where T : DockItemViewModel
             {
-                TargetFrameworkHelper.ThrowIfArgumentNull(control);
+                ArgumentNullException.ThrowIfNull(control);
 
                 DockControlData controlData = new()
                 {

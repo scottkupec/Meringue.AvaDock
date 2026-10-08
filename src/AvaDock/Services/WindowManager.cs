@@ -32,7 +32,7 @@ namespace Meringue.AvaDock.Services
         /// </param>
         public WindowManager(IWindowFactory windowFactory)
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(windowFactory);
+            ArgumentNullException.ThrowIfNull(windowFactory);
             this.WindowFactory = windowFactory;
         }
 

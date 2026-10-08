@@ -40,7 +40,7 @@ namespace Meringue.AvaDock.ViewModels
         /// <param name="item">The <see cref="DockItemViewModel"/> to be added.</param>
         public void AddTab(DockItemViewModel item)
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(item);
+            ArgumentNullException.ThrowIfNull(item);
             this.ObservableTabs.Add(item);
         }
 

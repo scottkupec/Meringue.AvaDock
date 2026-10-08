@@ -36,7 +36,7 @@ namespace Meringue.AvaDock.Services
         /// <inheritdoc/>
         public DockControlData Load(Stream input)
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(input);
+            ArgumentNullException.ThrowIfNull(input);
 
             DockControlData? layout = JsonSerializer.Deserialize<DockControlData>(input, Options);
             return layout ?? throw new InvalidDataException("Could not deserialize DockLayout.");
@@ -45,7 +45,7 @@ namespace Meringue.AvaDock.Services
         /// <inheritdoc/>
         public void Save(DockControlData layout, String filename)
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(layout);
+            ArgumentNullException.ThrowIfNull(layout);
 
             using FileStream stream = File.Create(filename);
             this.Save(layout, stream);
@@ -54,8 +54,8 @@ namespace Meringue.AvaDock.Services
         /// <inheritdoc/>
         public void Save(DockControlData layout, Stream output)
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(layout);
-            TargetFrameworkHelper.ThrowIfArgumentNull(output);
+            ArgumentNullException.ThrowIfNull(layout);
+            ArgumentNullException.ThrowIfNull(output);
 
             JsonSerializer.Serialize(output, layout, Options);
         }

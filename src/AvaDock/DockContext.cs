@@ -51,7 +51,7 @@ namespace Meringue.AvaDock
         /// <param name="item">The <see cref="DockItemViewModel"/> whose preferred panel ID is being cleared.</param>
         public static void ClearPreferredTabPanelId(DockItemViewModel item)
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(item);
+            ArgumentNullException.ThrowIfNull(item);
             _ = item.Tags.Remove(DockContext.PreferredTabPanelIdPropertyName);
         }
 
@@ -61,7 +61,7 @@ namespace Meringue.AvaDock
         /// <param name="item">The <see cref="DockItemViewModel"/> whose preferred workspace ID is being cleared.</param>
         public static void ClearPreferredWorkspaceId(DockItemViewModel item)
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(item);
+            ArgumentNullException.ThrowIfNull(item);
             _ = item.Tags.Remove(DockContext.PreferredWorkspaceIdPropertyName);
         }
 
@@ -71,7 +71,7 @@ namespace Meringue.AvaDock
         /// <param name="item">The <see cref="DockItemViewModel"/> whose workspace is being cleared.</param>
         public static void ClearWorkspace(DockItemViewModel item)
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(item);
+            ArgumentNullException.ThrowIfNull(item);
             _ = item.Tags.Remove(DockContext.DockWorkspaceManagerPropertyName);
         }
 
@@ -81,7 +81,7 @@ namespace Meringue.AvaDock
         /// <param name="node">The <see cref="DockNodeViewModel"/> whose workspace is being cleared.</param>
         public static void ClearWorkspace(DockNodeViewModel node)
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(node);
+            ArgumentNullException.ThrowIfNull(node);
             _ = node.Tags.Remove(DockContext.DockWorkspaceManagerPropertyName);
         }
 
@@ -94,7 +94,7 @@ namespace Meringue.AvaDock
         /// </returns>
         public static DockItemState? GetItemState(DockItemViewModel item)
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(item);
+            ArgumentNullException.ThrowIfNull(item);
             return item.Tags.TryGetValue(DockContext.ItemState, out Object? value) && value is DockItemState state
                 ? state
                 : null;
@@ -109,7 +109,7 @@ namespace Meringue.AvaDock
         /// </returns>
         public static String? GetPreferredTabPanelId(DockItemViewModel item)
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(item);
+            ArgumentNullException.ThrowIfNull(item);
             return item.Tags.TryGetValue(DockContext.PreferredTabPanelIdPropertyName, out Object? value)
                 ? value as String
                 : null;
@@ -124,7 +124,7 @@ namespace Meringue.AvaDock
         /// </returns>
         public static String? GetPreferredWorkspaceId(DockItemViewModel item)
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(item);
+            ArgumentNullException.ThrowIfNull(item);
 
             return item.Tags.TryGetValue(DockContext.PreferredWorkspaceIdPropertyName, out Object? value) ? value as String : null;
         }
@@ -138,7 +138,7 @@ namespace Meringue.AvaDock
         /// </returns>
         public static DockWorkspaceManager? GetWorkspace(DockItemViewModel item)
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(item);
+            ArgumentNullException.ThrowIfNull(item);
             return item.Tags.TryGetValue(DockContext.DockWorkspaceManagerPropertyName, out Object? value)
                 ? value as DockWorkspaceManager
                 : null;
@@ -153,7 +153,7 @@ namespace Meringue.AvaDock
         /// </returns>
         public static DockWorkspaceManager? GetWorkspace(DockNodeViewModel node)
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(node);
+            ArgumentNullException.ThrowIfNull(node);
             return node.Tags.TryGetValue(DockContext.DockWorkspaceManagerPropertyName, out Object? value)
                 ? value as DockWorkspaceManager
                 : null;
@@ -166,7 +166,7 @@ namespace Meringue.AvaDock
         /// <param name="state">The <see cref="ItemState"/> to record for this item.</param>
         public static void SetItemState(DockItemViewModel item, DockItemState state)
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(item);
+            ArgumentNullException.ThrowIfNull(item);
             item.Tags[DockContext.ItemState] = state;
         }
 
@@ -178,7 +178,7 @@ namespace Meringue.AvaDock
         /// <param name="tabPanelId">The Id of the preferred <see cref="DockTabNodeViewModel"/> panel to associate with this tab.</param>
         public static void SetPreferredTabPanelId(DockItemViewModel item, String tabPanelId)
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(item);
+            ArgumentNullException.ThrowIfNull(item);
             item.Tags[DockContext.PreferredTabPanelIdPropertyName] = tabPanelId;
         }
 
@@ -190,7 +190,7 @@ namespace Meringue.AvaDock
         /// <param name="workspaceId">The Id of the preferred <see cref="DockWorkspaceManager"/> to associate with this tab.</param>
         public static void SetPreferredWorkspaceId(DockItemViewModel item, String workspaceId)
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(item);
+            ArgumentNullException.ThrowIfNull(item);
             item.Tags[DockContext.PreferredWorkspaceIdPropertyName] = workspaceId;
         }
 
@@ -201,7 +201,7 @@ namespace Meringue.AvaDock
         /// <param name="workspace">The <see cref="DockWorkspaceManager"/> to associate with this tab.</param>
         public static void SetWorkspace(DockItemViewModel item, DockWorkspaceManager workspace)
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(item);
+            ArgumentNullException.ThrowIfNull(item);
             item.Tags[DockContext.DockWorkspaceManagerPropertyName] = workspace;
         }
 
@@ -212,7 +212,7 @@ namespace Meringue.AvaDock
         /// <param name="workspace">The <see cref="DockWorkspaceManager"/> to associate with this tab.</param>
         public static void SetWorkspace(DockNodeViewModel node, DockWorkspaceManager workspace)
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(node);
+            ArgumentNullException.ThrowIfNull(node);
             node.Tags[DockContext.DockWorkspaceManagerPropertyName] = workspace;
         }
     }

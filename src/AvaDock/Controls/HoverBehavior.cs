@@ -123,14 +123,10 @@ namespace Meringue.AvaDock.Controls
             {
                 CancellationTokenSource? oldTokenSource = GetHoverToken(control);
 
-#if NET6_0_OR_GREATER
                 if (oldTokenSource is not null)
                 {
                     await oldTokenSource.CancelAsync().ConfigureAwait(true);
                 }
-#else
-                oldTokenSource?.Cancel();
-#endif
 
                 CancellationTokenSource tokenSource = new();
                 SetHoverToken(control, tokenSource);

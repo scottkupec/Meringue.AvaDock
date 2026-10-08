@@ -317,7 +317,7 @@ namespace Meringue.AvaDock.Managers
         /// <returns>The added <see cref="DockItemViewModel"/> if successful; otherwise <c>null</c>.</returns>
         public DockItemViewModel? AddItem(DockItemViewModel item, String? preferredTabPanelId = null)
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(item);
+            ArgumentNullException.ThrowIfNull(item);
 
             if (preferredTabPanelId is not null)
             {
@@ -339,7 +339,7 @@ namespace Meringue.AvaDock.Managers
         [EditorBrowsable(EditorBrowsableState.Advanced)]
         public IWindow? AttachSecondaryWorkspace(DockWorkspaceManager workspace, PixelPoint? location, Size size)
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(workspace);
+            ArgumentNullException.ThrowIfNull(workspace);
             DockWorkspaceAttachingEventArgs attachingEventArgs = new(workspace);
             this.OnWorkspaceAttaching(attachingEventArgs);
 
@@ -484,7 +484,7 @@ namespace Meringue.AvaDock.Managers
         [EditorBrowsable(EditorBrowsableState.Advanced)]
         public void RemoveFloatingWorkspace(DockWorkspaceManager workspace)
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(workspace);
+            ArgumentNullException.ThrowIfNull(workspace);
 
             IWindow? child = this.WindowManager?
                 .Windows

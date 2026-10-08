@@ -337,7 +337,7 @@ namespace Meringue.AvaDock.Managers
         /// <returns><c>true</c> if the <see cref="DockItemViewModel"/> was minimized; otherwise <c>false</c>.</returns>
         public Boolean MinimizeItem(DockItemViewModel item)
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(item);
+            ArgumentNullException.ThrowIfNull(item);
             Boolean success = false;
 
             if (!this.minimizedItems.Contains(item))
@@ -389,7 +389,7 @@ namespace Meringue.AvaDock.Managers
         /// <returns><c>true</c> if the <see cref="DockItemViewModel"/> is no longer part of the current instance; otherwise <c>false</c>.</returns>
         public Boolean RemoveItem(DockItemViewModel item)
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(item);
+            ArgumentNullException.ThrowIfNull(item);
             Boolean success = false;
 
             if (this.minimizedItems.Contains(item))
@@ -450,7 +450,7 @@ namespace Meringue.AvaDock.Managers
         /// <returns><c>true</c> if the <see cref="DockItemViewModel"/> was restored; otherwise <c>false</c>.</returns>
         public Boolean RestoreItem(DockItemViewModel item)
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(item);
+            ArgumentNullException.ThrowIfNull(item);
             Boolean success = false;
 
             if (this.minimizedItems.Contains(item))
@@ -717,9 +717,9 @@ namespace Meringue.AvaDock.Managers
             MovePlacement placement = eventArgs.Placement;
             Orientation? requiredOrientation = eventArgs.RequiredOrientation;
 
-            TargetFrameworkHelper.ThrowIfArgumentNull(item);
-            TargetFrameworkHelper.ThrowIfArgumentNull(targetTabNode);
-            TargetFrameworkHelper.ThrowIfArgumentNull(sourceTabNode);
+            ArgumentNullException.ThrowIfNull(item);
+            ArgumentNullException.ThrowIfNull(targetTabNode);
+            ArgumentNullException.ThrowIfNull(sourceTabNode);
 
             DockItemMovingEventArgs movingEventArgs = new(
                 item,

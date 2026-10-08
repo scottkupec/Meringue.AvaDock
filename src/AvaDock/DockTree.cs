@@ -24,7 +24,7 @@ namespace Meringue.AvaDock
         [EditorBrowsable(EditorBrowsableState.Advanced)]
         public static void DisplayTree(DockNodeViewModel node, Int32 indent = 0)
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(node, nameof(node));
+            ArgumentNullException.ThrowIfNull(node, nameof(node));
 
             String indentStr = new(' ', indent * 2);
 

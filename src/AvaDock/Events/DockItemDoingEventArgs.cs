@@ -1,5 +1,6 @@
 ﻿// Copyright (C) Scott Kupec. All rights reserved.
 
+using System;
 using System.ComponentModel;
 using Meringue.AvaDock.ViewModels;
 
@@ -17,7 +18,7 @@ namespace Meringue.AvaDock.Events
         /// <param name="item">The <see cref="DockItemViewModel"/> that will be acted upon.</param>
         public DockItemDoingEventArgs(DockItemViewModel item)
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(item);
+            ArgumentNullException.ThrowIfNull(item);
             this.Item = item;
         }
 

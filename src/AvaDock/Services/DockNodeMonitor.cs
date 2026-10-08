@@ -102,7 +102,7 @@ namespace Meringue.AvaDock.Services
         /// <param name="node">The root node to monitor.</param>
         public void Monitor(DockNodeViewModel node)
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(node);
+            ArgumentNullException.ThrowIfNull(node);
 
             if (this.MonitoredRoots.Add(node))
             {
@@ -116,7 +116,7 @@ namespace Meringue.AvaDock.Services
         /// <param name="root">The root node to unmonitor.</param>
         public void Unmonitor(DockNodeViewModel root)
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(root);
+            ArgumentNullException.ThrowIfNull(root);
 
             if (this.MonitoredRoots.Remove(root))
             {

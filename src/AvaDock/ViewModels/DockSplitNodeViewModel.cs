@@ -100,7 +100,7 @@ namespace Meringue.AvaDock.ViewModels
         /// <param name="size">The proportional size for the new child.</param>
         public void AddChild(DockNodeViewModel child, Double size = 1.0)
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(child);
+            ArgumentNullException.ThrowIfNull(child);
 
             this.children.Add(child);
             this.sizes.Add(size);
@@ -171,7 +171,7 @@ namespace Meringue.AvaDock.ViewModels
         /// </exception>
         public void InsertAt(Int32 index, DockNodeViewModel child, Double size = 1.0)
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(child);
+            ArgumentNullException.ThrowIfNull(child);
 
             if (index < 0 || index > this.children.Count)
             {
@@ -193,7 +193,7 @@ namespace Meringue.AvaDock.ViewModels
         /// <param name="child">The child to be removed.</param>
         public void RemoveChild(DockNodeViewModel child)
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(child);
+            ArgumentNullException.ThrowIfNull(child);
 
             Int32 index = this.children.IndexOf(child);
             if (index >= 0)
@@ -252,7 +252,7 @@ namespace Meringue.AvaDock.ViewModels
         /// <param name="newSizes">The new values for <see cref="Sizes"/>.</param>
         public void UpdateSizes(IEnumerable<Double> newSizes)
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(newSizes);
+            ArgumentNullException.ThrowIfNull(newSizes);
             Int32 newSizesCount = newSizes.Count();
 
             if (newSizesCount != this.children.Count)
