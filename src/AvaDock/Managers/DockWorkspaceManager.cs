@@ -435,6 +435,11 @@ namespace Meringue.AvaDock.Managers
                 }
             }
 
+            if (success && this.ActiveItem == item)
+            {
+                this.ActiveItem = null;
+            }
+
             return success;
         }
 

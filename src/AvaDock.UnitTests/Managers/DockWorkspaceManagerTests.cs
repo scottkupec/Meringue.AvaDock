@@ -653,6 +653,57 @@ namespace Meringue.AvaDock.Managers.UnitTests
         }
 
         [Fact]
+        public void RemoveItem_RemovesActiveItemAndClearsActiveItem()
+        {
+            DockItemViewModel activeItem = new() { Title = "Active" };
+            DockItemViewModel otherItem = new() { Title = "Other" };
+            DockTabNodeViewModel tabNode = new();
+            tabNode.AddTab(activeItem);
+            tabNode.AddTab(otherItem);
+
+            DockWorkspaceManager manager = new(DockTree.Horizontal(tabNode));
+            manager.ActiveItem = activeItem;
+
+            Boolean result = manager.RemoveItem(activeItem);
+
+            result.ShouldBeTrue("RemoveItem should succeed for active item.");
+            manager.ActiveItem.ShouldBeNull("ActiveItem should be cleared when active item is removed.");
+            manager.FindItem(otherItem.Id).ShouldNotBeNull("Other item should remain.");
+        }
+
+        [Fact]
+        public void RemoveItem_RemovesItemFromMinimizedCollection()
+        {
+            DockItemViewModel item = new() { Title = "Minimized" };
+            DockWorkspaceManager manager = new(DockTree.Horizontal(DockTree.Tab(item)));
+            item.MinimizeCommand.Execute(null);
+
+            manager.MinimizedItems.ShouldContain(item, "Item should be minimized.");
+
+            Boolean result = manager.RemoveItem(item);
+
+            result.ShouldBeTrue("RemoveItem should succeed for minimized item.");
+            manager.MinimizedItems.ShouldNotContain(item, "Item should be removed from minimized collection.");
+            manager.FindItem(item.Id).ShouldBeNull("Item should not be found after removal.");
+        }
+
+        [Fact]
+        public void RemoveItem_RemovesItemFromHiddenCollection()
+        {
+            DockItemViewModel item = new() { Title = "Hidden" };
+            DockWorkspaceManager manager = new(DockTree.Horizontal(DockTree.Tab(item)));
+            item.HideCommand.Execute(null);
+
+            manager.HiddenItems.ShouldContain(item, "Item should be hidden.");
+
+            Boolean result = manager.RemoveItem(item);
+
+            result.ShouldBeTrue("RemoveItem should succeed for hidden item.");
+            manager.HiddenItems.ShouldNotContain(item, "Item should be removed from hidden collection.");
+            manager.FindItem(item.Id).ShouldBeNull("Item should not be found after removal.");
+        }
+
+        [Fact]
         public void RestoreItem_ShouldClearPanelId()
         {
             DockItemViewModel item = new() { Title = "Restorable Item" };

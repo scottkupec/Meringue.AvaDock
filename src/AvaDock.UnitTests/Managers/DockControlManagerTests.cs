@@ -522,6 +522,82 @@ namespace Meringue.AvaDock.Managers.UnitTests
             raised.ShouldBeTrue("WorkspaceDetached should be raised when workspace is detached.");
         }
 
+        [Fact]
+        public void RemoveItem_RemovesItemFromPrimaryWorkspace()
+        {
+            DockItemViewModel item = new() { Id = "item1", Title = "Item 1" };
+            DockSplitNodeViewModel root = DockTree.Horizontal(DockTree.Tab(item));
+            DockWorkspaceManager primary = new(root);
+            DockControlManager manager = new(primary);
+
+            Boolean result = manager.RemoveItem(item.Id);
+
+            result.ShouldBeTrue("RemoveItem should succeed for item in primary workspace.");
+            manager.FindItem(item.Id).ShouldBeNull("Item should no longer be found after removal.");
+        }
+
+        [Fact]
+        public void RemoveItem_ReturnsFalseWhenItemNotFound()
+        {
+            DockSplitNodeViewModel root = DockTree.Horizontal(DockTree.Tab("item1"));
+            DockWorkspaceManager primary = new(root);
+            DockControlManager manager = new(primary);
+
+            Boolean result = manager.RemoveItem("nonexistent");
+
+            result.ShouldBeFalse("RemoveItem should return false when item id is not found.");
+        }
+
+        [Fact]
+        public void ActiveItem_ClearedWhenRemovedItemIsActive()
+        {
+            DockItemViewModel item = new() { Id = "active", Title = "Active" };
+            DockItemViewModel other = new() { Id = "other", Title = "Other" };
+            DockSplitNodeViewModel root = DockTree.Horizontal(DockTree.Tab(item, other));
+            DockWorkspaceManager primary = new(root);
+            DockControlManager manager = new(primary);
+
+            primary.ActiveItem = item;
+            manager.ActiveItem.ShouldBe(item, "Manager active item should mirror workspace active item.");
+
+            Boolean removed = manager.RemoveItem(item.Id);
+
+            removed.ShouldBeTrue("RemoveItem should succeed.");
+            manager.ActiveItem.ShouldBeNull("Manager active item should be cleared when active item is removed.");
+        }
+
+        [Fact]
+        public void ActiveItem_PropagatesWhenWorkspaceActiveItemChanges()
+        {
+            DockItemViewModel item1 = new() { Id = "1" };
+            DockItemViewModel item2 = new() { Id = "2" };
+            DockSplitNodeViewModel root = DockTree.Horizontal(DockTree.Tab(item1, item2));
+            DockWorkspaceManager primary = new(root);
+            DockControlManager manager = new(primary);
+
+            primary.ActiveItem = item1;
+            manager.ActiveItem.ShouldBe(item1, "Manager active item should mirror workspace active item.");
+
+            primary.ActiveItem = item2;
+            manager.ActiveItem.ShouldBe(item2, "Manager active item should update when workspace active item changes.");
+        }
+
+        [Fact]
+        public void ActiveItem_ClearedWhenPrimaryWorkspaceActiveItemSetToNull()
+        {
+            DockItemViewModel item = new() { Id = "item" };
+            DockSplitNodeViewModel root = DockTree.Horizontal(DockTree.Tab(item));
+            DockWorkspaceManager primary = new(root);
+            DockControlManager manager = new(primary);
+
+            manager.ActiveItem = item;
+            primary.ActiveItem = item;
+
+            primary.ActiveItem = null;
+
+            manager.ActiveItem.ShouldBeNull("Manager active item should be cleared when primary workspace active item is set to null.");
+        }
+
         /// <summary>
         /// IoC class so we can raise <see cref="DockWorkspaceManager"/> events directly.
         /// </summary>
