@@ -62,6 +62,7 @@ See the `Samples` projects for usage examples:
 - `LayoutMonitor` - A layout sample that monitors changes to the layout.
 
 ## Recent changes
+- Version 0.1.2 - Updates for correct styles in floating windows.
 - Version 0.1.1 - Added active item tracking for both control and workspace. Update HelloLayout
                   sample to highlight the active item.
 - Version 0.1.0 - Initial version for nuget

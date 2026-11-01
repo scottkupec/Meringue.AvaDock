@@ -1,0 +1,25 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:dock="clr-namespace:Meringue.AvaDock.Controls;assembly=Meringue.AvaDock"
+        xmlns:viewModels="clr-namespace:ThemeTest.ViewModels"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="ThemeTest.Windows.MainWindow"
+        x:DataType="viewModels:MainWindowViewModel"
+        Title="Hello Dock!">
+
+  <DockPanel>
+    <Border
+      DockPanel.Dock="Top"
+      Padding="8,4"
+      Background="{DynamicResource GalleryCellBrush}"
+      BorderBrush="{DynamicResource GalleryCellBorderBrush}"
+      BorderThickness="0,0,0,1">
+      <ToggleButton
+        HorizontalAlignment="Right"
+        Content="Toggle Theme"
+        Command="{Binding ToggleThemeCommand}"
+        IsChecked="{Binding IsDark}" />
+    </Border>
+    <dock:DockControl Manager="{Binding DockManager}" />
+  </DockPanel>
+
+</Window>

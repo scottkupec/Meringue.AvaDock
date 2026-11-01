@@ -4,10 +4,12 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Metadata;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
+using Avalonia.VisualTree;
 using Meringue.AvaDock.ViewModels;
 
 namespace Meringue.AvaDock.Controls
@@ -47,6 +49,20 @@ namespace Meringue.AvaDock.Controls
         }
 
         /// <summary>
+        /// Detaches a control and all of its descendants from their view models so that
+        /// discarded template instances do not retain logical parenting claims on hosted
+        /// controls.
+        /// </summary>
+        /// <param name="control">The control being discarded.</param>
+        private static void ClearDataContexts(Control control)
+        {
+            foreach (StyledElement element in control.GetSelfAndVisualDescendants())
+            {
+                element.DataContext = null;
+            }
+        }
+
+        /// <summary>
         /// Helper method for building an enumeration of <see cref="Control"/>s from an enumeration of <see cref="DockNodeViewModel"/>s.
         /// </summary>
         /// <param name="children">The <see cref="DockNodeViewModel"/>s to use for constructing <see cref="Control"/>s.</param>
@@ -70,6 +86,19 @@ namespace Meringue.AvaDock.Controls
             if (container == null || children == null)
             {
                 return;
+            }
+
+            // Discarded template instances are still bound to shared view models, and their
+            // ContentPresenters hold logical parenting claims on any hosted item content
+            // (for example, a control set on a DockItemViewModel). In Avalonia 12 a
+            // control's logical parent is only ever assigned while the control has no
+            // parent, so a stale host will prevent live hosts from reparenting the control.
+            // Reparenting a control whose logical parent chain is broken or orphaned makes
+            // implicit theme lookup fail for the entire subtree, so all stale logical host
+            // claims are released before the children are discarded and recreated.
+            foreach (Control existing in container.Children)
+            {
+                DockSplitPanel.ClearDataContexts(existing);
             }
 
             container.Children.Clear();

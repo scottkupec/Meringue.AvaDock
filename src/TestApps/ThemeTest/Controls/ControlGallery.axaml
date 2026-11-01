@@ -1,0 +1,182 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="ThemeTest.Controls.ControlGallery">
+
+  <!-- 4x4 grid of themed base controls used to visually verify theme/style rendering. -->
+  <UserControl.Styles>
+    <Style Selector="Border.cell">
+      <Setter Property="Background" Value="{DynamicResource GalleryCellBrush}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource GalleryCellBorderBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="6" />
+      <Setter Property="Padding" Value="6" />
+    </Style>
+  </UserControl.Styles>
+
+  <Grid ColumnDefinitions="*,*,*,*" RowDefinitions="*,*,*,*" Margin="8">
+
+    <!-- Row 1: flat text, primary button, text input. -->
+    <Border Classes="cell" Grid.Row="0" Grid.Column="0" Margin="4">
+      <Grid RowDefinitions="Auto,*">
+        <TextBlock Grid.Row="0" Text="TextBlock" HorizontalAlignment="Center" Margin="0,4,0,2" Opacity="0.7" />
+        <TextBlock Grid.Row="1" Text="Aa Bb Cc Dd 1234567890" TextWrapping="Wrap" HorizontalAlignment="Center" VerticalAlignment="Center" />
+      </Grid>
+    </Border>
+
+    <Border Classes="cell" Grid.Row="0" Grid.Column="1" Margin="4">
+      <Grid RowDefinitions="Auto,*">
+        <TextBlock Grid.Row="0" Text="Button" HorizontalAlignment="Center" Margin="0,4,0,2" Opacity="0.7" />
+        <Button Grid.Row="1" Content="Click Me" VerticalAlignment="Center" HorizontalAlignment="Center" />
+      </Grid>
+    </Border>
+
+    <Border Classes="cell" Grid.Row="0" Grid.Column="2" Margin="4">
+      <Grid RowDefinitions="Auto,*">
+        <TextBlock Grid.Row="0" Text="TextBox" HorizontalAlignment="Center" Margin="0,4,0,2" Opacity="0.7" />
+        <TextBox Grid.Row="1" Text="Type Here" VerticalAlignment="Center" Margin="4" />
+      </Grid>
+    </Border>
+
+    <Border Classes="cell" Grid.Row="0" Grid.Column="3" Margin="4">
+      <Grid RowDefinitions="Auto,*">
+        <TextBlock Grid.Row="0" Text="ListBox" HorizontalAlignment="Center" Margin="0,4,0,2" Opacity="0.7" />
+        <ListBox Grid.Row="1" Margin="4" SelectedIndex="0" BorderBrush="{DynamicResource GalleryCellBorderBrush}" BorderThickness="1">
+          <ListBoxItem Content="Item 1" />
+          <ListBoxItem Content="Item 2" />
+          <ListBoxItem Content="Item 3" />
+          <ListBoxItem Content="Item 4" />
+        </ListBox>
+      </Grid>
+    </Border>
+
+    <!-- Row 2: selection and boolean controls. -->
+    <Border Classes="cell" Grid.Row="1" Grid.Column="0" Margin="4">
+      <Grid RowDefinitions="Auto,*">
+        <TextBlock Grid.Row="0" Text="ComboBox" HorizontalAlignment="Center" Margin="0,4,0,2" Opacity="0.7" />
+        <ComboBox Grid.Row="1" SelectedIndex="0" VerticalAlignment="Center" Margin="4">
+          <ComboBoxItem Content="Alpha" />
+          <ComboBoxItem Content="Beta" />
+          <ComboBoxItem Content="Gamma" />
+        </ComboBox>
+      </Grid>
+    </Border>
+
+    <Border Classes="cell" Grid.Row="1" Grid.Column="1" Margin="4">
+      <Grid RowDefinitions="Auto,*">
+        <TextBlock Grid.Row="0" Text="CheckBox" HorizontalAlignment="Center" Margin="0,4,0,2" Opacity="0.7" />
+        <CheckBox Grid.Row="1" Content="Checked" IsChecked="True" VerticalAlignment="Center" HorizontalAlignment="Center" />
+      </Grid>
+    </Border>
+
+    <Border Classes="cell" Grid.Row="1" Grid.Column="2" Margin="4">
+      <Grid RowDefinitions="Auto,*">
+        <TextBlock Grid.Row="0" Text="RadioButton" HorizontalAlignment="Center" Margin="0,4,0,2" Opacity="0.7" />
+        <StackPanel Grid.Row="1" Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center">
+          <RadioButton Content="First" GroupName="Gallery" IsChecked="True" HorizontalAlignment="Left" />
+          <RadioButton Content="Second" GroupName="Gallery" HorizontalAlignment="Left" Margin="0,4,0,0" />
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <Border Classes="cell" Grid.Row="1" Grid.Column="3" Margin="4">
+      <Grid RowDefinitions="Auto,*">
+        <TextBlock Grid.Row="0" Text="Expander" HorizontalAlignment="Center" Margin="0,4,0,2" Opacity="0.7" />
+        <Expander Grid.Row="1" Header="Details" IsExpanded="True" Margin="4">
+          <TextBlock Text="Expanded Content" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="4" />
+        </Expander>
+      </Grid>
+    </Border>
+
+    <!-- Row 3: input ranges and indicators. -->
+    <Border Classes="cell" Grid.Row="2" Grid.Column="0" Margin="4">
+      <Grid RowDefinitions="Auto,*">
+        <TextBlock Grid.Row="0" Text="Slider" HorizontalAlignment="Center" Margin="0,4,0,2" Opacity="0.7" />
+        <Slider Grid.Row="1" Minimum="0" Maximum="100" Value="60" VerticalAlignment="Center" Margin="4" />
+      </Grid>
+    </Border>
+
+    <Border Classes="cell" Grid.Row="2" Grid.Column="1" Margin="4">
+      <Grid RowDefinitions="Auto,*">
+        <TextBlock Grid.Row="0" Text="ProgressBar" HorizontalAlignment="Center" Margin="0,4,0,2" Opacity="0.7" />
+        <ProgressBar Grid.Row="1" Minimum="0" Maximum="100" Value="60" VerticalAlignment="Center" Margin="4" />
+      </Grid>
+    </Border>
+
+    <Border Classes="cell" Grid.Row="2" Grid.Column="2" Margin="4">
+      <Grid RowDefinitions="Auto,*">
+        <TextBlock Grid.Row="0" Text="List" HorizontalAlignment="Center" Margin="0,4,0,2" Opacity="0.7" />
+        <ScrollViewer Grid.Row="1" Margin="4" Padding="4">
+          <ItemsControl>
+            <TextBlock Text="Item 1" />
+            <TextBlock Text="Item 2" />
+            <TextBlock Text="Item 3" />
+            <TextBlock Text="Item 4" />
+            <TextBlock Text="Item 5" />
+            <TextBlock Text="Item 6" />
+            <TextBlock Text="Item 7" />
+            <TextBlock Text="Item 8" />
+          </ItemsControl>
+        </ScrollViewer>
+      </Grid>
+    </Border>
+
+    <Border Classes="cell" Grid.Row="2" Grid.Column="3" Margin="4">
+      <Grid RowDefinitions="Auto,*">
+        <TextBlock Grid.Row="0" Text="DatePicker" HorizontalAlignment="Center" Margin="0,4,0,2" Opacity="0.7" />
+        <DatePicker Grid.Row="1" VerticalAlignment="Center" Margin="4,4,4,4" />
+      </Grid>
+    </Border>
+
+    <!-- Row 4: composite containers. -->
+    <Border Classes="cell" Grid.Row="3" Grid.Column="0" Margin="4">
+      <Grid RowDefinitions="Auto,*">
+        <TextBlock Grid.Row="0" Text="TabControl" HorizontalAlignment="Center" Margin="0,4,0,2" Opacity="0.7" />
+        <TabControl Grid.Row="1" Margin="4">
+          <TabItem Header="One">
+            <TextBlock Text="Tab 1" HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </TabItem>
+          <TabItem Header="Two">
+            <TextBlock Text="Tab 2" HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </TabItem>
+          <TabItem Header="Three">
+            <TextBlock Text="Tab 3" HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </TabItem>
+        </TabControl>
+      </Grid>
+    </Border>
+
+    <Border Classes="cell" Grid.Row="3" Grid.Column="1" Margin="4">
+      <Grid RowDefinitions="Auto,*">
+        <TextBlock Grid.Row="0" Text="ToggleButton" HorizontalAlignment="Center" Margin="0,4,0,2" Opacity="0.7" />
+        <ToggleButton Grid.Row="1" Content="Toggled" IsChecked="True" VerticalAlignment="Center" HorizontalAlignment="Center" />
+      </Grid>
+    </Border>
+
+    <Border Classes="cell" Grid.Row="3" Grid.Column="2" Margin="4">
+      <Grid RowDefinitions="Auto,*">
+        <TextBlock Grid.Row="0" Text="TreeView" HorizontalAlignment="Center" Margin="0,4,0,2" Opacity="0.7" />
+        <TreeView Grid.Row="1" Margin="4">
+          <TreeViewItem Header="Root 1" IsExpanded="True">
+            <TreeViewItem Header="Child 1" />
+            <TreeViewItem Header="Child 2" />
+          </TreeViewItem>
+          <TreeViewItem Header="Root 2" />
+        </TreeView>
+      </Grid>
+    </Border>
+
+    <Border Classes="cell" Grid.Row="3" Grid.Column="3" Margin="4">
+      <Grid RowDefinitions="Auto,*">
+        <TextBlock Grid.Row="0" Text="Menu" HorizontalAlignment="Center" Margin="0,4,0,2" Opacity="0.7" />
+        <Menu Grid.Row="1" VerticalAlignment="Center" Margin="4">
+          <MenuItem Header="_File">
+            <MenuItem Header="New" />
+            <MenuItem Header="Open" />
+          </MenuItem>
+          <MenuItem Header="_Edit" />
+        </Menu>
+      </Grid>
+    </Border>
+
+  </Grid>
+</UserControl>

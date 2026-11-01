@@ -1,0 +1,28 @@
+<Application
+  x:Class="ThemeTest.App"
+  xmlns="https://github.com/avaloniaui"
+  xmlns:app="clr-namespace:ThemeTest"
+  xmlns:dock="clr-namespace:Meringue.AvaDock.Themes;assembly=Meringue.AvaDock"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  RequestedThemeVariant="Dark">
+
+  <Application.Styles>
+    <FluentTheme DensityStyle="Compact" />
+    <dock:AvaDockTheme />
+  </Application.Styles>
+
+  <app:App.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Light">
+          <SolidColorBrush x:Key="GalleryCellBrush" Color="#EEF1F5" />
+          <SolidColorBrush x:Key="GalleryCellBorderBrush" Color="#B0B0B0" />
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="Dark">
+          <SolidColorBrush x:Key="GalleryCellBrush" Color="#1F1F1F" />
+          <SolidColorBrush x:Key="GalleryCellBorderBrush" Color="#6E6E6E" />
+        </ResourceDictionary>
+      </ResourceDictionary.ThemeDictionaries>
+    </ResourceDictionary>
+  </app:App.Resources>
+</Application>

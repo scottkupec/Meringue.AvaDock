@@ -4,6 +4,7 @@ using System;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Meringue.AvaDock.Controls;
 
 namespace Meringue.AvaDock.Services
 {
@@ -32,7 +33,22 @@ namespace Meringue.AvaDock.Services
         public IWindow MainWindow => this.mainWindow.Value!;
 
         /// <inheritdoc/>
-        public IWindow CreateWindow() =>
-            new AvaloniaWindowAdapter(new Window());
+        public IWindow CreateWindow()
+        {
+            Window? main = GetMainWindow();
+            WorkspaceWindow window = main != null ? new WorkspaceWindow(main) : new WorkspaceWindow();
+            return new AvaloniaWindowAdapter(window);
+        }
+
+        /// <summary>
+        /// Gets the current application main window, if one is available.
+        /// </summary>
+        /// <returns>The main window instance, or null when a desktop application lifetime is not active.</returns>
+        private static Window? GetMainWindow()
+        {
+            return Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktopLifetime
+                ? desktopLifetime.MainWindow
+                : null;
+        }
     }
 }
