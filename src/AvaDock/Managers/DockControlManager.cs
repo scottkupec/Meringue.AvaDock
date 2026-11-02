@@ -30,31 +30,21 @@ namespace Meringue.AvaDock.Managers
         private DockWorkspaceManager primaryWorkspace;
 
         /// <summary>
+        /// Gets or sets the currently active <see cref="DockItemViewModel"/> across all managed workspaces.
+        /// </summary>
+        [ObservableProperty]
+        private DockItemViewModel? activeItem;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="DockControlManager"/> class.
         /// </summary>
         /// <param name="rootNode">The root <see cref="DockNodeViewModel"/> for the dock control tree.</param>
         public DockControlManager(DockWorkspaceManager rootNode)
         {
+            this.WorkspaceAttached += this.OnWorkspaceAttached;
+            this.WorkspaceDetached += this.OnWorkspaceDetached;
             this.DockMonitor = new(this.HookItem, this.UnhookItem);
-
             this.PrimaryWorkspace = rootNode;
-            this.PrimaryWorkspace.HiddenItemsChanged += this.ForwardHiddenItemsChanged;
-            this.PrimaryWorkspace.ItemsChanged += this.ForwardItemsChanged;
-            this.PrimaryWorkspace.MinimizedItemsChanged += this.ForwardMinimizedItemsChanged;
-            this.PrimaryWorkspace.ItemClosed += this.ForwardItemClosed;
-            this.PrimaryWorkspace.ItemClosing += this.ForwardItemClosing;
-            this.PrimaryWorkspace.ItemHidden += this.ForwardItemHidden;
-            this.PrimaryWorkspace.ItemHiding += this.ForwardItemHiding;
-            this.PrimaryWorkspace.ItemMinimized += this.ForwardItemMinimized;
-            this.PrimaryWorkspace.ItemMinimizing += this.ForwardItemMinimizing;
-            this.PrimaryWorkspace.ItemMoved += this.ForwardItemMoved;
-            this.PrimaryWorkspace.ItemMoving += this.ForwardItemMoving;
-            this.PrimaryWorkspace.ItemRestored += this.ForwardItemRestored;
-            this.PrimaryWorkspace.ItemRestoring += this.ForwardItemRestoring;
-            this.PrimaryWorkspace.ItemShowing += this.ForwardItemShowing;
-            this.PrimaryWorkspace.ItemShown += this.ForwardItemShown;
-
-            this.DockMonitor.Monitor(this.PrimaryWorkspace.DockTree);
         }
 
         /// <summary>
@@ -63,38 +53,24 @@ namespace Meringue.AvaDock.Managers
         /// <param name="layout">The dock layout to deserialize.</param>
         public DockControlManager(DockLayout layout)
         {
-#if NET6_0_OR_GREATER
             ArgumentNullException.ThrowIfNull(layout);
-#else
-            if (layout == null)
-            {
-                throw new ArgumentNullException(nameof(layout));
-            }
-#endif
             DockControlManager temporaryManager = DockSerializationConverter.BuildViewModel<DockItemViewModel>(layout.Data);
             DockWorkspaceManager rootNode = temporaryManager.PrimaryWorkspace;
-
+            this.WorkspaceAttached += this.OnWorkspaceAttached;
+            this.WorkspaceDetached += this.OnWorkspaceDetached;
             this.DockMonitor = new(this.HookItem, this.UnhookItem);
-
             this.PrimaryWorkspace = rootNode;
-            this.PrimaryWorkspace.HiddenItemsChanged += this.ForwardHiddenItemsChanged;
-            this.PrimaryWorkspace.ItemsChanged += this.ForwardItemsChanged;
-            this.PrimaryWorkspace.MinimizedItemsChanged += this.ForwardMinimizedItemsChanged;
-            this.PrimaryWorkspace.ItemClosed += this.ForwardItemClosed;
-            this.PrimaryWorkspace.ItemClosing += this.ForwardItemClosing;
-            this.PrimaryWorkspace.ItemHidden += this.ForwardItemHidden;
-            this.PrimaryWorkspace.ItemHiding += this.ForwardItemHiding;
-            this.PrimaryWorkspace.ItemMinimized += this.ForwardItemMinimized;
-            this.PrimaryWorkspace.ItemMinimizing += this.ForwardItemMinimizing;
-            this.PrimaryWorkspace.ItemMoved += this.ForwardItemMoved;
-            this.PrimaryWorkspace.ItemMoving += this.ForwardItemMoving;
-            this.PrimaryWorkspace.ItemRestored += this.ForwardItemRestored;
-            this.PrimaryWorkspace.ItemRestoring += this.ForwardItemRestoring;
-            this.PrimaryWorkspace.ItemShowing += this.ForwardItemShowing;
-            this.PrimaryWorkspace.ItemShown += this.ForwardItemShown;
-
-            this.DockMonitor.Monitor(this.PrimaryWorkspace.DockTree);
         }
+
+        /// <summary>
+        /// Occurs when a <see cref="DockItemViewModel"/> has been made active.
+        /// </summary>
+        public event EventHandler<DockItemActivatedEventArgs>? ItemActivated;
+
+        /// <summary>
+        /// Occurs when a <see cref="DockItemViewModel"/> is being made active
+        /// </summary>
+        public event EventHandler<DockItemActivatingEventArgs>? ItemActivating;
 
         /// <summary>
         /// Occurs when a <see cref="DockItemViewModel"/> has been closed.
@@ -341,7 +317,7 @@ namespace Meringue.AvaDock.Managers
         /// <returns>The added <see cref="DockItemViewModel"/> if successful; otherwise <c>null</c>.</returns>
         public DockItemViewModel? AddItem(DockItemViewModel item, String? preferredTabPanelId = null)
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(item);
+            ArgumentNullException.ThrowIfNull(item);
 
             if (preferredTabPanelId is not null)
             {
@@ -363,7 +339,7 @@ namespace Meringue.AvaDock.Managers
         [EditorBrowsable(EditorBrowsableState.Advanced)]
         public IWindow? AttachSecondaryWorkspace(DockWorkspaceManager workspace, PixelPoint? location, Size size)
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(workspace);
+            ArgumentNullException.ThrowIfNull(workspace);
             DockWorkspaceAttachingEventArgs attachingEventArgs = new(workspace);
             this.OnWorkspaceAttaching(attachingEventArgs);
 
@@ -399,21 +375,7 @@ namespace Meringue.AvaDock.Managers
                                 // usable to get back to the IWindow so we have to explicitly remove the window from the
                                 // manager as well.
                                 this.WindowManager.RemoveWindow(child);
-                                workspace.HiddenItemsChanged -= this.ForwardHiddenItemsChanged;
-                                workspace.ItemsChanged -= this.ForwardItemsChanged;
-                                workspace.ItemClosed -= this.ForwardItemClosed;
-                                workspace.ItemClosing -= this.ForwardItemClosing;
-                                workspace.ItemHidden -= this.ForwardItemHidden;
-                                workspace.ItemHiding -= this.ForwardItemHiding;
-                                workspace.ItemMinimized -= this.ForwardItemMinimized;
-                                workspace.ItemMinimizing -= this.ForwardItemMinimizing;
-                                workspace.ItemMoved -= this.ForwardItemMoved;
-                                workspace.ItemMoving -= this.ForwardItemMoving;
-                                workspace.ItemRestored -= this.ForwardItemRestored;
-                                workspace.ItemRestoring -= this.ForwardItemRestoring;
-                                workspace.ItemShowing -= this.ForwardItemShowing;
-                                workspace.ItemShown -= this.ForwardItemShown;
-                                workspace.MinimizedItemsChanged -= this.ForwardMinimizedItemsChanged;
+                                this.UnhookWorkspace(workspace);
                             }
                         });
                 };
@@ -427,24 +389,8 @@ namespace Meringue.AvaDock.Managers
 
                 child.Closed += (sender, eventArgs) => this.OnWorkspaceDetached(new DockWorkspaceDetachedEventArgs(workspace));
 
-                workspace.HiddenItemsChanged += this.ForwardHiddenItemsChanged;
-                workspace.ItemsChanged += this.ForwardItemsChanged;
-                workspace.ItemClosed += this.ForwardItemClosed;
-                workspace.ItemClosing += this.ForwardItemClosing;
-                workspace.ItemHidden += this.ForwardItemHidden;
-                workspace.ItemHiding += this.ForwardItemHiding;
-                workspace.ItemMinimized += this.ForwardItemMinimized;
-                workspace.ItemMinimizing += this.ForwardItemMinimizing;
-                workspace.ItemMoved += this.ForwardItemMoved;
-                workspace.ItemMoving += this.ForwardItemMoving;
-                workspace.ItemRestored += this.ForwardItemRestored;
-                workspace.ItemRestoring += this.ForwardItemRestoring;
-                workspace.ItemShowing += this.ForwardItemShowing;
-                workspace.ItemShown += this.ForwardItemShown;
-                workspace.MinimizedItemsChanged += this.ForwardMinimizedItemsChanged;
-
-                this.DockMonitor.Monitor(workspace.DockTree);
-                this.OnWorkspaceAttached(new DockWorkspaceAttachedEventArgs(workspace));
+                this.HookWorkspace(workspace);
+                ////this.OnWorkspaceAttached(new DockWorkspaceAttachedEventArgs(workspace));
                 return child;
             }
             else
@@ -538,7 +484,7 @@ namespace Meringue.AvaDock.Managers
         [EditorBrowsable(EditorBrowsableState.Advanced)]
         public void RemoveFloatingWorkspace(DockWorkspaceManager workspace)
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(workspace);
+            ArgumentNullException.ThrowIfNull(workspace);
 
             IWindow? child = this.WindowManager?
                 .Windows
@@ -844,6 +790,20 @@ namespace Meringue.AvaDock.Managers
         }
 
         /// <summary>
+        /// Forwards <see cref="DockItemActivatedEventArgs"/> events from all workspaces to event subscribers.
+        /// </summary>
+        /// <param name="sender">The <see cref="Object"/> that raised the event.</param>
+        /// <param name="eventArgs">The event arguments containing additional information about the event request.</param>
+        private void ForwardItemActivated(Object? sender, DockItemActivatedEventArgs eventArgs) => this.ItemActivated?.Invoke(sender, eventArgs);
+
+        /// <summary>
+        /// Forwards <see cref="DockItemActivatingEventArgs"/> events from all workspaces to event subscribers.
+        /// </summary>
+        /// <param name="sender">The <see cref="Object"/> that raised the event.</param>
+        /// <param name="eventArgs">The event arguments containing additional information about the event request.</param>
+        private void ForwardItemActivating(Object? sender, DockItemActivatingEventArgs eventArgs) => this.ItemActivating?.Invoke(sender, eventArgs);
+
+        /// <summary>
         /// Forwards <see cref="DockItemClosedEventArgs"/> events from all workspaces to event subscribers.
         /// </summary>
         /// <param name="sender">The <see cref="Object"/> that raised the event.</param>
@@ -962,20 +922,151 @@ namespace Meringue.AvaDock.Managers
         /// Handles hooking a single <see cref="DockItemViewModel"/> so the current <see cref="DockControlManager"/>
         /// will be notified of changes it needs to update state based on.
         /// </summary>
-        /// <param name="item">The <see cref="DockItemViewModel"/> to proces.</param>
+        /// <param name="item">The <see cref="DockItemViewModel"/> to process.</param>
         private void HookItem(DockItemViewModel item)
         {
             item.FloatRequested += this.HandleItemFloatRequested;
         }
 
         /// <summary>
-        /// Handles removing all handlers for a <see cref="DockItemViewModel"/> so the current <see cref="DockWorkspaceManager"/>
+        /// Handles hooking a single <see cref="DockWorkspaceManager"/> so the current <see cref="DockControlManager"/>
+        /// will be notified of changes it needs to update state based on.
+        /// </summary>
+        /// <param name="workspace">The <see cref="DockWorkspaceManager"/> to process.</param>
+        private void HookWorkspace(DockWorkspaceManager workspace)
+        {
+            workspace.HiddenItemsChanged += this.ForwardHiddenItemsChanged;
+            workspace.ItemsChanged += this.ForwardItemsChanged;
+            workspace.MinimizedItemsChanged += this.ForwardMinimizedItemsChanged;
+            workspace.PropertyChanged += this.OnWorkspaceActiveItemChanged;
+
+            workspace.ItemActivated += this.ForwardItemActivated;
+            workspace.ItemActivating += this.ForwardItemActivating;
+            workspace.ItemClosed += this.ForwardItemClosed;
+            workspace.ItemClosing += this.ForwardItemClosing;
+            workspace.ItemHidden += this.ForwardItemHidden;
+            workspace.ItemHiding += this.ForwardItemHiding;
+            workspace.ItemMinimized += this.ForwardItemMinimized;
+            workspace.ItemMinimizing += this.ForwardItemMinimizing;
+            workspace.ItemMoved += this.ForwardItemMoved;
+            workspace.ItemMoving += this.ForwardItemMoving;
+            workspace.ItemRestored += this.ForwardItemRestored;
+            workspace.ItemRestoring += this.ForwardItemRestoring;
+            workspace.ItemShowing += this.ForwardItemShowing;
+            workspace.ItemShown += this.ForwardItemShown;
+
+            this.DockMonitor.Monitor(workspace.DockTree);
+        }
+
+        /// <summary>
+        /// Handles changes to the active item on a workspace to update the manager's active item.
+        /// </summary>
+        /// <param name="sender">The <see cref="DockWorkspaceManager"/> that raised the event.</param>
+        /// <param name="eventArgs">The <see cref="PropertyChangedEventArgs"/> for the event.</param>
+        private void OnWorkspaceActiveItemChanged(Object? sender, PropertyChangedEventArgs eventArgs)
+        {
+            if (eventArgs.PropertyName == nameof(DockWorkspaceManager.ActiveItem) && sender is DockWorkspaceManager workspace)
+            {
+                if (workspace.ActiveItem is not null)
+                {
+                    if (this.ActiveItem is not null)
+                    {
+                        DockWorkspaceManager? oldWorkspace = DockContext.GetWorkspace(this.ActiveItem);
+
+                        if (oldWorkspace is not null && oldWorkspace != workspace)
+                        {
+                            oldWorkspace.ActiveItem = null;
+                        }
+                    }
+
+                    this.ActiveItem = workspace.ActiveItem;
+                }
+                else
+                {
+                    // Workspace cleared its active item – only clear manager if it was from this workspace
+                    if (this.ActiveItem is DockItemViewModel item && DockContext.GetWorkspace(item) == workspace)
+                    {
+                        this.ActiveItem = null;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Handles workspace attachment to subscribe to active item changes.
+        /// </summary>
+        /// <param name="sender">The sender of the event.</param>
+        /// <param name="eventArgs">The <see cref="DockWorkspaceAttachedEventArgs"/> for the event.</param>
+        private void OnWorkspaceAttached(Object? sender, DockWorkspaceAttachedEventArgs eventArgs)
+        {
+            this.ActiveItem = eventArgs.Workspace.ActiveItem;
+        }
+
+        /// <summary>
+        /// Handles workspace detachment to unsubscribe from active item changes.
+        /// </summary>
+        /// <param name="sender">The sender of the event.</param>
+        /// <param name="eventArgs">The <see cref="DockWorkspaceDetachedEventArgs"/> for the event.</param>
+        private void OnWorkspaceDetached(Object? sender, DockWorkspaceDetachedEventArgs eventArgs)
+        {
+            eventArgs.Workspace.PropertyChanged -= this.OnWorkspaceActiveItemChanged;
+        }
+
+        /// <summary>
+        /// Handles removing all handlers for a <see cref="DockItemViewModel"/> so the current <see cref="DockControlManager"/>
         /// will no longer be notified of changes.
         /// </summary>
         /// <param name="item">The <see cref="DockItemViewModel"/> to process.</param>
         private void UnhookItem(DockItemViewModel item)
         {
             item.FloatRequested -= this.HandleItemFloatRequested;
+        }
+
+        /// <summary>
+        /// Handles removing all handlers for a <see cref="DockWorkspaceManager"/> so the current <see cref="DockControlManager"/>
+        /// will no longer be notified of changes.
+        /// </summary>
+        /// <param name="workspace">The <see cref="DockWorkspaceManager"/> to process.</param>
+        private void UnhookWorkspace(DockWorkspaceManager workspace)
+        {
+            workspace.HiddenItemsChanged -= this.ForwardHiddenItemsChanged;
+            workspace.ItemsChanged -= this.ForwardItemsChanged;
+            workspace.MinimizedItemsChanged -= this.ForwardMinimizedItemsChanged;
+            workspace.PropertyChanged -= this.OnWorkspaceActiveItemChanged;
+
+            workspace.ItemActivated -= this.ForwardItemActivated;
+            workspace.ItemActivating -= this.ForwardItemActivating;
+            workspace.ItemClosed -= this.ForwardItemClosed;
+            workspace.ItemClosing -= this.ForwardItemClosing;
+            workspace.ItemHidden -= this.ForwardItemHidden;
+            workspace.ItemHiding -= this.ForwardItemHiding;
+            workspace.ItemMinimized -= this.ForwardItemMinimized;
+            workspace.ItemMinimizing -= this.ForwardItemMinimizing;
+            workspace.ItemMoved -= this.ForwardItemMoved;
+            workspace.ItemMoving -= this.ForwardItemMoving;
+            workspace.ItemRestored -= this.ForwardItemRestored;
+            workspace.ItemRestoring -= this.ForwardItemRestoring;
+            workspace.ItemShowing -= this.ForwardItemShowing;
+            workspace.ItemShown -= this.ForwardItemShown;
+
+            this.DockMonitor.Unmonitor(workspace.DockTree);
+        }
+
+        /// <inheritdoc/>
+        partial void OnPrimaryWorkspaceChanged(DockWorkspaceManager? oldValue, DockWorkspaceManager newValue)
+        {
+            if (oldValue is not null)
+            {
+                this.OnWorkspaceDetached(new DockWorkspaceDetachedEventArgs(oldValue));
+                this.UnhookWorkspace(oldValue);
+            }
+
+            if (newValue is not null)
+            {
+                this.OnWorkspaceAttached(new DockWorkspaceAttachedEventArgs(newValue));
+                this.HookWorkspace(newValue);
+                this.ActiveItem = newValue.ActiveItem;
+            }
         }
     }
 }

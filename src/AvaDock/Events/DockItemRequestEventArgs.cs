@@ -18,7 +18,7 @@ namespace Meringue.AvaDock.Events
         /// <param name="item">The <see cref="DockItemViewModel"/> that is requesting the action.</param>
         public DockItemRequestEventArgs(DockItemViewModel item)
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(item);
+            ArgumentNullException.ThrowIfNull(item);
             this.Item = item;
         }
 

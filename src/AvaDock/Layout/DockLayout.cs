@@ -88,8 +88,8 @@ namespace Meringue.AvaDock.Layout
         /// <returns>A new <see cref="DockTabNodeData"/> instance.</returns>
         public static DockTabNodeData Tab(String id, params DockItemData[] items)
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(id, nameof(id));
-            TargetFrameworkHelper.ThrowIfArgumentNull(items, nameof(items));
+            ArgumentNullException.ThrowIfNull(id, nameof(id));
+            ArgumentNullException.ThrowIfNull(items, nameof(items));
 
             return new DockTabNodeData
             {
@@ -136,7 +136,7 @@ namespace Meringue.AvaDock.Layout
         public Boolean Merge<T>(DockControlManager target, Boolean preserveContexts = true)
             where T : DockItemViewModel, new()
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(target, nameof(target));
+            ArgumentNullException.ThrowIfNull(target, nameof(target));
 
             if (this.Data is null)
             {
@@ -210,7 +210,7 @@ namespace Meringue.AvaDock.Layout
         /// <returns>A new <see cref="DockSplitNodeData"/> instance.</returns>
         private static DockSplitNodeData Split(Orientation orientation, params DockNodeData[] children)
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(children, nameof(children));
+            ArgumentNullException.ThrowIfNull(children, nameof(children));
             return new DockSplitNodeData
             {
                 Orientation = orientation,

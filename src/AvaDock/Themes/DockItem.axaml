@@ -5,15 +5,16 @@
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
   <Style Selector=":is(controls|DockItem)">
+    <Setter Property="Focusable" Value="True" />
     <Setter Property="Template">
       <ControlTemplate x:DataType="viewModels:DockItemViewModel">
         <Grid>
-          <Border BorderBrush="{DynamicResource AvaDockAccentColor}"
+          <Border x:Name="PART_Border"
+                  BorderBrush="{DynamicResource AvaDockAccentColor}"
                   BorderThickness="1"
                   CornerRadius="1"
                   Margin="1">
-            <DockPanel>
-
+            <DockPanel Background="Transparent">
               <Border x:Name="PART_TitleBar"
                       Background="{DynamicResource AvaDockAccentColor}"
                       DockPanel.Dock="Top"

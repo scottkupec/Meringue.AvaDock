@@ -18,7 +18,7 @@ namespace Meringue.AvaDock.Events
         /// <param name="workspace">The <see cref="DockWorkspaceManager"/> associated with the event.</param>
         public DockWorkspaceDoneEventArgs(DockWorkspaceManager workspace)
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(workspace);
+            ArgumentNullException.ThrowIfNull(workspace);
             this.Workspace = workspace;
         }
 

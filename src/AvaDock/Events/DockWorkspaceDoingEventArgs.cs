@@ -1,5 +1,6 @@
 // Copyright (C) Scott Kupec. All rights reserved.
 
+using System;
 using System.ComponentModel;
 using Meringue.AvaDock.Managers;
 
@@ -17,7 +18,7 @@ namespace Meringue.AvaDock.Events
         /// <param name="workspace">The <see cref="DockWorkspaceManager"/> associated with the event.</param>
         public DockWorkspaceDoingEventArgs(DockWorkspaceManager workspace)
         {
-            TargetFrameworkHelper.ThrowIfArgumentNull(workspace);
+            ArgumentNullException.ThrowIfNull(workspace);
             this.Workspace = workspace;
         }
 

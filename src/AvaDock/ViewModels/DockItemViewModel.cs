@@ -21,6 +21,46 @@ namespace Meringue.AvaDock.ViewModels
     public partial class DockItemViewModel : ObservableObject
     {
         /// <summary>
+        /// Gets the close command.
+        /// </summary>
+        private readonly RelayCommand closeCommand;
+
+        /// <summary>
+        /// Gets the float command.
+        /// </summary>
+        private readonly RelayCommand floatCommand;
+
+        /// <summary>
+        /// Gets the hide command.
+        /// </summary>
+        private readonly RelayCommand hideCommand;
+
+        /// <summary>
+        /// Gets the make active command.
+        /// </summary>
+        private readonly RelayCommand makeActiveCommand;
+
+        /// <summary>
+        /// Gets the maximize command.
+        /// </summary>
+        private readonly RelayCommand maximizeCommand;
+
+        /// <summary>
+        /// Gets the minimize command.
+        /// </summary>
+        private readonly RelayCommand minimizeCommand;
+
+        /// <summary>
+        /// Gets the restore command.
+        /// </summary>
+        private readonly RelayCommand restoreCommand;
+
+        /// <summary>
+        /// Gets the show command.
+        /// </summary>
+        private readonly RelayCommand showCommand;
+
+        /// <summary>
         /// Gets or sets the context of the item.
         /// </summary>
         /// <remarks>
@@ -40,6 +80,51 @@ namespace Meringue.AvaDock.ViewModels
         private String title = "[Untitled]";
 
         /// <summary>
+        /// Gets or sets a value indicating whether the item is currently active.
+        /// </summary>
+        [ObservableProperty]
+        private Boolean active;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the item blocks being closed.
+        /// </summary>
+        [ObservableProperty]
+        private Boolean disableClose;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the item blocks being hidden.
+        /// </summary>
+        [ObservableProperty]
+        private Boolean disableHide;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the item blocks being maximized.
+        /// </summary>
+        [ObservableProperty]
+        private Boolean disableMaximize;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the item blocks being minimized.
+        /// </summary>
+        [ObservableProperty]
+        private Boolean disableMinimize;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DockItemViewModel"/> class.
+        /// </summary>
+        public DockItemViewModel()
+        {
+            this.closeCommand = new RelayCommand(this.CloseItem, () => !this.DisableClose);
+            this.floatCommand = new RelayCommand(this.FloatItem);
+            this.hideCommand = new RelayCommand(this.HideItem, () => !this.DisableHide);
+            this.makeActiveCommand = new RelayCommand(this.MakeActive);
+            this.maximizeCommand = new RelayCommand(this.MaximizeItem, () => !this.DisableMaximize);
+            this.minimizeCommand = new RelayCommand(this.MinimizeItem, () => !this.DisableMinimize);
+            this.restoreCommand = new RelayCommand(this.RestoreItem);
+            this.showCommand = new RelayCommand(this.ShowItem);
+        }
+
+        /// <summary>
         /// Occurs when a request is made to close this item.
         /// </summary>
         public event EventHandler<DockItemCloseRequestedEventArgs>? CloseRequested;
@@ -53,6 +138,11 @@ namespace Meringue.AvaDock.ViewModels
         /// Occurs when a request is made to hide this item.
         /// </summary>
         public event EventHandler<DockItemHideRequestedEventArgs>? HideRequested;
+
+        /// <summary>
+        /// Occurs when a request is made to make this item the active item.
+        /// </summary>
+        public event EventHandler<DockItemActivateRequestedEventArgs>? MakeActiveRequested;
 
         /// <summary>
         /// Occurs when a request is made to maximize this item.
@@ -86,32 +176,7 @@ namespace Meringue.AvaDock.ViewModels
         /// UI-only binding surface. Use the <see cref="CloseRequested"/> event for programmatic requests.
         /// </remarks>
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public ICommand CloseCommand => new RelayCommand(this.CloseItem, () => !this.DisableClose);
-
-        /// <summary>
-        /// Gets or sets a value indicating whether the item blocks being clsoed.
-        /// </summary>
-        public Boolean DisableClose { get; set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether the item blocks being hidden.
-        /// </summary>
-        public Boolean DisableHide { get; set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether the item blocks being maximized.
-        /// </summary>
-        /// <remarks>
-        /// Currently not implemented. This is a placeholder so consumers can proactively
-        /// set it if they don't want the ability to be maximized to be enabled automatically
-        /// once the feature is complete.
-        /// </remarks>
-        public Boolean DisableMaximize { get; set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether the item blocks being minimized.
-        /// </summary>
-        public Boolean DisableMinimize { get; set; }
+        public ICommand CloseCommand => this.closeCommand;
 
         /// <summary>
         /// Gets the command that requests the item be floated.
@@ -120,7 +185,7 @@ namespace Meringue.AvaDock.ViewModels
         /// UI-only binding surface. Programmatic use should prefer <see cref="RequestFloat"/>.
         /// </remarks>
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public ICommand FloatCommand => new RelayCommand(this.FloatItem);
+        public ICommand FloatCommand => this.floatCommand;
 
         /// <summary>
         /// Gets the command that requests the item be hidden.
@@ -129,12 +194,21 @@ namespace Meringue.AvaDock.ViewModels
         /// UI-only binding surface. Use the <see cref="HideRequested"/> event for programmatic requests.
         /// </remarks>
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public ICommand HideCommand => new RelayCommand(this.HideItem, () => !this.DisableHide);
+        public ICommand HideCommand => this.hideCommand;
 
         /// <summary>
         /// Gets or sets the id of the item.
         /// </summary>
         public String Id { get; set; } = Guid.NewGuid().ToString("N");
+
+        /// <summary>
+        /// Gets the command that requests the item be makde the active item.
+        /// </summary>
+        /// <remarks>
+        /// UI-only binding surface. Use the <see cref="MakeActiveRequested"/> event for programmatic requests.
+        /// </remarks>
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public ICommand MakeActiveCommand => this.makeActiveCommand;
 
         /// <summary>
         /// Gets the command that requests the item be maximized.
@@ -143,7 +217,7 @@ namespace Meringue.AvaDock.ViewModels
         /// UI-only binding surface. Use the <see cref="MaximizeRequested"/> event for programmatic requests.
         /// </remarks>
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public ICommand MaximizeCommand => new RelayCommand(this.MaximizeItem, () => !this.DisableMaximize);
+        public ICommand MaximizeCommand => this.maximizeCommand;
 
         /// <summary>
         /// Gets the command that requests the item be minimized.
@@ -152,7 +226,7 @@ namespace Meringue.AvaDock.ViewModels
         /// UI-only binding surface. Use the <see cref="MinimizeRequested"/> event for programmatic requests.
         /// </remarks>
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public ICommand MinimizeCommand => new RelayCommand(this.MinimizeItem, () => !this.DisableMinimize);
+        public ICommand MinimizeCommand => this.minimizeCommand;
 
         /// <summary>
         /// Gets the command that requests the item be restored from the minimized state.
@@ -161,7 +235,7 @@ namespace Meringue.AvaDock.ViewModels
         /// UI-only binding surface. Use the <see cref="RestoreRequested"/> event for programmatic requests.
         /// </remarks>
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public ICommand RestoreCommand => new RelayCommand(this.RestoreItem);
+        public ICommand RestoreCommand => this.restoreCommand;
 
         /// <summary>
         /// Gets the command that requests the item be shown.
@@ -170,7 +244,7 @@ namespace Meringue.AvaDock.ViewModels
         /// UI-only binding surface. Use the <see cref="ShowRequested"/> event for programmatic requests.
         /// </remarks>
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public ICommand ShowCommand => new RelayCommand(this.ShowItem);
+        public ICommand ShowCommand => this.showCommand;
 
         /// <summary>
         /// Gets a property dictionary usable for implementation specific purposes.
@@ -247,6 +321,15 @@ namespace Meringue.AvaDock.ViewModels
         }
 
         /// <summary>
+        /// Invokes the <see cref="MakeActiveRequested"/> event.
+        /// </summary>
+        private void MakeActive()
+        {
+            DockItemActivateRequestedEventArgs args = new(this);
+            this.MakeActiveRequested?.Invoke(this, args);
+        }
+
+        /// <summary>
         /// Invokes the <see cref="MaximizeRequested"/> event if <see cref="DisableMaximize"/> is <c>false</c>.
         /// </summary>
         private void MaximizeItem()
@@ -286,6 +369,54 @@ namespace Meringue.AvaDock.ViewModels
         {
             DockItemShowRequestedEventArgs args = new(this);
             this.ShowRequested?.Invoke(this, args);
+        }
+
+        /// <inheritdoc/>
+        partial void OnDisableCloseChanged(bool value)
+        {
+            closeCommand.NotifyCanExecuteChanged();
+        }
+
+        /// <inheritdoc/>
+        partial void OnDisableCloseChanged(bool oldValue, bool newValue)
+        {
+            closeCommand.NotifyCanExecuteChanged();
+        }
+
+        /// <inheritdoc/>
+        partial void OnDisableHideChanged(bool value)
+        {
+            hideCommand.NotifyCanExecuteChanged();
+        }
+
+        /// <inheritdoc/>
+        partial void OnDisableHideChanged(bool oldValue, bool newValue)
+        {
+            hideCommand.NotifyCanExecuteChanged();
+        }
+
+        /// <inheritdoc/>
+        partial void OnDisableMaximizeChanged(bool value)
+        {
+            maximizeCommand.NotifyCanExecuteChanged();
+        }
+
+        /// <inheritdoc/>
+        partial void OnDisableMaximizeChanged(bool oldValue, bool newValue)
+        {
+            maximizeCommand.NotifyCanExecuteChanged();
+        }
+
+        /// <inheritdoc/>
+        partial void OnDisableMinimizeChanged(bool value)
+        {
+            minimizeCommand.NotifyCanExecuteChanged();
+        }
+
+        /// <inheritdoc/>
+        partial void OnDisableMinimizeChanged(bool oldValue, bool newValue)
+        {
+            minimizeCommand.NotifyCanExecuteChanged();
         }
     }
 }
