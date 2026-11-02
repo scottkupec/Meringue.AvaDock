@@ -5,12 +5,16 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TestApps", "TestApps", "{6C65F3FD-F8F5-40F8-AC2F-C48B82CF7307}"
+EndProject
 # HelloLayout as the first project to F5 in Visual Studio will run something
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HelloLayout", "Samples\HelloLayout\HelloLayout.csproj", "{1384931E-A4A0-40DE-A84B-A3C7C70A03BB}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HelloDock", "Samples\HelloDock\HelloDock.csproj", "{4D1E500E-73EF-4C22-91F6-509A8719F904}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LayoutMonitor", "Samples\LayoutMonitor\LayoutMonitor.csproj", "{5B55958F-BC66-4D1A-B174-BFC010216862}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThemeTest", "TestApps\ThemeTest\ThemeTest.csproj", "{91F0DB21-1CAA-4B31-849E-C9D8AC165902}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Meringue.AvaDock", "AvaDock\Meringue.AvaDock.csproj", "{F146FA35-9096-42FC-A0B4-EDE3A6D3CB3C}"
 EndProject
@@ -42,6 +46,10 @@ Global
 		{5B55958F-BC66-4D1A-B174-BFC010216862}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5B55958F-BC66-4D1A-B174-BFC010216862}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5B55958F-BC66-4D1A-B174-BFC010216862}.Release|Any CPU.Build.0 = Release|Any CPU
+		{91F0DB21-1CAA-4B31-849E-C9D8AC165902}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{91F0DB21-1CAA-4B31-849E-C9D8AC165902}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{91F0DB21-1CAA-4B31-849E-C9D8AC165902}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{91F0DB21-1CAA-4B31-849E-C9D8AC165902}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -50,6 +58,7 @@ Global
 		{4D1E500E-73EF-4C22-91F6-509A8719F904} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{1384931E-A4A0-40DE-A84B-A3C7C70A03BB} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{5B55958F-BC66-4D1A-B174-BFC010216862} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{91F0DB21-1CAA-4B31-849E-C9D8AC165902} = {6C65F3FD-F8F5-40F8-AC2F-C48B82CF7307}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {7C20B2E2-27BE-4D5C-8B4C-82D39F7E5EFE}

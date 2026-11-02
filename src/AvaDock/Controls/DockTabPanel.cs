@@ -1,4 +1,4 @@
-﻿// Copyright (C) Scott Kupec. All rights reserved.
+// Copyright (C) Scott Kupec. All rights reserved.
 
 using System;
 using System.Collections.Specialized;
