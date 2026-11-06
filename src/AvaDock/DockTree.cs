@@ -196,7 +196,7 @@ namespace Meringue.AvaDock
                 _ = workspace.AddItem(minimizedItem);
             }
 
-            foreach (DockItemViewModel hiddenItem in minimized ?? [])
+            foreach (DockItemViewModel hiddenItem in hidden ?? [])
             {
                 DockContext.SetItemState(hiddenItem, DockItemState.Hidden);
                 _ = workspace.AddItem(hiddenItem);
