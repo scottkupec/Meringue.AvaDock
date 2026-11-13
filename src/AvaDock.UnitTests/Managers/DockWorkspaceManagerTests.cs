@@ -1,6 +1,7 @@
 ﻿// Copyright (C) Scott Kupec. All rights reserved.
 
 using System;
+using System.Collections.Specialized;
 using System.Linq;
 using Avalonia;
 using Avalonia.Headless.XUnit;
@@ -298,6 +299,22 @@ namespace Meringue.AvaDock.Managers.UnitTests
 
             manager.DockTree.FindAncestorTabNode(item.Id)
                 .ShouldBeNull($"Item should no longer be in {nameof(DockWorkspaceManager.HiddenItems)} after minimization.");
+        }
+
+        [Fact]
+        public void HideItem_ForMinimizedItem_PreservesMinimizedState()
+        {
+            DockItemViewModel item = new() { Title = "Minimizable" };
+            DockWorkspaceManager workspace = new(DockTree.Horizontal(DockTree.Tab("anytab")));
+            _ = workspace.AddItem(item);
+
+            item.MinimizeCommand.Execute(null);
+            item.HideCommand.Execute(null);
+
+            workspace.MinimizedItems.ShouldNotContain(item, "Item should be removed from MinimizedItems after being hidden.");
+            workspace.HiddenItems.ShouldContain(item, "Item should be in HiddenItems after being hidden.");
+            DockContext.GetItemState(item)
+                .ShouldBe(DockItemState.Minimized | DockItemState.Hidden, "State should combine Minimized and Hidden after a minimized item is hidden.");
         }
 
         [Fact]
@@ -817,6 +834,25 @@ namespace Meringue.AvaDock.Managers.UnitTests
         }
 
         [Fact]
+        public void RestoreItem_RaisesItemRestoredAndClearsState()
+        {
+            DockItemViewModel item = new() { Title = "Minimizable" };
+            DockWorkspaceManager workspace = new(DockTree.Horizontal(DockTree.Tab("anytab")));
+            _ = workspace.AddItem(item);
+
+            item.MinimizeCommand.Execute(null);
+
+            Boolean restoredRaised = false;
+            workspace.ItemRestored += (_, _) => restoredRaised = true;
+
+            item.RestoreCommand.Execute(null);
+
+            workspace.MinimizedItems.ShouldNotContain(item, "Item should be removed from MinimizedItems after restore.");
+            DockContext.GetItemState(item).ShouldBe(DockItemState.Normal, "State should be Normal after restoring a minimized item.");
+            restoredRaised.ShouldBeTrue("ItemRestored should be raised after a successful restore.");
+        }
+
+        [Fact]
         public void RestoreItem_ShouldClearPanelId()
         {
             DockItemViewModel item = new() { Title = "Restorable Item" };
@@ -856,6 +892,46 @@ namespace Meringue.AvaDock.Managers.UnitTests
 
             manager.ShouldShowMinimizedItems
                 .ShouldBeFalse($"{nameof(DockWorkspaceManager.ShouldShowMinimizedItems)} should be false after restoring the only minimized item.");
+        }
+
+        [Fact]
+        public void ShowItem_ForMinimizedHiddenItem_RestoresToMinimizedBar()
+        {
+            DockItemViewModel item = new() { Title = "Minimizable" };
+            DockWorkspaceManager workspace = new(DockTree.Horizontal(DockTree.Tab("anytab")));
+            _ = workspace.AddItem(item);
+
+            item.MinimizeCommand.Execute(null);
+            item.HideCommand.Execute(null);
+
+            workspace.HiddenItems
+                .ShouldContain(item, "Sanity: Item should be in HiddenItems before ShowCommand is executed.");
+
+            Boolean minAddRaised = false;
+            workspace.MinimizedItemsChanged += (_, args) =>
+            {
+                if (args.Action is NotifyCollectionChangedAction.Add && args.NewItems?.Contains(item) == true)
+                {
+                    minAddRaised = true;
+                }
+            };
+
+            item.ShowCommand.Execute(null);
+
+            workspace.HiddenItems
+                .ShouldNotContain(item, "Item should be removed from HiddenItems after ShowCommand is executed.");
+
+            workspace.MinimizedItems
+                .ShouldContain(item, "Item should be restored to the minimized bar rather than a tab after ShowCommand is executed.");
+
+            workspace.DockTree.FindAncestorTabNode(item.Id)
+                .ShouldBeNull("Item should not be restored to a tab when it was hidden while minimized.");
+
+            DockContext.GetItemState(item)
+                .ShouldBe(DockItemState.Minimized, "State should be Minimized after a hidden minimized item is shown.");
+
+            minAddRaised
+                .ShouldBeTrue("MinimizedItemsChanged should raise an Add for an item restored to the minimized bar.");
         }
 
         [Fact]

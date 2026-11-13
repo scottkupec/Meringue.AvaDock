@@ -162,7 +162,7 @@ namespace Meringue.AvaDock.Layout
                 }
                 else
                 {
-                    DockContext.SetItemState(runtimeItem, DockItemState.Hidden);
+                    DockContext.AddItemState(runtimeItem, DockItemState.Hidden);
                     _ = built.AddItem(runtimeItem);
                 }
             }

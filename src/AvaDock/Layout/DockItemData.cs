@@ -52,5 +52,16 @@ namespace Meringue.AvaDock.Layout
         /// Gets or sets a <see cref="DockItemViewModel.Tags"/> entry used by <see cref="DockWorkspaceManager"/>.
         /// </summary>
         public String? Panel { get; set; }
+
+        /// <summary>
+        /// Gets or sets the <see cref="DockItemState"/> of the item.
+        /// </summary>
+        /// <remarks>
+        /// Serialized as the state flag names (e.g. <c>"Minimized"</c>, <c>"Minimized|Hidden"</c>)
+        /// and omitted entirely for the default (<see cref="DockItemState.Normal"/>) state.
+        /// </remarks>
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public DockItemState State { get; set; }
     }
 }

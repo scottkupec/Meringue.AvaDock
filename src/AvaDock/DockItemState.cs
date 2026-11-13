@@ -1,5 +1,6 @@
 ﻿// Copyright (C) Scott Kupec. All rights reserved.
 
+using System;
 using Meringue.AvaDock.ViewModels;
 
 namespace Meringue.AvaDock
@@ -7,6 +8,12 @@ namespace Meringue.AvaDock
     /// <summary>
     /// Stores the display state of the control associated with a <see cref="DockItemViewModel"/>.
     /// </summary>
+    /// <remarks>
+    /// This is a flags enum so the <see cref="Hidden"/> state can be combined with the
+    /// <see cref="Minimized"/> state. Hidden and minimized are independent: an item can be
+    /// hidden while minimized, and shown later into the minimized bar rather than a tab.
+    /// </remarks>
+    [Flags]
     public enum DockItemState
     {
         /// <summary>
@@ -28,6 +35,6 @@ namespace Meringue.AvaDock
         /// <summary>
         /// The <see cref="DockItemViewModel"/> is currently hidden.
         /// </summary>
-        Hidden = 3,
+        Hidden = 4,
     }
 }

@@ -527,7 +527,7 @@ namespace Meringue.AvaDock.Managers
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Refactor in progress.")]
         internal void AddHiddenItem(DockItemViewModel item)
         {
-            DockContext.SetItemState(item, DockItemState.Hidden);
+            DockContext.AddItemState(item, DockItemState.Hidden);
             _ = this.PrimaryWorkspace.AddItem(item);
         }
 
