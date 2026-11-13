@@ -41,6 +41,28 @@ namespace Meringue.AvaDock
             DataFormat.CreateInProcessFormat<DockItemViewModel>("application/x-meringuedockitem");
 
         /// <summary>
+        /// Adds the specified state flags to the <see cref="ItemState"/> of the specified <see cref="DockItemViewModel"/>.
+        /// </summary>
+        /// <param name="item">The <see cref="DockItemViewModel"/> whose state is being modified.</param>
+        /// <param name="state">The state flags to add.</param>
+        public static void AddItemState(DockItemViewModel item, DockItemState state)
+        {
+            ArgumentNullException.ThrowIfNull(item);
+            DockItemState current = GetItemState(item) ?? DockItemState.Normal;
+            item.Tags[DockContext.ItemState] = current | state;
+        }
+
+        /// <summary>
+        /// Clears all <see cref="ItemState"/> for the specified <see cref="DockItemViewModel"/>.
+        /// </summary>
+        /// <param name="item">The <see cref="DockItemViewModel"/> whose state is being cleared.</param>
+        public static void ClearItemState(DockItemViewModel item)
+        {
+            ArgumentNullException.ThrowIfNull(item);
+            _ = item.Tags.Remove(DockContext.ItemState);
+        }
+
+        /// <summary>
         /// Clears the preferred <see cref="DockTabNodeViewModel"/> panel Id for the specified <see cref="DockItemViewModel"/>.
         /// </summary>
         /// <param name="item">The <see cref="DockItemViewModel"/> whose preferred panel ID is being cleared.</param>
@@ -131,10 +153,41 @@ namespace Meringue.AvaDock
         }
 
         /// <summary>
+        /// Removes the specified state flags from the <see cref="ItemState"/> of the specified <see cref="DockItemViewModel"/>.
+        /// </summary>
+        /// <param name="item">The <see cref="DockItemViewModel"/> whose state is being modified.</param>
+        /// <param name="state">The state flags to remove.</param>
+        public static void RemoveItemState(DockItemViewModel item, DockItemState state)
+        {
+            ArgumentNullException.ThrowIfNull(item);
+            DockItemState current = GetItemState(item) ?? DockItemState.Normal;
+
+            if ((current & state) != state)
+            {
+                return;
+            }
+
+            current &= ~state;
+
+            if (current == DockItemState.Normal)
+            {
+                _ = item.Tags.Remove(DockContext.ItemState);
+            }
+            else
+            {
+                item.Tags[DockContext.ItemState] = current;
+            }
+        }
+
+        /// <summary>
         /// Sets the <see cref="ItemState"/> for the specified <see cref="DockItemViewModel"/>.
         /// </summary>
         /// <param name="item">The <see cref="DockItemViewModel"/> whose dock control is being set.</param>
         /// <param name="state">The <see cref="ItemState"/> to record for this item.</param>
+        /// <remarks>
+        /// This overwrites any previously recorded state. Use <see cref="AddItemState"/>
+        /// or <see cref="RemoveItemState"/> to preserve the other state flags.
+        /// </remarks>
         public static void SetItemState(DockItemViewModel item, DockItemState state)
         {
             ArgumentNullException.ThrowIfNull(item);

@@ -239,23 +239,23 @@ namespace Meringue.AvaDock.Managers
                 return false;
             }
 
-            DockItemState? state = DockContext.GetItemState(item);
+            DockItemState state = DockContext.GetItemState(item) ?? DockItemState.Normal;
 
-            if (state is DockItemState.Minimized)
-            {
-                this.minimizedItems.Add(item);
-            }
-            else if (state is DockItemState.Hidden)
+            if (state.HasFlag(DockItemState.Hidden))
             {
                 this.hiddenItems.Add(item);
+                success = true;
+            }
+            else if (state.HasFlag(DockItemState.Minimized))
+            {
+                this.minimizedItems.Add(item);
+                this.MinimizedItemsChanged?.Invoke(
+                    this,
+                    new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, item));
+                success = true;
             }
             else
             {
-                if (state is null)
-                {
-                    DockContext.SetItemState(item, DockItemState.Normal);
-                }
-
                 DockTabNodeViewModel? tabNode = null;
 
                 // Prefer to insert back to the original node.
@@ -463,6 +463,7 @@ namespace Meringue.AvaDock.Managers
                     this.MinimizedItemsChanged?.Invoke(
                         this,
                         new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, item));
+                    success = true;
                 }
             }
 
@@ -647,7 +648,7 @@ namespace Meringue.AvaDock.Managers
 
             if (!this.hiddenItems.Contains(item))
             {
-                if (this.Items.Contains(item))
+                if (this.Items.Contains(item) || this.MinimizedItems.Contains(item))
                 {
                     DockItemHidingEventArgs hidingEventArgs = new(item);
                     this.OnItemHiding(hidingEventArgs);
@@ -656,7 +657,7 @@ namespace Meringue.AvaDock.Managers
                     {
                         if (this.RemoveItem(item))
                         {
-                            DockContext.SetItemState(item, DockItemState.Hidden);
+                            DockContext.AddItemState(item, DockItemState.Hidden);
                             this.hiddenItems.Add(item);
                             this.OnPropertyChanged(nameof(this.HiddenItems));
                             this.CommitChanges();
@@ -773,7 +774,6 @@ namespace Meringue.AvaDock.Managers
             {
                 if (this.RestoreItem(item))
                 {
-                    DockContext.SetItemState(item, DockItemState.Normal);
                     this.OnItemRestored(new DockItemRestoredEventArgs(item));
                 }
             }
@@ -797,13 +797,12 @@ namespace Meringue.AvaDock.Managers
                 {
                     if (this.hiddenItems.Remove(item))
                     {
-                        DockContext.SetItemState(item, DockItemState.Normal);
+                        DockContext.RemoveItemState(item, DockItemState.Hidden);
                         Boolean added = this.AddItem(item);
                         System.Diagnostics.Debug.Assert(added, "Failed to add item to workspace during show request.");
 
                         this.OnPropertyChanged(nameof(this.HiddenItems));
                         this.CommitChanges();
-                        DockContext.SetItemState(item, DockItemState.Normal);
                         this.OnItemShown(new DockItemShownEventArgs(item));
                     }
                 }

@@ -64,5 +64,38 @@ namespace Meringue.AvaDock.Services.UnitTests
             deserializedControl.HiddenItems.ShouldContain(restoredHidden, "Hidden item should be in HiddenItems collection.");
             deserializedControl.PrimaryWorkspace.DockTree.FindAncestorTabNode(hiddenItem.Id).ShouldBeNull("A hidden item should not be restored to a tab.");
         }
+
+        [AvaloniaFact]
+        public void Layout_ShouldRoundTripHiddenMinimizedState()
+        {
+            DockItemViewModel item = new() { Title = "Hidden Minimized Tab" };
+
+            DockTabNodeViewModel tabNode = new();
+            tabNode.AddTab(item);
+
+            DockWorkspaceManager workspace = new(DockTree.Horizontal(tabNode));
+            DockControlManager control = new(workspace);
+
+            item.MinimizeCommand.Execute(null);
+            item.HideCommand.Execute(null);
+
+            workspace.MinimizedItems.ShouldNotContain(item, "Sanity: Minimized item should not be in workspace before serialization.");
+            control.HiddenItems.ShouldContain(item, "Sanity: Hidden item should be in control before serialization.");
+
+            DockControlData serialized = DockSerializationConverter.BuildLayout<DockItemViewModel>(control);
+            serialized.PrimaryWorkspace.ShouldNotBeNull("Primary workspace should be serialized.");
+            serialized.PrimaryWorkspace.Hidden.ShouldNotBeNull("Hidden items should be serialized.");
+            serialized.PrimaryWorkspace.Hidden.ShouldHaveSingleItem("Exactly one hidden item should be serialized.");
+            serialized.PrimaryWorkspace.Hidden[0].State.ShouldBe(DockItemState.Minimized | DockItemState.Hidden, "State should preserve both the Minimized and Hidden flags when serialized.");
+
+            DockControlManager deserializedControl = DockSerializationConverter.BuildViewModel<DockItemViewModel>(serialized);
+
+            DockItemViewModel? restoredItem = deserializedControl.FindItem(item.Id);
+            restoredItem.ShouldNotBeNull("Hidden minimized item should be restored in control.");
+            DockContext.GetItemState(restoredItem).ShouldBe(DockItemState.Minimized | DockItemState.Hidden, "State should restore both the Minimized and Hidden flags.");
+            deserializedControl.HiddenItems.ShouldContain(restoredItem, "Hidden minimized item should be in HiddenItems collection.");
+            deserializedControl.PrimaryWorkspace.MinimizedItems.ShouldNotContain(restoredItem, "Hidden minimized item should not be visible in the minimized bar.");
+            deserializedControl.PrimaryWorkspace.DockTree.FindAncestorTabNode(item.Id).ShouldBeNull("A hidden item should not be restored to a tab.");
+        }
     }
 }

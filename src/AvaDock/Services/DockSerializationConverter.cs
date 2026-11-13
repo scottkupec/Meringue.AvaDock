@@ -116,6 +116,11 @@ namespace Meringue.AvaDock.Services
                     Title = itemData.Title ?? placeholderText,
                 };
 
+                if (itemData.State != DockItemState.Normal)
+                {
+                    DockContext.SetItemState(item, itemData.State);
+                }
+
                 // CONSIDER: This requires special knowledge about the implementation
                 //           details.  Can we make it more generic?  Do we just serialize
                 //           all item.Tags?  What about tags that can't serialize?
@@ -244,14 +249,8 @@ namespace Meringue.AvaDock.Services
                         foreach (DockItemData itemData in workspaceData.Minimized)
                         {
                             T item = BuildItem<T>(itemData);
-
-                            if (workspace.AddItem(item))
-                            {
-                                if (item.MinimizeCommand.CanExecute(null))
-                                {
-                                    item.MinimizeCommand.Execute(null);
-                                }
-                            }
+                            DockContext.AddItemState(item, DockItemState.Minimized);
+                            _ = workspace.AddItem(item);
                         }
                     }
 
@@ -260,7 +259,7 @@ namespace Meringue.AvaDock.Services
                         foreach (DockItemData itemData in workspaceData.Hidden)
                         {
                             T item = BuildItem<T>(itemData);
-                            DockContext.SetItemState(item, DockItemState.Hidden);
+                            DockContext.AddItemState(item, DockItemState.Hidden);
                             _ = workspace.AddItem(item);
                         }
                     }
@@ -322,6 +321,7 @@ namespace Meringue.AvaDock.Services
                     DisableHide = item.DisableHide,
                     DisableMaximize = item.DisableMaximize,
                     DisableMinimize = item.DisableMinimize,
+                    State = DockContext.GetItemState(item) ?? DockItemState.Normal,
                     Title = item.Title,
                 };
 

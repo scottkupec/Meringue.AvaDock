@@ -34,11 +34,12 @@
                         <StackPanel HorizontalAlignment="Center"
                                     Orientation="Horizontal"
                                     Spacing="2">
-                          <!-- Restore icon -->
-                          <Path Data="M4 8 H14 V18 H4 Z M6 6 H16 V16 H6 Z"
+                          <!-- Restore icon - CONSIDER: Do we want this at all? -->
+                          <!-- Path Data="M4 8 H14 V18 H4 Z M6 6 H16 V16 H6 Z"
                                 Stroke="{DynamicResource AvaDockChromeColor}"
-                                StrokeThickness="1"/>
+                                StrokeThickness="1"/ -->
                           <TextBlock FontSize="{DynamicResource AvaDockFontSize}"
+                                     Margin="8,0,0,0"
                                      Text="{Binding Title}"
                                      TextTrimming="CharacterEllipsis"
                                      MaxWidth="100" />
